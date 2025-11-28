@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Item, ItemCondition } from '@/types';
-import { Search, Plus, Package, Upload, Download } from 'lucide-react';
+import { Search, Plus, Package, Upload, Download, FileSpreadsheet } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +22,8 @@ export default function Items() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');
   const [filterCondition, setFilterCondition] = useState<string>('all');
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const items = storage.getItems().filter(item => item.organizationId === currentOrg?.id && !item.isArchived);
   const categories = storage.getCategories().filter(cat => cat.organizationId === currentOrg?.id);
@@ -57,6 +60,32 @@ export default function Items() {
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData = [{
+      Name: 'Example Item',
+      Category: 'Electronics',
+      Location: 'Living Room',
+      Brand: 'Samsung',
+      Model: 'XYZ-123',
+      'Serial Number': 'SN123456',
+      Condition: 'GOOD',
+      Quantity: 1,
+      'Purchase Price': 299.99,
+      'Purchase Date': '2024-01-15',
+      Notes: 'Example notes'
+    }];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Items');
+    XLSX.writeFile(wb, 'import-template.xlsx');
+    
+    toast({
+      title: "Template downloaded",
+      description: "Fill in the template and import it to add items",
+    });
+  };
+
   const handleExport = () => {
     const exportData = filteredItems.map(item => ({
       Name: item.name,
@@ -83,10 +112,7 @@ export default function Items() {
     });
   };
 
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processImportFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
@@ -131,6 +157,7 @@ export default function Items() {
           description: `Imported ${importedCount} items from Excel`,
         });
         
+        setImportDialogOpen(false);
         window.location.reload();
       } catch (error) {
         toast({
@@ -141,7 +168,40 @@ export default function Items() {
       }
     };
     reader.readAsArrayBuffer(file);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processImportFile(file);
+    }
     e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+      processImportFile(file);
+    } else {
+      toast({
+        title: "Invalid file",
+        description: "Please drop an Excel file (.xlsx or .xls)",
+        variant: "destructive"
+      });
+    }
   };
 
   if (!currentOrg) {
@@ -173,12 +233,9 @@ export default function Items() {
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
-              <Button variant="outline" asChild>
-                <label>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Import
-                  <input type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
-                </label>
+              <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Import
               </Button>
               <Button onClick={() => navigate('/items/new')}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -258,6 +315,61 @@ export default function Items() {
           </div>
         )}
       </main>
+
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Items</DialogTitle>
+            <DialogDescription>
+              Upload an Excel file to import multiple items at once
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                isDragging 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-sm font-medium mb-2">
+                Drag and drop your Excel file here
+              </p>
+              <p className="text-xs text-muted-foreground mb-4">
+                or click to browse
+              </p>
+              <Button variant="outline" asChild>
+                <label className="cursor-pointer">
+                  Choose File
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleImport}
+                    className="hidden"
+                  />
+                </label>
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownloadTemplate}
+                className="text-primary"
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Download Import Template
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
