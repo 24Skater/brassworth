@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Item } from '@/types';
 import { Search, Plus, Package } from 'lucide-react';
+import { Navigation } from '@/components/Navigation';
 
 export default function Items() {
   const { currentOrg } = useOrganization();
@@ -71,12 +72,7 @@ export default function Items() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-foreground">Inventory Items</h1>
-          <p className="text-sm text-muted-foreground">{currentOrg.name}</p>
-        </div>
-      </header>
+      <Navigation />
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-4 mb-6">

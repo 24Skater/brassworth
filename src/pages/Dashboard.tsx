@@ -5,7 +5,8 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { storage } from '@/lib/storage';
-import { Package, MapPin, Tag, FolderOpen, LogOut } from 'lucide-react';
+import { Package, MapPin, FolderOpen } from 'lucide-react';
+import { Navigation } from '@/components/Navigation';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -28,27 +29,9 @@ export default function Dashboard() {
   const totalValue = items.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
   const estimatedValue = items.reduce((sum, item) => sum + (item.currentEstimatedValue || item.purchasePrice || 0), 0);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Home Inventory</h1>
-            {currentOrg && (
-              <p className="text-sm text-muted-foreground">{currentOrg.name}</p>
-            )}
-          </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </header>
+      <Navigation />
 
       <main className="container mx-auto px-4 py-8">
         {!currentOrg ? (

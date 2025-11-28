@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Location } from '@/types';
 import { MapPin, Pencil, Trash2 } from 'lucide-react';
+import { Navigation } from '@/components/Navigation';
 
 export default function Locations() {
   const { currentOrg } = useOrganization();
@@ -77,12 +78,7 @@ export default function Locations() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-foreground">Locations</h1>
-          <p className="text-sm text-muted-foreground">{currentOrg.name}</p>
-        </div>
-      </header>
+      <Navigation />
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
