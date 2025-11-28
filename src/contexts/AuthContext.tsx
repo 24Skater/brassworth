@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@/types';
-import { storage } from '@/lib/storage';
-import { useNavigate } from 'react-router-dom';
+import { User, UserRole } from '@/types';
+import { createAuthProvider } from '@/lib/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -9,6 +8,9 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  listUsers: () => User[];
+  inviteUser: (email: string, name: string, organizationId: string, role: UserRole) => Promise<void>;
+  removeUser: (userId: string, organizationId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,42 +18,64 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const authProvider = createAuthProvider();
 
   useEffect(() => {
-    const storedUser = storage.getUser();
-    setUser(storedUser);
+    const currentUser = authProvider.getCurrentUser();
+    setUser(currentUser);
     setIsLoading(false);
   }, []);
 
   const signup = async (email: string, password: string, name: string) => {
-    // Simulate signup (in real app, this would be backend)
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      email,
-      name,
-      createdAt: new Date().toISOString(),
-    };
-    storage.setUser(newUser);
-    setUser(newUser);
+    const result = await authProvider.signup(email, password, name);
+    if (result.error) {
+      throw new Error(result.error);
+    }
+    setUser(result.user);
   };
 
   const login = async (email: string, password: string) => {
-    // Simulate login (in real app, this would validate with backend)
-    const existingUser = storage.getUser();
-    if (existingUser && existingUser.email === email) {
-      setUser(existingUser);
-    } else {
-      throw new Error('Invalid credentials');
+    const result = await authProvider.login(email, password);
+    if (result.error) {
+      throw new Error(result.error);
     }
+    setUser(result.user);
   };
 
   const logout = () => {
-    storage.setUser(null);
+    authProvider.logout();
     setUser(null);
   };
 
+  const listUsers = (): User[] => {
+    return authProvider.listUsers();
+  };
+
+  const inviteUser = async (email: string, name: string, organizationId: string, role: UserRole) => {
+    const result = await authProvider.inviteUser(email, name, organizationId, role);
+    if (result.error) {
+      throw new Error(result.error);
+    }
+  };
+
+  const removeUser = async (userId: string, organizationId: string) => {
+    const result = await authProvider.removeUser(userId, organizationId);
+    if (result.error) {
+      throw new Error(result.error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      signup, 
+      logout, 
+      isLoading,
+      listUsers,
+      inviteUser,
+      removeUser,
+    }}>
       {children}
     </AuthContext.Provider>
   );

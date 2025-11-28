@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { usePermission } from '@/contexts/RolesContext';
 import { Button } from '@/components/ui/button';
-import { Home, Package, MapPin, FolderOpen, Building2, LogOut } from 'lucide-react';
+import { Home, Package, MapPin, FolderOpen, Building2, LogOut, Users } from 'lucide-react';
 import { NavLink } from './NavLink';
 
 export function Navigation() {
   const { logout } = useAuth();
   const { currentOrg } = useOrganization();
+  const canManageUsers = usePermission('canManageUsers');
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -41,6 +43,7 @@ export function Navigation() {
           <NavLink to="/items" icon={Package}>Items</NavLink>
           <NavLink to="/categories" icon={FolderOpen}>Categories</NavLink>
           <NavLink to="/locations" icon={MapPin}>Locations</NavLink>
+          {canManageUsers && <NavLink to="/users" icon={Users}>Users</NavLink>}
         </nav>
       </div>
     </header>

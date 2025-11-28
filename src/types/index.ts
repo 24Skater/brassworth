@@ -1,4 +1,4 @@
-export type UserRole = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER';
+export type UserRole = 'ADMIN' | 'MANAGER' | 'VIEWER' | 'CONTRIBUTOR';
 
 export type ItemCondition = 'NEW' | 'GOOD' | 'FAIR' | 'POOR' | 'DAMAGED' | 'DISPOSED';
 
@@ -9,6 +9,17 @@ export interface User {
   email: string;
   name: string;
   createdAt: string;
+}
+
+export interface UserWithAuth extends User {
+  passwordHash: string;
+}
+
+export interface UserRoleAssignment {
+  id: string;
+  userId: string;
+  organizationId: string;
+  role: UserRole;
 }
 
 export interface Organization {
@@ -24,7 +35,6 @@ export interface Membership {
   id: string;
   userId: string;
   organizationId: string;
-  role: UserRole;
 }
 
 export interface Location {
