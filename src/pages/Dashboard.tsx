@@ -1,0 +1,157 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { storage } from '@/lib/storage';
+import { Package, MapPin, Tag, FolderOpen, LogOut } from 'lucide-react';
+
+export default function Dashboard() {
+  const { user, logout } = useAuth();
+  const { currentOrg, organizations, setCurrentOrg } = useOrganization();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
+
+  if (!user) return null;
+
+  const items = storage.getItems().filter(item => item.organizationId === currentOrg?.id);
+  const locations = storage.getLocations().filter(loc => loc.organizationId === currentOrg?.id);
+  const categories = storage.getCategories().filter(cat => cat.organizationId === currentOrg?.id);
+  const tags = storage.getTags().filter(tag => tag.organizationId === currentOrg?.id);
+
+  const totalValue = items.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
+  const estimatedValue = items.reduce((sum, item) => sum + (item.currentEstimatedValue || item.purchasePrice || 0), 0);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Home Inventory</h1>
+            {currentOrg && (
+              <p className="text-sm text-muted-foreground">{currentOrg.name}</p>
+            )}
+          </div>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        {!currentOrg ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Welcome to Home Inventory</CardTitle>
+              <CardDescription>Create your first property to get started</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate('/organizations')}>
+                Create Property
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{items.length}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Purchase Value</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${totalValue.toFixed(2)}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Estimated Value</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${estimatedValue.toFixed(2)}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Locations</CardTitle>
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{locations.length}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/items')}>
+                    <Package className="h-4 w-4 mr-2" />
+                    Manage Items
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/locations')}>
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Manage Locations
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/categories')}>
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    Manage Categories
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>Latest items added</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {items.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No items yet. Add your first item to get started!</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {items.slice(0, 5).map(item => (
+                        <div key={item.id} className="flex justify-between items-center">
+                          <span className="text-sm">{item.name}</span>
+                          <span className="text-sm text-muted-foreground">${item.purchasePrice?.toFixed(2) || '0.00'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
