@@ -8,14 +8,17 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Item, ItemCondition, PurchaseSource } from '@/types';
-import { ArrowLeft } from 'lucide-react';
+import { Item, ItemCondition, PurchaseSource, Photo } from '@/types';
+import { ArrowLeft, ImagePlus, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ItemForm() {
   const { id } = useParams();
   const { currentOrg } = useOrganization();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const isEditing = !!id;
+  const [photos, setPhotos] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<Partial<Item>>({
     name: '',
@@ -42,7 +45,11 @@ export default function ItemForm() {
   useEffect(() => {
     if (isEditing && id) {
       const item = storage.getItems().find(i => i.id === id);
-      if (item) setFormData(item);
+      if (item) {
+        setFormData(item);
+        const itemPhotos = storage.getPhotos().filter(p => p.itemId === item.id);
+        setPhotos(itemPhotos.map(p => p.fileUrl));
+      }
     }
   }, [id, isEditing]);
 
@@ -51,15 +58,20 @@ export default function ItemForm() {
     if (!currentOrg || !formData.name) return;
 
     const items = storage.getItems();
+    const itemId = isEditing && id ? id : crypto.randomUUID();
     
     if (isEditing && id) {
       const updated = items.map(item =>
         item.id === id ? { ...item, ...formData, updatedAt: new Date().toISOString() } : item
       );
       storage.setItems(updated);
+      
+      // Clear existing photos for this item
+      const existingPhotos = storage.getPhotos().filter(p => p.itemId !== id);
+      storage.setPhotos(existingPhotos);
     } else {
       const newItem: Item = {
-        id: crypto.randomUUID(),
+        id: itemId,
         organizationId: currentOrg.id,
         name: formData.name,
         description: formData.description,
@@ -84,7 +96,44 @@ export default function ItemForm() {
       storage.setItems([...items, newItem]);
     }
 
+    // Save photos
+    const newPhotos: Photo[] = photos.map(photoUrl => ({
+      id: crypto.randomUUID(),
+      itemId: itemId,
+      fileUrl: photoUrl,
+      takenAt: new Date().toISOString()
+    }));
+    storage.setPhotos([...storage.getPhotos(), ...newPhotos]);
+
     navigate('/items');
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select images under 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setPhotos(prev => [...prev, dataUrl]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   if (!currentOrg) {
@@ -240,6 +289,29 @@ export default function ItemForm() {
               <div>
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
+              </div>
+
+              <div>
+                <Label>Photos</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {photos.map((photo, index) => (
+                    <div key={index} className="relative group">
+                      <img src={photo} alt={`Item ${index + 1}`} className="w-full h-32 object-cover rounded-lg border border-border" />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                    <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
+                    <span className="text-sm text-muted-foreground">Add Photo</span>
+                    <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
+                  </label>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">
