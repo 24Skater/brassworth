@@ -7,13 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Item } from '@/types';
-import { Search, Plus, Package } from 'lucide-react';
+import { Item, ItemCondition } from '@/types';
+import { Search, Plus, Package, Upload, Download } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
+import * as XLSX from 'xlsx';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Items() {
   const { currentOrg } = useOrganization();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');
@@ -54,6 +57,93 @@ export default function Items() {
     }
   };
 
+  const handleExport = () => {
+    const exportData = filteredItems.map(item => ({
+      Name: item.name,
+      Category: getCategoryName(item.categoryId),
+      Location: getLocationName(item.locationId),
+      Brand: item.brand || '',
+      Model: item.model || '',
+      'Serial Number': item.serialNumber || '',
+      Condition: item.condition,
+      Quantity: item.quantity,
+      'Purchase Price': item.purchasePrice || '',
+      'Purchase Date': item.purchaseDate || '',
+      Notes: item.notes || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Items');
+    XLSX.writeFile(wb, `${currentOrg?.name}-items-${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+    toast({
+      title: "Export successful",
+      description: `Exported ${filteredItems.length} items to Excel`,
+    });
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+        let importedCount = 0;
+        jsonData.forEach((row) => {
+          const categoryId = categories.find(c => c.name === row.Category)?.id;
+          const locationId = locations.find(l => l.name === row.Location)?.id;
+          
+          const newItem: Item = {
+            id: crypto.randomUUID(),
+            organizationId: currentOrg!.id,
+            name: row.Name || 'Unnamed Item',
+            description: row.Description,
+            categoryId,
+            locationId,
+            brand: row.Brand,
+            model: row.Model,
+            serialNumber: row['Serial Number'],
+            purchaseDate: row['Purchase Date'],
+            purchasePrice: row['Purchase Price'] ? Number(row['Purchase Price']) : undefined,
+            condition: (row.Condition as ItemCondition) || 'GOOD',
+            quantity: row.Quantity ? Number(row.Quantity) : 1,
+            notes: row.Notes,
+            isArchived: false,
+            tags: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+
+          const existingItems = storage.getItems();
+          storage.setItems([...existingItems, newItem]);
+          importedCount++;
+        });
+
+        toast({
+          title: "Import successful",
+          description: `Imported ${importedCount} items from Excel`,
+        });
+        
+        window.location.reload();
+      } catch (error) {
+        toast({
+          title: "Import failed",
+          description: "Please check your Excel file format",
+          variant: "destructive"
+        });
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = '';
+  };
+
   if (!currentOrg) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -78,10 +168,23 @@ export default function Items() {
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex justify-between items-center">
             <p className="text-muted-foreground">{filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}</p>
-            <Button onClick={() => navigate('/items/new')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleExport}>
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button variant="outline" asChild>
+                <label>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import
+                  <input type="file" accept=".xlsx,.xls" onChange={handleImport} className="hidden" />
+                </label>
+              </Button>
+              <Button onClick={() => navigate('/items/new')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-col md:flex-row gap-3">
