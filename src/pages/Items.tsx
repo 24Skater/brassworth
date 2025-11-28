@@ -8,9 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Item, ItemCondition } from '@/types';
-import { Search, Plus, Package, Upload, Download, FileSpreadsheet } from 'lucide-react';
+import { Search, Plus, Package, Upload, Download, FileSpreadsheet, LayoutGrid, List, Image as ImageIcon, Table as TableIcon } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
+import { ItemCard } from '@/components/items/ItemCard';
+import { ItemListView } from '@/components/items/ItemListView';
+import { ItemGalleryView } from '@/components/items/ItemGalleryView';
+import { ItemTableView } from '@/components/items/ItemTableView';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,8 +30,13 @@ export default function Items() {
   const [filterCondition, setFilterCondition] = useState<string>('all');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'gallery' | 'table'>('grid');
+  const [showArchived, setShowArchived] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
 
-  const items = storage.getItems().filter(item => item.organizationId === currentOrg?.id && !item.isArchived);
+  const allItems = storage.getItems().filter(item => item.organizationId === currentOrg?.id);
+  const items = showArchived ? allItems.filter(item => item.isArchived) : allItems.filter(item => !item.isArchived);
   const categories = storage.getCategories().filter(cat => cat.organizationId === currentOrg?.id);
   const locations = storage.getLocations().filter(loc => loc.organizationId === currentOrg?.id);
 
@@ -49,15 +60,52 @@ export default function Items() {
     return locations.find(l => l.id === locationId)?.name || 'No location';
   };
 
-  const getConditionColor = (condition: Item['condition']) => {
-    switch (condition) {
-      case 'NEW': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'GOOD': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-      case 'FAIR': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      case 'POOR': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'DAMAGED': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      default: return 'bg-muted text-muted-foreground';
-    }
+  const handleArchiveItem = (item: Item) => {
+    const allItems = storage.getItems();
+    const updatedItems = allItems.map(i => 
+      i.id === item.id ? { ...i, isArchived: true, updatedAt: new Date().toISOString() } : i
+    );
+    storage.setItems(updatedItems);
+    
+    toast({
+      title: "Item archived",
+      description: `${item.name} has been moved to archive`,
+    });
+  };
+
+  const handleRestoreItem = (item: Item) => {
+    const allItems = storage.getItems();
+    const updatedItems = allItems.map(i => 
+      i.id === item.id ? { ...i, isArchived: false, updatedAt: new Date().toISOString() } : i
+    );
+    storage.setItems(updatedItems);
+    
+    toast({
+      title: "Item restored",
+      description: `${item.name} has been restored`,
+    });
+  };
+
+  const handleDeleteItem = (item: Item) => {
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!itemToDelete) return;
+
+    const allItems = storage.getItems();
+    const updatedItems = allItems.filter(i => i.id !== itemToDelete.id);
+    storage.setItems(updatedItems);
+    
+    toast({
+      title: "Item deleted",
+      description: `${itemToDelete.name} has been permanently deleted`,
+      variant: "destructive"
+    });
+
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
   };
 
   const handleDownloadTemplate = () => {
@@ -226,9 +274,33 @@ export default function Items() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-4 mb-6">
-          <div className="flex justify-between items-center">
-            <p className="text-muted-foreground">{filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}</p>
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <p className="text-muted-foreground">{filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}</p>
+              <Tabs value={showArchived ? 'archived' : 'active'} onValueChange={(v) => setShowArchived(v === 'archived')}>
+                <TabsList>
+                  <TabsTrigger value="active">Active</TabsTrigger>
+                  <TabsTrigger value="archived">Archived</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
             <div className="flex gap-2">
+              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
+                <TabsList>
+                  <TabsTrigger value="grid" className="px-3">
+                    <LayoutGrid className="h-4 w-4" />
+                  </TabsTrigger>
+                  <TabsTrigger value="list" className="px-3">
+                    <List className="h-4 w-4" />
+                  </TabsTrigger>
+                  <TabsTrigger value="gallery" className="px-3">
+                    <ImageIcon className="h-4 w-4" />
+                  </TabsTrigger>
+                  <TabsTrigger value="table" className="px-3">
+                    <TableIcon className="h-4 w-4" />
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               <Button variant="outline" onClick={handleExport}>
                 <Download className="h-4 w-4 mr-2" />
                 Export
@@ -287,32 +359,73 @@ export default function Items() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Package className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">No items found</p>
-              <Button onClick={() => navigate('/items/new')}>Add your first item</Button>
+              <p className="text-muted-foreground mb-4">
+                {showArchived ? 'No archived items' : 'No items found'}
+              </p>
+              {!showArchived && <Button onClick={() => navigate('/items/new')}>Add your first item</Button>}
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredItems.map((item) => (
-              <Card key={item.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => navigate(`/items/${item.id}`)}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{item.name}</CardTitle>
-                    <Badge variant="outline" className={getConditionColor(item.condition)}>{item.condition}</Badge>
-                  </div>
-                  <CardDescription>{getCategoryName(item.categoryId)}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm">
-                    {item.brand && <p className="text-muted-foreground">Brand: {item.brand}</p>}
-                    <p className="text-muted-foreground">Location: {getLocationName(item.locationId)}</p>
-                    {item.purchasePrice && <p className="font-semibold">Value: ${item.purchasePrice.toFixed(2)}</p>}
-                    {item.quantity > 1 && <p className="text-muted-foreground">Quantity: {item.quantity}</p>}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <>
+            {viewMode === 'grid' && (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredItems.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    categoryName={getCategoryName(item.categoryId)}
+                    locationName={getLocationName(item.locationId)}
+                    onView={() => navigate(`/items/${item.id}`)}
+                    onArchive={() => showArchived ? handleRestoreItem(item) : handleArchiveItem(item)}
+                    onDelete={() => handleDeleteItem(item)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {viewMode === 'list' && (
+              <div className="space-y-2">
+                {filteredItems.map((item) => (
+                  <ItemListView
+                    key={item.id}
+                    item={item}
+                    categoryName={getCategoryName(item.categoryId)}
+                    locationName={getLocationName(item.locationId)}
+                    onView={() => navigate(`/items/${item.id}`)}
+                    onArchive={() => showArchived ? handleRestoreItem(item) : handleArchiveItem(item)}
+                    onDelete={() => handleDeleteItem(item)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {viewMode === 'gallery' && (
+              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {filteredItems.map((item) => (
+                  <ItemGalleryView
+                    key={item.id}
+                    item={item}
+                    categoryName={getCategoryName(item.categoryId)}
+                    locationName={getLocationName(item.locationId)}
+                    onView={() => navigate(`/items/${item.id}`)}
+                    onArchive={() => showArchived ? handleRestoreItem(item) : handleArchiveItem(item)}
+                    onDelete={() => handleDeleteItem(item)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {viewMode === 'table' && (
+              <ItemTableView
+                items={filteredItems}
+                getCategoryName={getCategoryName}
+                getLocationName={getLocationName}
+                onView={(item) => navigate(`/items/${item.id}`)}
+                onArchive={(item) => showArchived ? handleRestoreItem(item) : handleArchiveItem(item)}
+                onDelete={handleDeleteItem}
+              />
+            )}
+          </>
         )}
       </main>
 
@@ -370,6 +483,24 @@ export default function Items() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently Delete Item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete "{itemToDelete?.name}"? This action cannot be undone.
+              {!itemToDelete?.isArchived && " Consider archiving instead to preserve the item data."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
