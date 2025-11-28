@@ -1,7 +1,9 @@
-import { User, Organization, Membership, Location, Category, Tag, Item, Photo, Document } from '@/types';
+import { User, Organization, Membership, Location, Category, Tag, Item, Photo, Document, UserWithAuth, UserRoleAssignment } from '@/types';
 
 const STORAGE_KEYS = {
   USER: 'inventory_user',
+  USERS: 'inventory_all_users',
+  USER_ROLES: 'inventory_user_roles',
   ORGANIZATIONS: 'inventory_organizations',
   MEMBERSHIPS: 'inventory_memberships',
   LOCATIONS: 'inventory_locations',
@@ -96,6 +98,24 @@ export const storage = {
   },
   setDocuments: (documents: Document[]) => {
     localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(documents));
+  },
+
+  // Users (all users with auth)
+  getUsers: (): UserWithAuth[] => {
+    const data = localStorage.getItem(STORAGE_KEYS.USERS);
+    return data ? JSON.parse(data) : [];
+  },
+  setUsers: (users: UserWithAuth[]) => {
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  },
+
+  // User Roles
+  getUserRoles: (): UserRoleAssignment[] => {
+    const data = localStorage.getItem(STORAGE_KEYS.USER_ROLES);
+    return data ? JSON.parse(data) : [];
+  },
+  setUserRoles: (roles: UserRoleAssignment[]) => {
+    localStorage.setItem(STORAGE_KEYS.USER_ROLES, JSON.stringify(roles));
   },
 
   // Clear all

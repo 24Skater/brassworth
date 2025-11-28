@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Organization } from '@/types';
+import { Organization, UserRole } from '@/types';
 import { storage } from '@/lib/storage';
 import { useAuth } from './AuthContext';
+import { createRoleProvider } from '@/lib/auth';
 
 interface OrganizationContextType {
   currentOrg: Organization | null;
@@ -59,9 +60,12 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         id: crypto.randomUUID(),
         userId: user.id,
         organizationId: newOrg.id,
-        role: 'OWNER',
       },
     ]);
+
+    // Assign ADMIN role to the creator
+    const roleProvider = createRoleProvider();
+    roleProvider.setUserRole(user.id, newOrg.id, 'ADMIN' as UserRole);
 
     setOrganizations([...organizations, newOrg]);
     setCurrentOrg(newOrg);
