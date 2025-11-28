@@ -8,6 +8,11 @@ import { OrganizationProvider } from "./contexts/OrganizationContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Organizations from "./pages/Organizations";
+import Items from "./pages/Items";
+import ItemForm from "./pages/ItemForm";
+import Locations from "./pages/Locations";
+import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +29,12 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/organizations" element={<Organizations />} />
+              <Route path="/items" element={<Items />} />
+              <Route path="/items/new" element={<ItemForm />} />
+              <Route path="/items/:id" element={<ItemForm />} />
+              <Route path="/locations" element={<Locations />} />
+              <Route path="/categories" element={<Categories />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
