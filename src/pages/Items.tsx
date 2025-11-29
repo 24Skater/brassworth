@@ -18,6 +18,9 @@ import { ItemCard } from '@/components/items/ItemCard';
 import { ItemListView } from '@/components/items/ItemListView';
 import { ItemGalleryView } from '@/components/items/ItemGalleryView';
 import { ItemTableView } from '@/components/items/ItemTableView';
+import { ReceiptUploadDialog } from '@/components/receipts/ReceiptUploadDialog';
+import { ReceiptReviewTable, ConfirmedReceiptData } from '@/components/receipts/ReceiptReviewTable';
+import { ParsedReceipt } from '@/lib/receipt';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 
@@ -39,6 +42,10 @@ export default function Items() {
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [bulkCategory, setBulkCategory] = useState<string>('');
   const [bulkLocation, setBulkLocation] = useState<string>('');
+  const [receiptUploadOpen, setReceiptUploadOpen] = useState(false);
+  const [receiptReviewOpen, setReceiptReviewOpen] = useState(false);
+  const [parsedReceipt, setParsedReceipt] = useState<ParsedReceipt | null>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
   const allItems = storage.getItems().filter(item => item.organizationId === currentOrg?.id);
   const items = showArchived ? allItems.filter(item => item.isArchived) : allItems.filter(item => !item.isArchived);
@@ -369,6 +376,82 @@ export default function Items() {
     window.location.reload();
   };
 
+  const handleReceiptParsed = (receipt: ParsedReceipt, file?: File) => {
+    setParsedReceipt(receipt);
+    setReceiptFile(file || null);
+    setReceiptUploadOpen(false);
+    setReceiptReviewOpen(true);
+  };
+
+  const handleReceiptConfirm = (data: ConfirmedReceiptData) => {
+    if (!currentOrg) return;
+
+    // Convert receipt file to base64 if available
+    if (receiptFile) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        
+        // Create receipt document
+        const receiptDocument = {
+          id: crypto.randomUUID(),
+          fileName: receiptFile.name,
+          type: 'RECEIPT' as const,
+          organizationId: currentOrg.id,
+          fileUrl: base64,
+          uploadedAt: new Date().toISOString(),
+        };
+        
+        const allDocuments = storage.getDocuments();
+        storage.setDocuments([...allDocuments, receiptDocument]);
+        
+        createItems(receiptDocument.id);
+      };
+      reader.readAsDataURL(receiptFile);
+    } else {
+      createItems();
+    }
+
+    function createItems(docId?: string) {
+      const allItems = storage.getItems();
+      const createdItems = [];
+      
+      data.items.forEach(item => {
+        const newItem = {
+          id: crypto.randomUUID(),
+          name: item.description,
+          quantity: item.quantity,
+          purchasePrice: item.unitPrice || item.lineTotal,
+          purchaseDate: data.purchaseDate,
+          purchaseLocation: (data.storeName.toLowerCase().includes('amazon') || data.storeName.toLowerCase().includes('online') ? 'ONLINE' : 'STORE') as PurchaseSource,
+          purchaseSourceName: data.storeName,
+          organizationId: currentOrg.id,
+          condition: 'NEW' as ItemCondition,
+          isArchived: false,
+          tags: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        
+        createdItems.push(newItem);
+      });
+
+      storage.setItems([...allItems, ...createdItems]);
+
+      toast({
+        title: 'Items imported',
+        description: `Successfully imported ${createdItems.length} items from receipt.`,
+      });
+
+      setReceiptReviewOpen(false);
+      setParsedReceipt(null);
+      setReceiptFile(null);
+      
+      // Refresh the page to show new items
+      window.location.reload();
+    }
+  };
+
   if (!currentOrg) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -425,6 +508,10 @@ export default function Items() {
               <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 Import
+              </Button>
+              <Button variant="outline" onClick={() => setReceiptUploadOpen(true)}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Add from Receipt
               </Button>
               {selectedItems.size > 0 && (
                 <Button variant="secondary" onClick={() => setBulkEditOpen(true)}>
@@ -680,6 +767,23 @@ export default function Items() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Receipt Upload Dialog */}
+      <ReceiptUploadDialog
+        open={receiptUploadOpen}
+        onOpenChange={setReceiptUploadOpen}
+        onParsed={handleReceiptParsed}
+      />
+
+      {/* Receipt Review Dialog */}
+      {parsedReceipt && (
+        <ReceiptReviewTable
+          open={receiptReviewOpen}
+          onOpenChange={setReceiptReviewOpen}
+          receipt={parsedReceipt}
+          onConfirm={handleReceiptConfirm}
+        />
+      )}
     </div>
   );
 }
