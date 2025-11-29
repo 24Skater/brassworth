@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Item, ItemCondition } from '@/types';
+import { Item, ItemCondition, Category, Location, PurchaseSource } from '@/types';
 import { Search, Plus, Package, Upload, Download, FileSpreadsheet, LayoutGrid, List, Image as ImageIcon, Table as TableIcon } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { ItemCard } from '@/components/items/ItemCard';
@@ -111,6 +111,7 @@ export default function Items() {
   const handleDownloadTemplate = () => {
     const templateData = [{
       Name: 'Example Item',
+      Description: 'Example description',
       Category: 'Electronics',
       Location: 'Living Room',
       Brand: 'Samsung',
@@ -119,7 +120,10 @@ export default function Items() {
       Condition: 'GOOD',
       Quantity: 1,
       'Purchase Price': 299.99,
+      'Current Estimated Value': 250.00,
       'Purchase Date': '2024-01-15',
+      'Purchase Source': 'STORE',
+      'Purchase Source Name': 'Best Buy',
       Notes: 'Example notes'
     }];
 
@@ -137,6 +141,7 @@ export default function Items() {
   const handleExport = () => {
     const exportData = filteredItems.map(item => ({
       Name: item.name,
+      Description: item.description || '',
       Category: getCategoryName(item.categoryId),
       Location: getLocationName(item.locationId),
       Brand: item.brand || '',
@@ -145,7 +150,10 @@ export default function Items() {
       Condition: item.condition,
       Quantity: item.quantity,
       'Purchase Price': item.purchasePrice || '',
+      'Current Estimated Value': item.currentEstimatedValue || '',
       'Purchase Date': item.purchaseDate || '',
+      'Purchase Source': item.purchaseLocation || '',
+      'Purchase Source Name': item.purchaseSourceName || '',
       Notes: item.notes || ''
     }));
 
@@ -170,9 +178,42 @@ export default function Items() {
         const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
 
         let importedCount = 0;
+        let createdCategories = 0;
+        let createdLocations = 0;
+
+        // Get existing data
+        const existingItems = storage.getItems();
+        const existingCategories = storage.getCategories();
+        const existingLocations = storage.getLocations();
+
         jsonData.forEach((row) => {
-          const categoryId = categories.find(c => c.name === row.Category)?.id;
-          const locationId = locations.find(l => l.name === row.Location)?.id;
+          // Auto-create category if it doesn't exist
+          let categoryId = categories.find(c => c.name === row.Category)?.id;
+          if (!categoryId && row.Category) {
+            const newCategory: Category = {
+              id: crypto.randomUUID(),
+              organizationId: currentOrg!.id,
+              name: row.Category,
+              description: `Auto-created from import`
+            };
+            existingCategories.push(newCategory);
+            categoryId = newCategory.id;
+            createdCategories++;
+          }
+
+          // Auto-create location if it doesn't exist
+          let locationId = locations.find(l => l.name === row.Location)?.id;
+          if (!locationId && row.Location) {
+            const newLocation: Location = {
+              id: crypto.randomUUID(),
+              organizationId: currentOrg!.id,
+              name: row.Location,
+              notes: `Auto-created from import`
+            };
+            existingLocations.push(newLocation);
+            locationId = newLocation.id;
+            createdLocations++;
+          }
           
           const newItem: Item = {
             id: crypto.randomUUID(),
@@ -186,6 +227,9 @@ export default function Items() {
             serialNumber: row['Serial Number'],
             purchaseDate: row['Purchase Date'],
             purchasePrice: row['Purchase Price'] ? Number(row['Purchase Price']) : undefined,
+            currentEstimatedValue: row['Current Estimated Value'] ? Number(row['Current Estimated Value']) : undefined,
+            purchaseLocation: row['Purchase Source'] as PurchaseSource,
+            purchaseSourceName: row['Purchase Source Name'],
             condition: (row.Condition as ItemCondition) || 'GOOD',
             quantity: row.Quantity ? Number(row.Quantity) : 1,
             notes: row.Notes,
@@ -195,14 +239,22 @@ export default function Items() {
             updatedAt: new Date().toISOString()
           };
 
-          const existingItems = storage.getItems();
-          storage.setItems([...existingItems, newItem]);
+          existingItems.push(newItem);
           importedCount++;
         });
 
+        // Save all updated data
+        storage.setItems(existingItems);
+        storage.setCategories(existingCategories);
+        storage.setLocations(existingLocations);
+
+        const messages = [`Imported ${importedCount} items`];
+        if (createdCategories > 0) messages.push(`Created ${createdCategories} new categories`);
+        if (createdLocations > 0) messages.push(`Created ${createdLocations} new locations`);
+
         toast({
           title: "Import successful",
-          description: `Imported ${importedCount} items from Excel`,
+          description: messages.join(', '),
         });
         
         setImportDialogOpen(false);
