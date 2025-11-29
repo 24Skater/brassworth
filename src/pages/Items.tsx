@@ -417,21 +417,23 @@ export default function Items() {
       const createdItems = [];
       
       data.items.forEach(item => {
-        const newItem = {
-          id: crypto.randomUUID(),
-          name: item.description,
-          quantity: item.quantity,
-          purchasePrice: item.unitPrice || item.lineTotal,
-          purchaseDate: data.purchaseDate,
-          purchaseLocation: (data.storeName.toLowerCase().includes('amazon') || data.storeName.toLowerCase().includes('online') ? 'ONLINE' : 'STORE') as PurchaseSource,
-          purchaseSourceName: data.storeName,
-          organizationId: currentOrg.id,
-          condition: 'NEW' as ItemCondition,
-          isArchived: false,
-          tags: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
+      const newItem = {
+        id: crypto.randomUUID(),
+        name: item.description,
+        quantity: item.quantity,
+        purchasePrice: item.unitPrice || item.lineTotal,
+        purchaseDate: data.purchaseDate,
+        purchaseLocation: (data.storeName.toLowerCase().includes('amazon') || data.storeName.toLowerCase().includes('online') ? 'ONLINE' : 'STORE') as PurchaseSource,
+        purchaseSourceName: data.storeName,
+        categoryId: data.categoryId,
+        locationId: data.locationId,
+        organizationId: currentOrg.id,
+        condition: 'NEW' as ItemCondition,
+        isArchived: false,
+        tags: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
         
         createdItems.push(newItem);
       });
@@ -782,6 +784,8 @@ export default function Items() {
           onOpenChange={setReceiptReviewOpen}
           receipt={parsedReceipt}
           onConfirm={handleReceiptConfirm}
+          categories={categories}
+          locations={locations}
         />
       )}
     </div>
