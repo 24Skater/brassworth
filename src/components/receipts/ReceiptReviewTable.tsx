@@ -5,26 +5,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ParsedReceipt, ParsedReceiptItem } from '@/lib/receipt';
+import { Category, Location } from '@/types';
 
 interface ReceiptReviewTableProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   receipt: ParsedReceipt;
   onConfirm: (data: ConfirmedReceiptData) => void;
+  categories: Category[];
+  locations: Location[];
 }
 
 export interface ConfirmedReceiptData {
   storeName: string;
   purchaseDate: string;
   items: ParsedReceiptItem[];
+  categoryId?: string;
+  locationId?: string;
 }
 
-export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm }: ReceiptReviewTableProps) {
+export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm, categories, locations }: ReceiptReviewTableProps) {
   const [storeName, setStoreName] = useState(receipt.storeName || '');
   const [purchaseDate, setPurchaseDate] = useState(
     receipt.purchaseDate || new Date().toISOString().split('T')[0]
   );
+  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
+  const [locationId, setLocationId] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<(ParsedReceiptItem & { selected: boolean })[]>(
     receipt.items.map(item => ({ ...item, selected: true }))
   );
@@ -56,14 +64,16 @@ export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm }: R
     onConfirm({
       storeName,
       purchaseDate,
-      items: selectedItems
+      items: selectedItems,
+      categoryId,
+      locationId
     });
   };
 
   const selectedCount = items.filter(i => i.selected).length;
   const selectedTotal = items
     .filter(i => i.selected)
-    .reduce((sum, item) => sum + (item.lineTotal || item.unitPrice || 0) * item.quantity, 0);
+    .reduce((sum, item) => sum + (item.lineTotal || (item.unitPrice || 0) * item.quantity), 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -92,6 +102,36 @@ export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm }: R
                 value={purchaseDate}
                 onChange={(e) => setPurchaseDate(e.target.value)}
               />
+            </div>
+            <div>
+              <Label htmlFor="category">Category (Optional)</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="Select category..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="location">Location (Optional)</Label>
+              <Select value={locationId} onValueChange={setLocationId}>
+                <SelectTrigger id="location">
+                  <SelectValue placeholder="Select location..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
