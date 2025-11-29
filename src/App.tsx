@@ -15,6 +15,7 @@ import ItemForm from "./pages/ItemForm";
 import Locations from "./pages/Locations";
 import Categories from "./pages/Categories";
 import Users from "./pages/Users";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="/locations" element={<Locations />} />
                 <Route path="/categories" element={<Categories />} />
                 <Route path="/users" element={<Users />} />
+                <Route path="/settings" element={<Settings />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
