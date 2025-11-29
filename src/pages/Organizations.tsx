@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -61,14 +62,14 @@ export default function Organizations() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-foreground">Properties</h1>
-          <p className="text-sm text-muted-foreground">Manage your homes, churches, and organizations</p>
-        </div>
-      </header>
+      <Navigation />
 
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Properties</h1>
+          <p className="text-muted-foreground">Manage your homes, churches, and organizations</p>
+        </div>
+
         <div className="flex justify-between items-center mb-6">
           <p className="text-muted-foreground">{organizations.length} {organizations.length === 1 ? 'property' : 'properties'}</p>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
