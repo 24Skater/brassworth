@@ -29,12 +29,6 @@ export function Navigation() {
             )}
           </div>
           <div className="flex gap-2">
-            {(canManageUsers || canManageOrg) && (
-              <Button variant="outline" size="sm" onClick={() => navigate('/settings')}>
-                <SettingsIcon className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
-            )}
             <Button variant="outline" size="sm" onClick={() => navigate('/organizations')}>
               <Building2 className="h-4 w-4 mr-2" />
               Switch Property
@@ -50,6 +44,7 @@ export function Navigation() {
           <NavLink to="/items" icon={Package}>Items</NavLink>
           <NavLink to="/categories" icon={FolderOpen}>Categories</NavLink>
           <NavLink to="/locations" icon={MapPin}>Locations</NavLink>
+          {(canManageUsers || canManageOrg) && <NavLink to="/settings" icon={SettingsIcon}>Settings</NavLink>}
         </nav>
       </div>
     </header>
