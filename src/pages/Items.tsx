@@ -4,6 +4,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,10 @@ export default function Items() {
   const [showArchived, setShowArchived] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkCategory, setBulkCategory] = useState<string>('');
+  const [bulkLocation, setBulkLocation] = useState<string>('');
 
   const allItems = storage.getItems().filter(item => item.organizationId === currentOrg?.id);
   const items = showArchived ? allItems.filter(item => item.isArchived) : allItems.filter(item => !item.isArchived);
@@ -183,12 +188,16 @@ export default function Items() {
 
         // Get existing data
         const existingItems = storage.getItems();
-        const existingCategories = storage.getCategories();
-        const existingLocations = storage.getLocations();
+        const existingCategories = [...storage.getCategories()];
+        const existingLocations = [...storage.getLocations()];
 
         jsonData.forEach((row) => {
-          // Auto-create category if it doesn't exist
-          let categoryId = categories.find(c => c.name === row.Category)?.id;
+          // Check for existing category or create new one (prevent duplicates)
+          let categoryId = existingCategories.find(c => 
+            c.name.toLowerCase() === row.Category?.toLowerCase() && 
+            c.organizationId === currentOrg!.id
+          )?.id;
+          
           if (!categoryId && row.Category) {
             const newCategory: Category = {
               id: crypto.randomUUID(),
@@ -201,8 +210,12 @@ export default function Items() {
             createdCategories++;
           }
 
-          // Auto-create location if it doesn't exist
-          let locationId = locations.find(l => l.name === row.Location)?.id;
+          // Check for existing location or create new one (prevent duplicates)
+          let locationId = existingLocations.find(l => 
+            l.name.toLowerCase() === row.Location?.toLowerCase() && 
+            l.organizationId === currentOrg!.id
+          )?.id;
+          
           if (!locationId && row.Location) {
             const newLocation: Location = {
               id: crypto.randomUUID(),
@@ -304,6 +317,58 @@ export default function Items() {
     }
   };
 
+  const toggleItemSelection = (itemId: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === filteredItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(filteredItems.map(item => item.id)));
+    }
+  };
+
+  const handleBulkEdit = () => {
+    if (selectedItems.size === 0) return;
+
+    const allItems = storage.getItems();
+    const updatedItems = allItems.map(item => {
+      if (selectedItems.has(item.id)) {
+        return {
+          ...item,
+          categoryId: bulkCategory || item.categoryId,
+          locationId: bulkLocation || item.locationId,
+          updatedAt: new Date().toISOString()
+        };
+      }
+      return item;
+    });
+
+    storage.setItems(updatedItems);
+    
+    const updates = [];
+    if (bulkCategory) updates.push('category');
+    if (bulkLocation) updates.push('location');
+
+    toast({
+      title: "Bulk update successful",
+      description: `Updated ${updates.join(' and ')} for ${selectedItems.size} items`,
+    });
+
+    setSelectedItems(new Set());
+    setBulkEditOpen(false);
+    setBulkCategory('');
+    setBulkLocation('');
+    window.location.reload();
+  };
+
   if (!currentOrg) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -361,6 +426,11 @@ export default function Items() {
                 <Upload className="h-4 w-4 mr-2" />
                 Import
               </Button>
+              {selectedItems.size > 0 && (
+                <Button variant="secondary" onClick={() => setBulkEditOpen(true)}>
+                  Edit {selectedItems.size} items
+                </Button>
+              )}
               <Button onClick={() => navigate('/items/new')}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Item
@@ -404,6 +474,14 @@ export default function Items() {
                 <SelectItem value="DAMAGED">Damaged</SelectItem>
               </SelectContent>
             </Select>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={toggleSelectAll}
+              className="whitespace-nowrap"
+            >
+              {selectedItems.size === filteredItems.length && filteredItems.length > 0 ? 'Deselect All' : 'Select All'}
+            </Button>
           </div>
         </div>
 
@@ -430,6 +508,8 @@ export default function Items() {
                     onView={() => navigate(`/items/${item.id}`)}
                     onArchive={() => showArchived ? handleRestoreItem(item) : handleArchiveItem(item)}
                     onDelete={() => handleDeleteItem(item)}
+                    selected={selectedItems.has(item.id)}
+                    onToggleSelect={() => toggleItemSelection(item.id)}
                   />
                 ))}
               </div>
@@ -532,6 +612,53 @@ export default function Items() {
                 Download Import Template
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bulkEditOpen} onOpenChange={setBulkEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Edit {selectedItems.size} Items</DialogTitle>
+            <DialogDescription>
+              Update category and/or location for all selected items. Leave blank to keep existing values.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="bulk-category">Change Category</Label>
+              <Select value={bulkCategory} onValueChange={setBulkCategory}>
+                <SelectTrigger id="bulk-category">
+                  <SelectValue placeholder="Select new category (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Keep existing category</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bulk-location">Change Location</Label>
+              <Select value={bulkLocation} onValueChange={setBulkLocation}>
+                <SelectTrigger id="bulk-location">
+                  <SelectValue placeholder="Select new location (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Keep existing location</SelectItem>
+                  {locations.map(loc => (
+                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setBulkEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleBulkEdit} disabled={!bulkCategory && !bulkLocation}>
+              Update Items
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

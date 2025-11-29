@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Item } from '@/types';
 import { Archive, Trash2 } from 'lucide-react';
 
@@ -11,6 +12,8 @@ interface ItemCardProps {
   onView: () => void;
   onArchive: () => void;
   onDelete: () => void;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 const getConditionColor = (condition: Item['condition']) => {
@@ -24,10 +27,18 @@ const getConditionColor = (condition: Item['condition']) => {
   }
 };
 
-export function ItemCard({ item, categoryName, locationName, onView, onArchive, onDelete }: ItemCardProps) {
+export function ItemCard({ item, categoryName, locationName, onView, onArchive, onDelete, selected, onToggleSelect }: ItemCardProps) {
   return (
-    <Card className="cursor-pointer hover:border-primary transition-colors group relative">
-      <div onClick={onView}>
+    <Card className={`cursor-pointer hover:border-primary transition-colors group relative ${selected ? 'ring-2 ring-primary' : ''}`}>
+      {onToggleSelect && (
+        <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
+          <Checkbox 
+            checked={selected}
+            onCheckedChange={onToggleSelect}
+          />
+        </div>
+      )}
+      <div onClick={onView} className={onToggleSelect ? 'pl-6' : ''}>
         <CardHeader>
           <div className="flex justify-between items-start">
             <CardTitle className="text-lg">{item.name}</CardTitle>
