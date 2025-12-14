@@ -50,12 +50,33 @@ The application will be available at `http://localhost:8080`
 
 ## 📖 Documentation
 
+### User Documentation
+
+- **[User Guide](./docs/USER_GUIDE.md)** - Complete user manual
+- **[FAQ](./docs/FAQ.md)** - Frequently asked questions
+- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Quick Start Guide](./docs/QUICK_START_GUIDE.md)** - Get started quickly
+
+### Developer Documentation
+
+- **[Developer Guide](./docs/DEVELOPER_GUIDE.md)** - Guide for contributors
+- **[Architecture](./docs/ARCHITECTURE.md)** - System architecture and design
 - **[Plan to v1.0](./docs/PLAN_TO_V1.0.md)** - Comprehensive development plan
 - **[Roadmap](./docs/ROADMAP_V1.md)** - Feature roadmap and milestones
+
+### Technical Documentation
+
+- **[Authentication Providers](./docs/AUTH_PROVIDERS.md)** - Guide to custom auth providers
+- **[Storage Providers](./docs/STORAGE_PROVIDERS.md)** - Storage backend guide
+- **[Deployment](./docs/DEPLOYMENT.md)** - Deployment instructions
+- **[Performance](./docs/PERFORMANCE.md)** - Performance optimization guide
+- **[Accessibility](./docs/ACCESSIBILITY.md)** - Accessibility guide
+
+### Project Documentation
+
 - **[Contributing](./CONTRIBUTING.md)** - How to contribute to the project
 - **[Security Policy](./SECURITY.md)** - Security policy and vulnerability reporting
 - **[Code of Conduct](./CODE_OF_CONDUCT.md)** - Community standards
-- **[Authentication Providers](./docs/AUTH_PROVIDERS.md)** - Guide to custom auth providers
 
 ## 🛠️ Technology Stack
 
