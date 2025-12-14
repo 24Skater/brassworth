@@ -75,6 +75,16 @@ jobs:
       - name: Run tests
         run: npm run test:coverage
 
+      - name: Check coverage threshold
+        run: |
+          # Check if coverage meets minimum threshold (60%)
+          COVERAGE=$(npm run test:coverage 2>&1 | grep -oP 'All files\s+\|\s+\d+\.\d+%' | grep -oP '\d+\.\d+' | head -1 || echo "0")
+          echo "Coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 60" | bc -l) )); then
+            echo "⚠️ Coverage is below 60% threshold"
+            exit 0  # Don't fail, just warn
+          fi
+
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         if: always()
