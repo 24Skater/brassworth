@@ -13,12 +13,14 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ## 🎯 Project Overview
 
 **Home Asset Keeper** is a home inventory and asset management system designed for:
+
 - 🏠 Homeowners tracking personal property
-- ⛪ Churches managing equipment and supplies  
+- ⛪ Churches managing equipment and supplies
 - 🏪 Small businesses inventorying assets
 - 🏢 Any organization needing simple asset tracking
 
 ### Core Principles
+
 1. **Privacy-First**: Self-hostable, your data stays yours
 2. **Security**: Production-ready security for self-hosted environments
 3. **Simplicity**: Easy to set up, easy to use
@@ -30,6 +32,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ## 🔍 Current State Analysis
 
 ### ✅ Strengths
+
 - Modern React 18 + TypeScript frontend
 - Beautiful UI with shadcn/ui and Tailwind CSS
 - Provider-based architecture (auth, storage ready for extension)
@@ -43,6 +46,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ### ⚠️ Critical Gaps
 
 #### Security Issues (CRITICAL)
+
 - ❌ **Client-side password hashing** (SHA-256) - INSECURE for production
 - ❌ **No password strength requirements**
 - ❌ **No rate limiting** - vulnerable to brute force
@@ -54,6 +58,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 - ❌ **No session management** - tokens stored in localStorage
 
 #### Infrastructure Gaps
+
 - ❌ **No backend** - cannot sync across devices/users
 - ❌ **No database** - localStorage only (data loss risk)
 - ❌ **No Docker support** - difficult to deploy
@@ -62,6 +67,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 - ❌ **No dependency scanning** - security vulnerabilities unknown
 
 #### Developer Experience
+
 - ❌ **No .env.example** - unclear configuration
 - ❌ **No Prettier** - inconsistent formatting
 - ❌ **No pre-commit hooks** - code quality issues
@@ -69,6 +75,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 - ❌ **No test coverage** - regression risk
 
 #### Documentation
+
 - ⚠️ **Incomplete README** - missing setup/deployment
 - ⚠️ **No SECURITY.md** - no vulnerability reporting process
 - ⚠️ **No CODE_OF_CONDUCT.md** - community standards missing
@@ -79,9 +86,11 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ## 🗺️ Phased Development Plan
 
 ### Phase 1: Foundation & Developer Experience (Weeks 1-2)
+
 **Priority: HIGH | Goal: Make project contributor-friendly**
 
 #### 1.1 Code Quality & Standards
+
 - [ ] **TypeScript Strict Mode**
   - Enable `strict: true` in tsconfig.json
   - Fix all type errors
@@ -111,6 +120,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Commit-msg: commitlint (conventional commits)
 
 #### 1.2 Configuration & Environment
+
 - [ ] **Environment Variables**
   - Create `.env.example` with all config options
   - Document each variable
@@ -124,6 +134,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Add scripts: `format`, `type-check`, `test`, `test:coverage`
 
 #### 1.3 Documentation Foundation
+
 - [ ] **README.md Overhaul**
   - Project description with screenshots
   - Features list
@@ -155,6 +166,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Add LICENSE file
 
 #### 1.4 Testing Foundation
+
 - [ ] **Vitest Setup**
   - Install Vitest
   - Configure test environment
@@ -177,7 +189,8 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Target: 60% minimum for v1.0
   - Focus on critical paths first
 
-**Deliverables**: 
+**Deliverables**:
+
 - ✅ Strict TypeScript, Prettier, ESLint configured
 - ✅ Git hooks working
 - ✅ Complete documentation
@@ -187,6 +200,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ---
 
 ### Phase 2: Security Hardening (Weeks 3-5)
+
 **Priority: CRITICAL | Goal: Production-ready security**
 
 #### 2.1 Authentication Security
@@ -298,6 +312,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Create security hardening guide
 
 **Deliverables**:
+
 - ✅ Secure authentication (client-side)
 - ✅ Input sanitization working
 - ✅ Security headers documented
@@ -307,11 +322,13 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ---
 
 ### Phase 3: Storage Provider Architecture (Weeks 6-8)
+
 **Priority: HIGH | Goal: Flexible storage backends**
 
 #### 3.1 Storage Provider Interface
 
 - [ ] **Define StorageProvider Interface**
+
   ```typescript
   interface StorageProvider {
     // Items
@@ -320,10 +337,10 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
     createItem(item: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>): Promise<Item>;
     updateItem(id: string, updates: Partial<Item>): Promise<Item>;
     deleteItem(id: string): Promise<void>;
-    
+
     // Organizations, Locations, Categories, Tags, etc.
     // Similar CRUD operations...
-    
+
     // Transactions
     beginTransaction?(): Promise<Transaction>;
     commit?(transaction: Transaction): Promise<void>;
@@ -375,6 +392,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Prepare for backend integration
 
 **Deliverables**:
+
 - ✅ Storage provider architecture
 - ✅ LocalStorageProvider refactored
 - ✅ IndexedDBProvider implemented
@@ -383,6 +401,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ---
 
 ### Phase 4: Testing & Quality Assurance (Weeks 9-10)
+
 **Priority: HIGH | Goal: Reliable, tested codebase**
 
 #### 4.1 Unit Tests
@@ -445,6 +464,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Minimum coverage threshold
 
 **Deliverables**:
+
 - ✅ 60%+ test coverage
 - ✅ CI/CD pipeline working
 - ✅ All critical paths tested
@@ -453,6 +473,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ---
 
 ### Phase 5: Docker & Deployment (Weeks 11-12)
+
 **Priority: HIGH | Goal: One-command deployment**
 
 #### 5.1 Docker Configuration
@@ -514,6 +535,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Migration support
 
 **Deliverables**:
+
 - ✅ Docker setup complete
 - ✅ Deployment guides ready
 - ✅ Backup/restore working
@@ -522,6 +544,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ---
 
 ### Phase 6: Performance & Optimization (Week 13)
+
 **Priority: MEDIUM | Goal: Fast, responsive application**
 
 #### 6.1 Code Splitting
@@ -570,6 +593,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Background refetching
 
 **Deliverables**:
+
 - ✅ Optimized bundle size
 - ✅ Fast load times
 - ✅ Smooth interactions
@@ -578,6 +602,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ---
 
 ### Phase 7: Accessibility & UX (Week 14)
+
 **Priority: MEDIUM | Goal: Accessible, user-friendly**
 
 #### 7.1 Accessibility
@@ -616,6 +641,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Smooth transitions
 
 **Deliverables**:
+
 - ✅ WCAG 2.1 AA compliant
 - ✅ Mobile-friendly
 - ✅ Great UX
@@ -624,6 +650,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ---
 
 ### Phase 8: Documentation & Polish (Week 15)
+
 **Priority: MEDIUM | Goal: Complete documentation**
 
 #### 8.1 User Documentation
@@ -661,6 +688,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Monitoring setup
 
 **Deliverables**:
+
 - ✅ Complete user docs
 - ✅ Developer docs
 - ✅ Deployment guides
@@ -669,6 +697,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ---
 
 ### Phase 9: Pre-Release (Week 16)
+
 **Priority: CRITICAL | Goal: Release-ready**
 
 #### 9.1 Final Security Audit
@@ -710,6 +739,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Contribution guidelines reviewed
 
 **Deliverables**:
+
 - ✅ Security audit complete
 - ✅ Performance validated
 - ✅ Release artifacts ready
@@ -722,6 +752,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 ### Authentication & Authorization
 
 #### Current Issues
+
 - ❌ SHA-256 client-side hashing (not secure)
 - ❌ No password strength requirements
 - ❌ No rate limiting
@@ -730,6 +761,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 #### Implementation Plan
 
 1. **Password Security** (Week 3)
+
    ```typescript
    // Password requirements
    - Minimum 12 characters
@@ -742,6 +774,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
    ```
 
 2. **Session Management** (Week 3-4)
+
    ```typescript
    // Session tokens
    - Generate secure random tokens (crypto.randomUUID)
@@ -767,13 +800,14 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 #### Implementation (Week 4)
 
 1. **DOMPurify Integration**
+
    ```typescript
    import DOMPurify from 'dompurify';
-   
+
    // Sanitize all user inputs
    const sanitized = DOMPurify.sanitize(userInput, {
      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
-     ALLOWED_ATTR: []
+     ALLOWED_ATTR: [],
    });
    ```
 
@@ -792,6 +826,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 #### Documentation (Week 5)
 
 Provide nginx configuration:
+
 ```nginx
 add_header X-Content-Type-Options "nosniff" always;
 add_header X-Frame-Options "DENY" always;
@@ -806,6 +841,7 @@ add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsaf
 #### Encryption (Week 5)
 
 1. **Export Encryption**
+
    ```typescript
    // Use Web Crypto API
    - AES-256-GCM encryption
@@ -827,23 +863,25 @@ add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsaf
 #### Automation (Week 5)
 
 1. **Dependabot**
+
    ```yaml
    # .github/dependabot.yml
    version: 2
    updates:
-     - package-ecosystem: "npm"
-       directory: "/"
+     - package-ecosystem: 'npm'
+       directory: '/'
        schedule:
-         interval: "weekly"
+         interval: 'weekly'
        open-pull-requests-limit: 10
    ```
 
 2. **CI Security Checks**
+
    ```yaml
    # GitHub Actions
    - name: Run npm audit
      run: npm audit --audit-level=moderate
-   
+
    - name: Check for vulnerabilities
      run: npm audit --production
    ```
@@ -855,6 +893,7 @@ add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsaf
 ### Docker Setup (Week 11)
 
 #### Dockerfile
+
 ```dockerfile
 # Multi-stage build
 FROM node:20-alpine AS builder
@@ -872,6 +911,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 #### docker-compose.yml
+
 ```yaml
 version: '3.8'
 
@@ -879,14 +919,14 @@ services:
   frontend:
     build: .
     ports:
-      - "80:80"
+      - '80:80'
     volumes:
       - ./data:/app/data
     environment:
       - VITE_STORAGE_PROVIDER=indexeddb
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -985,12 +1025,14 @@ tests/
 ## 📈 Success Metrics
 
 ### Code Quality
+
 - ✅ TypeScript strict mode enabled
 - ✅ 0 linting errors
 - ✅ 60%+ test coverage
 - ✅ All security vulnerabilities addressed
 
 ### Security
+
 - ✅ Password strength enforced
 - ✅ Rate limiting implemented
 - ✅ Input sanitization complete
@@ -998,12 +1040,14 @@ tests/
 - ✅ Dependency scanning automated
 
 ### Deployment
+
 - ✅ Docker setup working
 - ✅ One-command deployment
 - ✅ Backup/restore functional
 - ✅ Documentation complete
 
 ### User Experience
+
 - ✅ WCAG 2.1 AA compliant
 - ✅ Mobile responsive
 - ✅ Fast load times (<3s)
@@ -1014,29 +1058,34 @@ tests/
 ## 🚀 Release Milestones
 
 ### v0.5.0 - Open Source Ready (Week 2)
+
 - [x] Documentation complete
 - [ ] CI/CD pipeline
 - [ ] Basic test coverage
 - [ ] Code quality tools
 
 ### v0.7.0 - Security Hardened (Week 5)
+
 - [ ] Security improvements
 - [ ] Input sanitization
 - [ ] Rate limiting
 - [ ] Security documentation
 
 ### v0.8.0 - Storage Providers (Week 8)
+
 - [ ] Storage provider architecture
 - [ ] IndexedDB provider
 - [ ] API client ready
 
 ### v0.9.0 - Production Ready (Week 12)
+
 - [ ] Docker support
 - [ ] Deployment guides
 - [ ] Performance optimized
 - [ ] Accessibility compliant
 
 ### v1.0.0 - Release (Week 16)
+
 - [ ] All features complete
 - [ ] Security audit passed
 - [ ] Performance validated
@@ -1074,6 +1123,7 @@ tests/
 ## 🤝 Contributing
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for:
+
 - Development setup
 - Code style guidelines
 - Pull request process
@@ -1084,22 +1134,23 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for:
 ## 📚 Resources
 
 ### Security
+
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [Web Security Best Practices](https://developer.mozilla.org/en-US/docs/Web/Security)
 - [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
 
 ### Testing
+
 - [Vitest Documentation](https://vitest.dev/)
 - [React Testing Library](https://testing-library.com/react)
 - [Playwright](https://playwright.dev/)
 
 ### Docker
+
 - [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
 - [Multi-stage Builds](https://docs.docker.com/build/building/multi-stage/)
 
 ---
 
-*Last Updated: December 2024*  
-*Next Review: Weekly during active development*
-
-
+_Last Updated: December 2024_  
+_Next Review: Weekly during active development_

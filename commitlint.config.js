@@ -43,5 +43,3 @@ export default {
     'type-empty': [2, 'never'],
   },
 };
-
-

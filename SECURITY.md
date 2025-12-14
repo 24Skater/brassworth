@@ -36,6 +36,7 @@ If you discover a security vulnerability, please follow these steps:
 ### What to Report
 
 Please report:
+
 - Authentication and authorization bypasses
 - Cross-site scripting (XSS) vulnerabilities
 - Cross-site request forgery (CSRF) vulnerabilities
@@ -50,6 +51,7 @@ Please report:
 ### What NOT to Report
 
 Please do not report:
+
 - Issues that require physical access to the device
 - Issues that require social engineering
 - Denial of service (DoS) attacks
@@ -174,11 +176,13 @@ If using Docker:
 ## Security Updates
 
 Security updates will be released as:
+
 - **Patch versions** (1.0.1, 1.0.2) for low-severity issues
 - **Minor versions** (1.1.0) for medium-severity issues
 - **Major versions** (2.0.0) for high-severity issues requiring breaking changes
 
 All security updates will be documented in:
+
 - GitHub Security Advisories
 - CHANGELOG.md
 - Release notes
@@ -199,5 +203,3 @@ We thank the following individuals and organizations for responsibly disclosing 
 ---
 
 **Last Updated**: December 2024
-
-

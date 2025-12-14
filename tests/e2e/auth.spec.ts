@@ -21,5 +21,3 @@ test.describe('Authentication', () => {
     await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
   });
 });
-
-

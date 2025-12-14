@@ -10,7 +10,8 @@ describe('utils', () => {
     });
 
     it('should handle conditional classes', () => {
-      const result = cn('class1', false && 'class2', 'class3');
+      const shouldInclude = false;
+      const result = cn('class1', shouldInclude && 'class2', 'class3');
       expect(result).toContain('class1');
       expect(result).toContain('class3');
       expect(result).not.toContain('class2');
@@ -23,5 +24,3 @@ describe('utils', () => {
     });
   });
 });
-
-

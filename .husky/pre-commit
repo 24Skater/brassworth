@@ -1,6 +1,17 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+# Add Node.js to PATH for Git Bash (Windows)
+# Try multiple path formats to support different Git Bash configurations
+if [ -d "/c/Program Files/nodejs" ]; then
+  export PATH="/c/Program Files/nodejs:$PATH"
+elif [ -d "C:/Program Files/nodejs" ]; then
+  export PATH="C:/Program Files/nodejs:$PATH"
+elif [ -d "$HOME/AppData/Local/Programs/nodejs" ]; then
+  export PATH="$HOME/AppData/Local/Programs/nodejs:$PATH"
+fi
 
+# Also check node_modules/.bin (should always be available)
+if [ -d "node_modules/.bin" ]; then
+  export PATH="$(pwd)/node_modules/.bin:$PATH"
+fi
+
+# Run lint-staged
 npx lint-staged
-
-

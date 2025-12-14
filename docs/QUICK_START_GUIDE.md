@@ -11,6 +11,7 @@ npm install --save-dev prettier
 ```
 
 Then format the codebase:
+
 ```bash
 npm run format
 ```
@@ -32,6 +33,7 @@ npm install --save-dev @commitlint/cli @commitlint/config-conventional
 ```
 
 Create `.husky/pre-commit`:
+
 ```bash
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
@@ -40,6 +42,7 @@ npx lint-staged
 ```
 
 Create `.husky/commit-msg`:
+
 ```bash
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
@@ -48,6 +51,7 @@ npx --no -- commitlint --edit ${1}
 ```
 
 Create `commitlint.config.js`:
+
 ```js
 export default {
   extends: ['@commitlint/config-conventional'],
@@ -55,6 +59,7 @@ export default {
 ```
 
 Update `package.json`:
+
 ```json
 {
   "lint-staged": {
@@ -67,6 +72,7 @@ Update `package.json`:
 ### 3. Enable TypeScript Strict Mode (30-60 minutes)
 
 **Step 1**: Update `tsconfig.app.json`:
+
 ```json
 {
   "compilerOptions": {
@@ -80,6 +86,7 @@ Update `package.json`:
 ```
 
 **Step 2**: Fix type errors incrementally:
+
 ```bash
 npm run type-check
 ```
@@ -97,6 +104,7 @@ npm install --save-dev @vitest/coverage-v8
 ```
 
 Create `vitest.config.ts`:
+
 ```typescript
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
@@ -122,6 +130,7 @@ export default defineConfig({
 ```
 
 Create `tests/setup.ts`:
+
 ```typescript
 import '@testing-library/jest-dom';
 ```
@@ -159,6 +168,7 @@ Update `eslint.config.js` to include security rules.
 ### Password Strength
 
 Create `src/lib/auth/passwordValidation.ts`:
+
 ```typescript
 import zxcvbn from 'zxcvbn';
 
@@ -168,7 +178,7 @@ export function validatePasswordStrength(password: string): {
   feedback: string[];
 } {
   const result = zxcvbn(password);
-  
+
   return {
     isValid: result.score >= 3, // Require "strong" or better
     score: result.score,
@@ -180,6 +190,7 @@ export function validatePasswordStrength(password: string): {
 ### Input Sanitization
 
 Create `src/lib/utils/sanitize.ts`:
+
 ```typescript
 import DOMPurify from 'dompurify';
 
@@ -224,10 +235,10 @@ services:
   frontend:
     build: .
     ports:
-      - "80:80"
+      - '80:80'
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -243,6 +254,7 @@ services:
 ## 🧪 Testing Quick Start
 
 Create your first test: `tests/lib/storage.test.ts`:
+
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest';
 import { storage } from '@/lib/storage';
@@ -253,7 +265,12 @@ describe('storage', () => {
   });
 
   it('should store and retrieve user', () => {
-    const user = { id: '1', email: 'test@example.com', name: 'Test', createdAt: new Date().toISOString() };
+    const user = {
+      id: '1',
+      email: 'test@example.com',
+      name: 'Test',
+      createdAt: new Date().toISOString(),
+    };
     storage.setUser(user);
     expect(storage.getUser()).toEqual(user);
   });
@@ -263,6 +280,7 @@ describe('storage', () => {
 ## 🔄 Continuous Integration
 
 Create `.github/workflows/ci.yml`:
+
 ```yaml
 name: CI
 
@@ -324,5 +342,3 @@ jobs:
 ---
 
 **Remember**: Work incrementally. Don't try to do everything at once. Focus on one phase at a time.
-
-
