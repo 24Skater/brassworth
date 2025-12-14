@@ -1,5 +1,7 @@
 import { User, UserWithAuth, UserRole } from '@/types';
 import { AuthProviderInterface, RoleProviderInterface } from '../types';
+import { recordFailedAttempt, recordSuccessfulLogin, isLocked } from '../rateLimiter';
+import { validatePasswordStrength } from '../passwordValidation';
 
 const STORAGE_KEYS = {
   USERS: 'inventory_all_users',
@@ -12,7 +14,7 @@ async function hashPassword(password: string): Promise<string> {
   const data = encoder.encode(password);
   const hash = await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, '0'))
+    .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 }
 
@@ -23,17 +25,42 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
 
 export class LocalStorageAuthProvider implements AuthProviderInterface {
   async login(email: string, password: string): Promise<{ user: User | null; error?: string }> {
+    // Check if account is locked
+    const lockStatus = await isLocked(email);
+    if (lockStatus.isLocked) {
+      return {
+        user: null,
+        error: `Account locked due to too many failed attempts. Please try again in ${lockStatus.minutesRemaining} minute(s).`,
+      };
+    }
+
     const users = this.getAllUsers();
-    const userWithAuth = users.find(u => u.email === email);
-    
+    const userWithAuth = users.find((u) => u.email === email);
+
     if (!userWithAuth) {
+      // Record failed attempt
+      await recordFailedAttempt(email);
       return { user: null, error: 'Invalid email or password' };
     }
 
     const isValid = await verifyPassword(password, userWithAuth.passwordHash);
     if (!isValid) {
-      return { user: null, error: 'Invalid email or password' };
+      // Record failed attempt
+      const attemptResult = await recordFailedAttempt(email);
+      if (attemptResult.isLocked) {
+        return {
+          user: null,
+          error: `Too many failed attempts. Account locked for ${Math.ceil((attemptResult.lockedUntil! - Date.now()) / 60000)} minute(s).`,
+        };
+      }
+      return {
+        user: null,
+        error: `Invalid email or password. ${attemptResult.remainingAttempts} attempt(s) remaining.`,
+      };
     }
+
+    // Record successful login (clears failed attempts)
+    await recordSuccessfulLogin(email);
 
     const user: User = {
       id: userWithAuth.id,
@@ -46,10 +73,23 @@ export class LocalStorageAuthProvider implements AuthProviderInterface {
     return { user };
   }
 
-  async signup(email: string, password: string, name: string): Promise<{ user: User | null; error?: string }> {
+  async signup(
+    email: string,
+    password: string,
+    name: string
+  ): Promise<{ user: User | null; error?: string }> {
+    // Validate password strength
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.isValid) {
+      return {
+        user: null,
+        error: `Password is too weak. ${passwordValidation.feedback.join('. ')}`,
+      };
+    }
+
     const users = this.getAllUsers();
-    
-    if (users.some(u => u.email === email)) {
+
+    if (users.some((u) => u.email === email)) {
       return { user: null, error: 'User with this email already exists' };
     }
 
@@ -90,7 +130,7 @@ export class LocalStorageAuthProvider implements AuthProviderInterface {
   }
 
   listUsers(): User[] {
-    return this.getAllUsers().map(u => ({
+    return this.getAllUsers().map((u) => ({
       id: u.id,
       email: u.email,
       name: u.name,
@@ -98,10 +138,15 @@ export class LocalStorageAuthProvider implements AuthProviderInterface {
     }));
   }
 
-  async inviteUser(email: string, name: string, organizationId: string, role: UserRole): Promise<{ user: User | null; error?: string }> {
+  async inviteUser(
+    email: string,
+    name: string,
+    organizationId: string,
+    role: UserRole
+  ): Promise<{ user: User | null; error?: string }> {
     const users = this.getAllUsers();
-    
-    if (users.some(u => u.email === email)) {
+
+    if (users.some((u) => u.email === email)) {
       return { user: null, error: 'User with this email already exists' };
     }
 
@@ -134,10 +179,13 @@ export class LocalStorageAuthProvider implements AuthProviderInterface {
     return { user };
   }
 
-  async removeUser(userId: string, organizationId: string): Promise<{ success: boolean; error?: string }> {
+  async removeUser(
+    userId: string,
+    organizationId: string
+  ): Promise<{ success: boolean; error?: string }> {
     const users = this.getAllUsers();
-    const filteredUsers = users.filter(u => u.id !== userId);
-    
+    const filteredUsers = users.filter((u) => u.id !== userId);
+
     if (filteredUsers.length === users.length) {
       return { success: false, error: 'User not found' };
     }
@@ -160,14 +208,16 @@ export class LocalStorageAuthProvider implements AuthProviderInterface {
 export class LocalStorageRoleProvider implements RoleProviderInterface {
   getUserRole(userId: string, organizationId: string): UserRole | null {
     const roles = this.getAllRoles();
-    const userRole = roles.find(r => r.userId === userId && r.organizationId === organizationId);
+    const userRole = roles.find((r) => r.userId === userId && r.organizationId === organizationId);
     return userRole?.role ?? null;
   }
 
   setUserRole(userId: string, organizationId: string, role: UserRole): void {
     const roles = this.getAllRoles();
-    const existingIndex = roles.findIndex(r => r.userId === userId && r.organizationId === organizationId);
-    
+    const existingIndex = roles.findIndex(
+      (r) => r.userId === userId && r.organizationId === organizationId
+    );
+
     if (existingIndex >= 0) {
       roles[existingIndex].role = role;
     } else {
@@ -184,18 +234,25 @@ export class LocalStorageRoleProvider implements RoleProviderInterface {
 
   removeUserRole(userId: string, organizationId: string): void {
     const roles = this.getAllRoles();
-    const filteredRoles = roles.filter(r => !(r.userId === userId && r.organizationId === organizationId));
+    const filteredRoles = roles.filter(
+      (r) => !(r.userId === userId && r.organizationId === organizationId)
+    );
     localStorage.setItem(STORAGE_KEYS.USER_ROLES, JSON.stringify(filteredRoles));
   }
 
   getUserRolesInOrg(organizationId: string): Array<{ userId: string; role: UserRole }> {
     const roles = this.getAllRoles();
     return roles
-      .filter(r => r.organizationId === organizationId)
-      .map(r => ({ userId: r.userId, role: r.role }));
+      .filter((r) => r.organizationId === organizationId)
+      .map((r) => ({ userId: r.userId, role: r.role }));
   }
 
-  private getAllRoles(): Array<{ id: string; userId: string; organizationId: string; role: UserRole }> {
+  private getAllRoles(): Array<{
+    id: string;
+    userId: string;
+    organizationId: string;
+    role: UserRole;
+  }> {
     const data = localStorage.getItem(STORAGE_KEYS.USER_ROLES);
     return data ? JSON.parse(data) : [];
   }
