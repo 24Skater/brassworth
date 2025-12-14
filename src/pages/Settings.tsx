@@ -9,10 +9,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { UserCard } from '@/components/users/UserCard';
 import { InviteUserDialog } from '@/components/users/InviteUserDialog';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowLeft, Save, Download, Upload, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -73,18 +80,22 @@ export default function Settings() {
     if (!currentOrg) return;
 
     try {
-      const items = storage.getItems().filter(item => item.organizationId === currentOrg.id);
-      const locations = storage.getLocations().filter(loc => loc.organizationId === currentOrg.id);
-      const categories = storage.getCategories().filter(cat => cat.organizationId === currentOrg.id);
+      const items = storage.getItems().filter((item) => item.organizationId === currentOrg.id);
+      const locations = storage
+        .getLocations()
+        .filter((loc) => loc.organizationId === currentOrg.id);
+      const categories = storage
+        .getCategories()
+        .filter((cat) => cat.organizationId === currentOrg.id);
 
       const workbook = XLSX.utils.book_new();
 
       // Export items
-      const itemsData = items.map(item => ({
+      const itemsData = items.map((item) => ({
         Name: item.name,
         Description: item.description || '',
-        Category: categories.find(c => c.id === item.categoryId)?.name || '',
-        Location: locations.find(l => l.id === item.locationId)?.name || '',
+        Category: categories.find((c) => c.id === item.categoryId)?.name || '',
+        Location: locations.find((l) => l.id === item.locationId)?.name || '',
         Brand: item.brand || '',
         Model: item.model || '',
         'Serial Number': item.serialNumber || '',
@@ -100,16 +111,16 @@ export default function Settings() {
       XLSX.utils.book_append_sheet(workbook, itemsSheet, 'Items');
 
       // Export locations
-      const locationsData = locations.map(loc => ({
+      const locationsData = locations.map((loc) => ({
         Name: loc.name,
-        'Parent Location': locations.find(l => l.id === loc.parentLocationId)?.name || '',
+        'Parent Location': locations.find((l) => l.id === loc.parentLocationId)?.name || '',
         Notes: loc.notes || '',
       }));
       const locationsSheet = XLSX.utils.json_to_sheet(locationsData);
       XLSX.utils.book_append_sheet(workbook, locationsSheet, 'Locations');
 
       // Export categories
-      const categoriesData = categories.map(cat => ({
+      const categoriesData = categories.map((cat) => ({
         Name: cat.name,
         Description: cat.description || '',
       }));
@@ -117,7 +128,10 @@ export default function Settings() {
       XLSX.utils.book_append_sheet(workbook, categoriesSheet, 'Categories');
 
       // Download
-      XLSX.writeFile(workbook, `${currentOrg.name}-inventory-${new Date().toISOString().split('T')[0]}.xlsx`);
+      XLSX.writeFile(
+        workbook,
+        `${currentOrg.name}-inventory-${new Date().toISOString().split('T')[0]}.xlsx`
+      );
       toast.success('Data exported successfully');
     } catch (error) {
       toast.error('Failed to export data');
@@ -129,9 +143,13 @@ export default function Settings() {
     if (!confirm('Are you sure you want to clear all data? This action cannot be undone.')) return;
 
     try {
-      const items = storage.getItems().filter(item => item.organizationId !== currentOrg.id);
-      const locations = storage.getLocations().filter(loc => loc.organizationId !== currentOrg.id);
-      const categories = storage.getCategories().filter(cat => cat.organizationId !== currentOrg.id);
+      const items = storage.getItems().filter((item) => item.organizationId !== currentOrg.id);
+      const locations = storage
+        .getLocations()
+        .filter((loc) => loc.organizationId !== currentOrg.id);
+      const categories = storage
+        .getCategories()
+        .filter((cat) => cat.organizationId !== currentOrg.id);
 
       storage.setItems(items);
       storage.setLocations(locations);
@@ -158,10 +176,15 @@ export default function Settings() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage settings and preferences for {currentOrg.name}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+              <p className="text-muted-foreground mt-1">
+                Manage settings and preferences for {currentOrg.name}
+              </p>
+            </div>
+            <ThemeToggle />
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -189,7 +212,9 @@ export default function Settings() {
               <CardContent className="space-y-4">
                 {users.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-muted-foreground">No users found. Invite your first user to get started.</p>
+                    <p className="text-muted-foreground">
+                      No users found. Invite your first user to get started.
+                    </p>
                   </div>
                 ) : (
                   users.map((usr) => {
@@ -241,9 +266,7 @@ export default function Settings() {
             <Card>
               <CardHeader>
                 <CardTitle>Organization Details</CardTitle>
-                <CardDescription>
-                  Update your organization information
-                </CardDescription>
+                <CardDescription>Update your organization information</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -292,9 +315,7 @@ export default function Settings() {
             <Card>
               <CardHeader>
                 <CardTitle>Export Data</CardTitle>
-                <CardDescription>
-                  Download all your inventory data as an Excel file
-                </CardDescription>
+                <CardDescription>Download all your inventory data as an Excel file</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button onClick={handleExportData}>
@@ -307,9 +328,7 @@ export default function Settings() {
             <Card>
               <CardHeader>
                 <CardTitle>Import Data</CardTitle>
-                <CardDescription>
-                  Bulk import items from an Excel file
-                </CardDescription>
+                <CardDescription>Bulk import items from an Excel file</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button onClick={() => navigate('/items')} variant="outline">
@@ -339,9 +358,7 @@ export default function Settings() {
             <Card>
               <CardHeader>
                 <CardTitle>Security Preferences</CardTitle>
-                <CardDescription>
-                  Configure security and authentication settings
-                </CardDescription>
+                <CardDescription>Configure security and authentication settings</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-4 p-4 border rounded-lg">
@@ -352,8 +369,9 @@ export default function Settings() {
                       Currently using localStorage authentication (prototype mode)
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      For production deployments, configure a custom authentication provider. 
-                      See <code className="bg-muted px-1 py-0.5 rounded">docs/AUTH_PROVIDERS.md</code> for details.
+                      For production deployments, configure a custom authentication provider. See{' '}
+                      <code className="bg-muted px-1 py-0.5 rounded">docs/AUTH_PROVIDERS.md</code>{' '}
+                      for details.
                     </p>
                   </div>
                 </div>
@@ -361,10 +379,12 @@ export default function Settings() {
                 <div className="flex items-start gap-4 p-4 border rounded-lg">
                   <Shield className="h-5 w-5 text-primary mt-1" />
                   <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-1">Role-Based Access Control</h4>
+                    <h4 className="font-semibold text-foreground mb-1">
+                      Role-Based Access Control
+                    </h4>
                     <p className="text-sm text-muted-foreground">
-                      Roles are stored separately from user profiles for security. 
-                      All permission checks are enforced on both client and server (when using backend).
+                      Roles are stored separately from user profiles for security. All permission
+                      checks are enforced on both client and server (when using backend).
                     </p>
                   </div>
                 </div>
@@ -374,8 +394,8 @@ export default function Settings() {
                   <div className="flex-1">
                     <h4 className="font-semibold text-foreground mb-1">Data Storage</h4>
                     <p className="text-sm text-muted-foreground">
-                      Data is currently stored locally in your browser. For production use with multiple users, 
-                      integrate with a backend database.
+                      Data is currently stored locally in your browser. For production use with
+                      multiple users, integrate with a backend database.
                     </p>
                   </div>
                 </div>
