@@ -1,0 +1,40 @@
+version: '3.8'
+
+# Production docker-compose with nginx reverse proxy and SSL
+# Usage: docker-compose -f docker-compose.prod.yml up -d
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: home-asset-keeper-frontend
+    restart: unless-stopped
+    networks:
+      - home-asset-keeper-network
+    labels:
+      - "com.home-asset-keeper.description=Home Asset Keeper Frontend"
+      - "com.home-asset-keeper.version=0.0.0"
+
+  nginx:
+    image: nginx:alpine
+    container_name: home-asset-keeper-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    networks:
+      - home-asset-keeper-network
+    labels:
+      - "com.home-asset-keeper.description=Home Asset Keeper Nginx Reverse Proxy"
+
+networks:
+  home-asset-keeper-network:
+    driver: bridge
+

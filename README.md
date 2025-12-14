@@ -60,6 +60,7 @@ The application will be available at `http://localhost:8080`
 ## 🛠️ Technology Stack
 
 ### Frontend
+
 - **React 18** - UI library
 - **TypeScript** - Type safety
 - **Vite** - Build tool and dev server
@@ -70,22 +71,33 @@ The application will be available at `http://localhost:8080`
 - **React Hook Form + Zod** - Form handling and validation
 
 ### Features
+
 - **Tesseract.js** - OCR for receipt scanning
 - **PDF.js** - PDF parsing
 - **xlsx** - Excel import/export
 
 ## 🐳 Self-Hosting
 
-### Docker (Recommended)
+### Docker (Recommended) - One Command!
 
 ```bash
-# Build and run with Docker Compose
+# Quick start
 docker-compose up -d
+```
+
+The application will be available at http://localhost
+
+### Production Deployment with SSL
+
+```bash
+# Set up SSL certificates first (see docs/DEPLOYMENT.md)
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### Manual Deployment
 
 1. Build the application:
+
    ```bash
    npm run build
    ```
@@ -96,11 +108,12 @@ docker-compose up -d
 
 ### Deployment Options
 
-- **Docker Compose** - One-command deployment
+- **Docker Compose** - One-command deployment ✅
+- **Production Docker** - With SSL/HTTPS support ✅
 - **Static Hosting** - Netlify, Vercel, GitHub Pages
 - **Self-Hosted** - Your own server with nginx/Apache
 
-For detailed deployment instructions, see the [deployment guide](./docs/DEPLOYMENT.md) (coming soon).
+For detailed deployment instructions, see the [deployment guide](./docs/DEPLOYMENT.md).
 
 ## 🔒 Security
 
@@ -117,6 +130,7 @@ For detailed deployment instructions, see the [deployment guide](./docs/DEPLOYME
 ### Security Roadmap
 
 See [PLAN_TO_V1.0.md](./docs/PLAN_TO_V1.0.md) for the security hardening plan, including:
+
 - Server-side authentication
 - Rate limiting
 - Input sanitization (DOMPurify)
@@ -178,6 +192,7 @@ This project is compatible with [Lovable.dev](https://lovable.dev) for visual ed
 ## 🤝 Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
+
 - Development setup
 - Code style guidelines
 - Pull request process

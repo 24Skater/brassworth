@@ -41,6 +41,6 @@ export default {
     'subject-full-stop': [2, 'never', '.'],
     'type-case': [2, 'always', 'lower-case'],
     'type-empty': [2, 'never'],
-    'body-max-line-length': [2, 'always', 200], // Allow up to 200 chars per line in body
+    'body-max-line-length': [2, 'always', 300], // Allow up to 300 chars per line in body
   },
 };

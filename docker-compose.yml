@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: home-asset-keeper
+    ports:
+      - "${PORT:-80}:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    environment:
+      - NODE_ENV=production
+    labels:
+      - "com.home-asset-keeper.description=Home Asset Keeper Frontend"
+      - "com.home-asset-keeper.version=0.0.0"
+    networks:
+      - home-asset-keeper-network
+
+networks:
+  home-asset-keeper-network:
+    driver: bridge
+

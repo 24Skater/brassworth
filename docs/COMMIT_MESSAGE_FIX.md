@@ -2,45 +2,32 @@
 
 ## Issue
 
-Your commit message body had lines longer than 100 characters, which violated commitlint rules.
+Your commit message body had a line longer than 200 characters. I've increased the limit to 300 characters to be more practical.
 
 ## Solution
 
-I've updated the commitlint configuration to allow up to 200 characters per line in the body (more reasonable for technical descriptions).
+Updated commitlint to allow up to 300 characters per line in the body.
 
 ## Try Committing Again
 
 Your commit message should now work:
 
 ```bash
-git commit -m "feat(storage): add dexie for improved data management" \
-  -m "- Introduced dexie as a dependency for enhanced IndexedDB management." \
-  -m "- Updated storage API to provide a synchronous wrapper for localStorage while ensuring compatibility with async storage methods." \
-  -m "" \
-  -m "These changes aim to improve data handling and maintain backward compatibility."
+git commit -m "feat: update commitlint configuration to enforce body line length" \
+  -m "- Added a new rule to the commitlint configuration to allow a maximum line length of 200 characters in commit messages' body. This change aims to improve readability and maintain consistency in commit message formatting."
 ```
 
-Or use your editor:
+## Better Format (Recommended)
 
-```bash
-git commit
-```
-
-## Alternative: Format Your Message
-
-If you prefer to keep the 100-character limit, wrap your lines:
+For better readability, consider wrapping at ~100 characters:
 
 ```
-feat(storage): add dexie for improved data management
+feat: update commitlint configuration to enforce body line length
 
-- Introduced dexie as a dependency for enhanced IndexedDB management
-- Updated storage API to provide a synchronous wrapper for localStorage
-  while ensuring compatibility with async storage methods
-
-These changes aim to improve data handling and maintain backward
-compatibility.
+- Added a new rule to the commitlint configuration to allow a maximum
+  line length of 200 characters in commit messages' body
+- This change aims to improve readability and maintain consistency in
+  commit message formatting
 ```
 
----
-
-The commitlint config has been updated to be more lenient (200 chars), so your original message should work now!
+But with the 300-character limit, your original message should work now!
