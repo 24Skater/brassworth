@@ -34,6 +34,7 @@
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "analyze": "node scripts/analyze-bundle.js",
     "postinstall": "husky",
     "prepare": "husky"
   },
@@ -122,6 +123,7 @@
     "lovable-tagger": "^1.1.11",
     "postcss": "^8.5.6",
     "prettier": "^3.4.2",
+    "rollup-plugin-visualizer": "^6.0.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
