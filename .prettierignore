@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+package-lock.json
+bun.lockb
+
+# Build outputs
+dist
+dist-ssr
+build
+*.local
+
+# Generated files
+coverage
+.nyc_output
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Lock files (keep formatting as-is)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
