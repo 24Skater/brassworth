@@ -7,17 +7,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { storage } from '@/lib/storage';
 import { Package, MapPin, FolderOpen } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
+import { DashboardSkeleton } from '@/components/common/Skeletons';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
-  const { currentOrg, organizations, setCurrentOrg } = useOrganization();
+  const { user, isLoading } = useAuth();
+  const { currentOrg } = useOrganization();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && !user) {
       navigate('/auth');
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate]);
+
+  // Show loading skeleton while auth is loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 py-8">
+          <DashboardSkeleton />
+        </main>
+      </div>
+    );
+  }
 
   if (!user) return null;
 

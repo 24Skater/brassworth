@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
@@ -46,11 +46,28 @@ export default function Items() {
   const [receiptReviewOpen, setReceiptReviewOpen] = useState(false);
   const [parsedReceipt, setParsedReceipt] = useState<ParsedReceipt | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  
+  // Refresh key to trigger data reload without full page refresh
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refreshData = useCallback(() => setRefreshKey(k => k + 1), []);
 
-  const allItems = storage.getItems().filter(item => item.organizationId === currentOrg?.id);
-  const items = showArchived ? allItems.filter(item => item.isArchived) : allItems.filter(item => !item.isArchived);
-  const categories = storage.getCategories().filter(cat => cat.organizationId === currentOrg?.id);
-  const locations = storage.getLocations().filter(loc => loc.organizationId === currentOrg?.id);
+  // Data is re-fetched when refreshKey changes
+  const allItems = useMemo(
+    () => storage.getItems().filter(item => item.organizationId === currentOrg?.id),
+    [currentOrg?.id, refreshKey]
+  );
+  const items = useMemo(
+    () => showArchived ? allItems.filter(item => item.isArchived) : allItems.filter(item => !item.isArchived),
+    [allItems, showArchived]
+  );
+  const categories = useMemo(
+    () => storage.getCategories().filter(cat => cat.organizationId === currentOrg?.id),
+    [currentOrg?.id, refreshKey]
+  );
+  const locations = useMemo(
+    () => storage.getLocations().filter(loc => loc.organizationId === currentOrg?.id),
+    [currentOrg?.id, refreshKey]
+  );
 
   const filteredItems = useMemo(() => {
     return items.filter(item => {
@@ -278,7 +295,7 @@ export default function Items() {
         });
         
         setImportDialogOpen(false);
-        window.location.reload();
+        refreshData();
       } catch (error) {
         toast({
           title: "Import failed",
@@ -373,7 +390,7 @@ export default function Items() {
     setBulkEditOpen(false);
     setBulkCategory('');
     setBulkLocation('');
-    window.location.reload();
+    refreshData();
   };
 
   const handleReceiptParsed = (receipt: ParsedReceipt, file?: File) => {
@@ -449,8 +466,8 @@ export default function Items() {
       setParsedReceipt(null);
       setReceiptFile(null);
       
-      // Refresh the page to show new items
-      window.location.reload();
+      // Refresh data to show new items
+      refreshData();
     }
   };
 

@@ -70,6 +70,7 @@ export function ItemTableView({ items, getCategoryName, getLocationName, onView,
                       e.stopPropagation();
                       onArchive(item);
                     }}
+                    aria-label={item.isArchived ? `Restore ${item.name}` : `Archive ${item.name}`}
                   >
                     <Archive className="h-4 w-4" />
                   </Button>
@@ -81,6 +82,7 @@ export function ItemTableView({ items, getCategoryName, getLocationName, onView,
                       e.stopPropagation();
                       onDelete(item);
                     }}
+                    aria-label={`Delete ${item.name}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

@@ -51,6 +51,7 @@ export function ItemGalleryView({ item, categoryName, locationName, onView, onAr
               e.stopPropagation();
               onArchive();
             }}
+            aria-label={item.isArchived ? `Restore ${item.name}` : `Archive ${item.name}`}
           >
             <Archive className="h-4 w-4" />
           </Button>
@@ -62,6 +63,7 @@ export function ItemGalleryView({ item, categoryName, locationName, onView, onAr
               e.stopPropagation();
               onDelete();
             }}
+            aria-label={`Delete ${item.name}`}
           >
             <Trash2 className="h-4 w-4" />
           </Button>

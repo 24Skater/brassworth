@@ -123,10 +123,10 @@ export default function Locations() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(location)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(location)} aria-label={`Edit ${location.name}`}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(location.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(location.id)} aria-label={`Delete ${location.name}`}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

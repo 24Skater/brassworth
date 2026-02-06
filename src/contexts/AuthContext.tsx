@@ -1,13 +1,18 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, UserRole } from '@/types';
 import { createAuthProvider } from '@/lib/auth';
 
+// Session check interval (5 minutes)
+const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
+
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  isSessionExpired: boolean;
+  refreshSession: () => Promise<boolean>;
   listUsers: () => User[];
   inviteUser: (email: string, name: string, organizationId: string, role: UserRole) => Promise<void>;
   removeUser: (userId: string, organizationId: string) => Promise<void>;
@@ -18,13 +23,37 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
   const authProvider = createAuthProvider();
 
+  // Check session validity
+  const checkSession = useCallback(async () => {
+    const isValid = await authProvider.validateSession();
+    if (!isValid && user) {
+      setUser(null);
+      setIsSessionExpired(true);
+    }
+  }, [user]);
+
+  // Initial session check and periodic validation
   useEffect(() => {
-    const currentUser = authProvider.getCurrentUser();
-    setUser(currentUser);
-    setIsLoading(false);
-  }, []);
+    const initializeAuth = async () => {
+      const isValid = await authProvider.validateSession();
+      if (isValid) {
+        const currentUser = authProvider.getCurrentUser();
+        setUser(currentUser);
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+
+    // Set up periodic session check
+    const interval = setInterval(checkSession, SESSION_CHECK_INTERVAL);
+    return () => clearInterval(interval);
+  }, [checkSession]);
 
   const signup = async (email: string, password: string, name: string) => {
     const result = await authProvider.signup(email, password, name);
@@ -32,19 +61,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(result.error);
     }
     setUser(result.user);
+    setIsSessionExpired(false);
   };
 
-  const login = async (email: string, password: string) => {
-    const result = await authProvider.login(email, password);
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
+    const result = await authProvider.login(email, password, rememberMe);
     if (result.error) {
       throw new Error(result.error);
     }
     setUser(result.user);
+    setIsSessionExpired(false);
   };
 
   const logout = () => {
     authProvider.logout();
     setUser(null);
+    setIsSessionExpired(false);
+  };
+
+  const refreshSession = async (): Promise<boolean> => {
+    const success = await authProvider.refreshSession();
+    if (success) {
+      setIsSessionExpired(false);
+    }
+    return success;
   };
 
   const listUsers = (): User[] => {
@@ -72,6 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signup, 
       logout, 
       isLoading,
+      isSessionExpired,
+      refreshSession,
       listUsers,
       inviteUser,
       removeUser,

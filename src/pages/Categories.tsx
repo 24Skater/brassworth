@@ -123,10 +123,10 @@ export default function Categories() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(category)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(category)} aria-label={`Edit ${category.name}`}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)} aria-label={`Delete ${category.name}`}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

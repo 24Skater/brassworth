@@ -73,7 +73,7 @@ async function saveLoginAttempts(attempt: LoginAttempt): Promise<void> {
     });
   } catch (error) {
     // If IndexedDB fails, fall back to localStorage
-    localStorage.setItem(`login-attempts-${email}`, JSON.stringify(attempt));
+    localStorage.setItem(`login-attempts-${attempt.email}`, JSON.stringify(attempt));
   }
 }
 

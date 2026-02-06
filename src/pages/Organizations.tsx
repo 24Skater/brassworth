@@ -126,10 +126,10 @@ export default function Organizations() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(org)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(org)} aria-label={`Edit ${org.name}`}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteOrganization(org.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => deleteOrganization(org.id)} aria-label={`Delete ${org.name}`}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

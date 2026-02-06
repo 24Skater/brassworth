@@ -52,6 +52,7 @@ export function ItemListView({ item, categoryName, locationName, onView, onArchi
             e.stopPropagation();
             onArchive();
           }}
+          aria-label={item.isArchived ? `Restore ${item.name}` : `Archive ${item.name}`}
         >
           <Archive className="h-4 w-4" />
         </Button>
@@ -63,6 +64,7 @@ export function ItemListView({ item, categoryName, locationName, onView, onArchi
             e.stopPropagation();
             onDelete();
           }}
+          aria-label={`Delete ${item.name}`}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

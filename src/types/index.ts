@@ -13,6 +13,15 @@ export interface User {
 
 export interface UserWithAuth extends User {
   passwordHash: string;
+  passwordSalt: string;
+}
+
+export interface Session {
+  userId: string;
+  token: string;
+  createdAt: string;
+  expiresAt: string;
+  rememberMe: boolean;
 }
 
 export interface UserRoleAssignment {
