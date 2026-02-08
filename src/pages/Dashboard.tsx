@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -8,11 +8,16 @@ import { storage } from '@/lib/storage';
 import { Package, MapPin, FolderOpen } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { DashboardSkeleton } from '@/components/common/Skeletons';
+import { Item, Location, Category } from '@/types';
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
   const { currentOrg } = useOrganization();
   const navigate = useNavigate();
+  const [items, setItems] = useState<Item[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -20,8 +25,36 @@ export default function Dashboard() {
     }
   }, [user, isLoading, navigate]);
 
-  // Show loading skeleton while auth is loading
-  if (isLoading) {
+  useEffect(() => {
+    const loadData = async () => {
+      if (!currentOrg) {
+        setDataLoading(false);
+        return;
+      }
+
+      setDataLoading(true);
+      try {
+        const [allItems, allLocations, allCategories] = await Promise.all([
+          storage.getItems(),
+          storage.getLocations(),
+          storage.getCategories(),
+        ]);
+
+        setItems(allItems.filter((item) => item.organizationId === currentOrg.id));
+        setLocations(allLocations.filter((loc) => loc.organizationId === currentOrg.id));
+        setCategories(allCategories.filter((cat) => cat.organizationId === currentOrg.id));
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    loadData();
+  }, [currentOrg]);
+
+  // Show loading skeleton while auth is loading or data is loading
+  if (isLoading || dataLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -34,13 +67,11 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const items = storage.getItems().filter(item => item.organizationId === currentOrg?.id);
-  const locations = storage.getLocations().filter(loc => loc.organizationId === currentOrg?.id);
-  const categories = storage.getCategories().filter(cat => cat.organizationId === currentOrg?.id);
-  const tags = storage.getTags().filter(tag => tag.organizationId === currentOrg?.id);
-
   const totalValue = items.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
-  const estimatedValue = items.reduce((sum, item) => sum + (item.currentEstimatedValue || item.purchasePrice || 0), 0);
+  const estimatedValue = items.reduce(
+    (sum, item) => sum + (item.currentEstimatedValue || item.purchasePrice || 0),
+    0
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,9 +85,7 @@ export default function Dashboard() {
               <CardDescription>Create your first property to get started</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={() => navigate('/organizations')}>
-                Create Property
-              </Button>
+              <Button onClick={() => navigate('/organizations')}>Create Property</Button>
             </CardContent>
           </Card>
         ) : (
@@ -109,15 +138,27 @@ export default function Dashboard() {
                   <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/items')}>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => navigate('/items')}
+                  >
                     <Package className="h-4 w-4 mr-2" />
                     Manage Items
                   </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/locations')}>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => navigate('/locations')}
+                  >
                     <MapPin className="h-4 w-4 mr-2" />
                     Manage Locations
                   </Button>
-                  <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/categories')}>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => navigate('/categories')}
+                  >
                     <FolderOpen className="h-4 w-4 mr-2" />
                     Manage Categories
                   </Button>
@@ -131,13 +172,17 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   {items.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No items yet. Add your first item to get started!</p>
+                    <p className="text-sm text-muted-foreground">
+                      No items yet. Add your first item to get started!
+                    </p>
                   ) : (
                     <div className="space-y-2">
-                      {items.slice(0, 5).map(item => (
+                      {items.slice(0, 5).map((item) => (
                         <div key={item.id} className="flex justify-between items-center">
                           <span className="text-sm">{item.name}</span>
-                          <span className="text-sm text-muted-foreground">${item.purchasePrice?.toFixed(2) || '0.00'}</span>
+                          <span className="text-sm text-muted-foreground">
+                            ${item.purchasePrice?.toFixed(2) || '0.00'}
+                          </span>
                         </div>
                       ))}
                     </div>

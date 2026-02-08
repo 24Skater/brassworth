@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
@@ -6,9 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Item, ItemCondition, PurchaseSource, Photo } from '@/types';
+import { Item, ItemCondition, PurchaseSource, Photo, Category, Location } from '@/types';
 import { ArrowLeft, ImagePlus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,6 +25,8 @@ export default function ItemForm() {
   const { toast } = useToast();
   const isEditing = !!id;
   const [photos, setPhotos] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const [formData, setFormData] = useState<Partial<Item>>({
     name: '',
@@ -39,36 +47,49 @@ export default function ItemForm() {
     tags: [],
   });
 
-  const categories = storage.getCategories().filter(cat => cat.organizationId === currentOrg?.id);
-  const locations = storage.getLocations().filter(loc => loc.organizationId === currentOrg?.id);
+  const loadData = useCallback(async () => {
+    if (!currentOrg) return;
+    const [cats, locs] = await Promise.all([storage.getCategories(), storage.getLocations()]);
+    setCategories(cats.filter((cat) => cat.organizationId === currentOrg.id));
+    setLocations(locs.filter((loc) => loc.organizationId === currentOrg.id));
+  }, [currentOrg]);
 
   useEffect(() => {
-    if (isEditing && id) {
-      const item = storage.getItems().find(i => i.id === id);
-      if (item) {
-        setFormData(item);
-        const itemPhotos = storage.getPhotos().filter(p => p.itemId === item.id);
-        setPhotos(itemPhotos.map(p => p.fileUrl));
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    const loadItem = async () => {
+      if (isEditing && id) {
+        const items = await storage.getItems();
+        const item = items.find((i) => i.id === id);
+        if (item) {
+          setFormData(item);
+          const allPhotos = await storage.getPhotos();
+          const itemPhotos = allPhotos.filter((p) => p.itemId === item.id);
+          setPhotos(itemPhotos.map((p) => p.fileUrl));
+        }
       }
-    }
+    };
+    loadItem();
   }, [id, isEditing]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentOrg || !formData.name) return;
 
-    const items = storage.getItems();
+    const items = await storage.getItems();
     const itemId = isEditing && id ? id : crypto.randomUUID();
-    
+
     if (isEditing && id) {
-      const updated = items.map(item =>
+      const updated = items.map((item) =>
         item.id === id ? { ...item, ...formData, updatedAt: new Date().toISOString() } : item
       );
-      storage.setItems(updated);
-      
+      await storage.setItems(updated);
+
       // Clear existing photos for this item
-      const existingPhotos = storage.getPhotos().filter(p => p.itemId !== id);
-      storage.setPhotos(existingPhotos);
+      const existingPhotos = await storage.getPhotos();
+      await storage.setPhotos(existingPhotos.filter((p) => p.itemId !== id));
     } else {
       const newItem: Item = {
         id: itemId,
@@ -93,17 +114,18 @@ export default function ItemForm() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      storage.setItems([...items, newItem]);
+      await storage.setItems([...items, newItem]);
     }
 
     // Save photos
-    const newPhotos: Photo[] = photos.map(photoUrl => ({
+    const newPhotos: Photo[] = photos.map((photoUrl) => ({
       id: crypto.randomUUID(),
       itemId: itemId,
       fileUrl: photoUrl,
-      takenAt: new Date().toISOString()
+      takenAt: new Date().toISOString(),
     }));
-    storage.setPhotos([...storage.getPhotos(), ...newPhotos]);
+    const existingPhotos = await storage.getPhotos();
+    await storage.setPhotos([...existingPhotos, ...newPhotos]);
 
     navigate('/items');
   };
@@ -112,12 +134,12 @@ export default function ItemForm() {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach(file => {
+    Array.from(files).forEach((file) => {
       if (file.size > 5 * 1024 * 1024) {
         toast({
-          title: "File too large",
-          description: "Please select images under 5MB",
-          variant: "destructive"
+          title: 'File too large',
+          description: 'Please select images under 5MB',
+          variant: 'destructive',
         });
         return;
       }
@@ -125,7 +147,7 @@ export default function ItemForm() {
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
-        setPhotos(prev => [...prev, dataUrl]);
+        setPhotos((prev) => [...prev, dataUrl]);
       };
       reader.readAsDataURL(file);
     });
@@ -133,7 +155,7 @@ export default function ItemForm() {
   };
 
   const removePhoto = (index: number) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
   if (!currentOrg) {
@@ -159,7 +181,9 @@ export default function ItemForm() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Items
           </Button>
-          <h1 className="text-2xl font-bold text-foreground">{isEditing ? 'Edit Item' : 'Add New Item'}</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isEditing ? 'Edit Item' : 'Add New Item'}
+          </h1>
         </div>
       </header>
 
@@ -172,35 +196,58 @@ export default function ItemForm() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="name">Name *</Label>
-                <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
               </div>
 
               <div>
                 <Label htmlFor="description">Description</Label>
-                <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="category">Category</Label>
-                  <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
+                  <Select
+                    value={formData.categoryId}
+                    onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
                   <Label htmlFor="location">Location</Label>
-                  <Select value={formData.locationId} onValueChange={(value) => setFormData({ ...formData, locationId: value })}>
+                  <Select
+                    value={formData.locationId}
+                    onValueChange={(value) => setFormData({ ...formData, locationId: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent>
-                      {locations.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
+                      {locations.map((loc) => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -209,24 +256,41 @@ export default function ItemForm() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="brand">Brand</Label>
-                  <Input id="brand" value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} />
+                  <Input
+                    id="brand"
+                    value={formData.brand}
+                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  />
                 </div>
 
                 <div>
                   <Label htmlFor="model">Model</Label>
-                  <Input id="model" value={formData.model} onChange={(e) => setFormData({ ...formData, model: e.target.value })} />
+                  <Input
+                    id="model"
+                    value={formData.model}
+                    onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  />
                 </div>
               </div>
 
               <div>
                 <Label htmlFor="serialNumber">Serial Number</Label>
-                <Input id="serialNumber" value={formData.serialNumber} onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })} />
+                <Input
+                  id="serialNumber"
+                  value={formData.serialNumber}
+                  onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="condition">Condition *</Label>
-                  <Select value={formData.condition} onValueChange={(value) => setFormData({ ...formData, condition: value as ItemCondition })}>
+                  <Select
+                    value={formData.condition}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, condition: value as ItemCondition })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -243,31 +307,73 @@ export default function ItemForm() {
 
                 <div>
                   <Label htmlFor="quantity">Quantity</Label>
-                  <Input id="quantity" type="number" min="1" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })} />
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    value={formData.quantity}
+                    onChange={(e) =>
+                      setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })
+                    }
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="purchaseDate">Purchase Date</Label>
-                  <Input id="purchaseDate" type="date" value={formData.purchaseDate} onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })} />
+                  <Input
+                    id="purchaseDate"
+                    type="date"
+                    value={formData.purchaseDate}
+                    onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                  />
                 </div>
 
                 <div>
                   <Label htmlFor="purchasePrice">Purchase Price</Label>
-                  <Input id="purchasePrice" type="number" step="0.01" min="0" value={formData.purchasePrice || ''} onChange={(e) => setFormData({ ...formData, purchasePrice: parseFloat(e.target.value) || undefined })} />
+                  <Input
+                    id="purchasePrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.purchasePrice || ''}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        purchasePrice: parseFloat(e.target.value) || undefined,
+                      })
+                    }
+                  />
                 </div>
               </div>
 
               <div>
                 <Label htmlFor="currentEstimatedValue">Current Estimated Value</Label>
-                <Input id="currentEstimatedValue" type="number" step="0.01" min="0" value={formData.currentEstimatedValue || ''} onChange={(e) => setFormData({ ...formData, currentEstimatedValue: parseFloat(e.target.value) || undefined })} />
+                <Input
+                  id="currentEstimatedValue"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.currentEstimatedValue || ''}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      currentEstimatedValue: parseFloat(e.target.value) || undefined,
+                    })
+                  }
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="purchaseLocation">Purchase Source</Label>
-                  <Select value={formData.purchaseLocation} onValueChange={(value) => setFormData({ ...formData, purchaseLocation: value as PurchaseSource })}>
+                  <Select
+                    value={formData.purchaseLocation}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, purchaseLocation: value as PurchaseSource })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select source" />
                     </SelectTrigger>
@@ -282,13 +388,24 @@ export default function ItemForm() {
 
                 <div>
                   <Label htmlFor="purchaseSourceName">Source Name</Label>
-                  <Input id="purchaseSourceName" value={formData.purchaseSourceName} onChange={(e) => setFormData({ ...formData, purchaseSourceName: e.target.value })} placeholder="e.g., Best Buy, Amazon" />
+                  <Input
+                    id="purchaseSourceName"
+                    value={formData.purchaseSourceName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, purchaseSourceName: e.target.value })
+                    }
+                    placeholder="e.g., Best Buy, Amazon"
+                  />
                 </div>
               </div>
 
               <div>
                 <Label htmlFor="notes">Notes</Label>
-                <Textarea id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                />
               </div>
 
               <div>
@@ -296,7 +413,11 @@ export default function ItemForm() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {photos.map((photo, index) => (
                     <div key={index} className="relative group">
-                      <img src={photo} alt={`Item ${index + 1}`} className="w-full h-32 object-cover rounded-lg border border-border" />
+                      <img
+                        src={photo}
+                        alt={`Item ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border border-border"
+                      />
                       <button
                         type="button"
                         onClick={() => removePhoto(index)}
@@ -309,13 +430,21 @@ export default function ItemForm() {
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
                     <ImagePlus className="h-8 w-8 text-muted-foreground mb-2" />
                     <span className="text-sm text-muted-foreground">Add Photo</span>
-                    <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
                   </label>
                 </div>
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => navigate('/items')}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => navigate('/items')}>
+                  Cancel
+                </Button>
                 <Button type="submit">{isEditing ? 'Save Changes' : 'Create Item'}</Button>
               </div>
             </CardContent>

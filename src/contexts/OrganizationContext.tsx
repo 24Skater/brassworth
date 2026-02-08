@@ -8,9 +8,13 @@ interface OrganizationContextType {
   currentOrg: Organization | null;
   organizations: Organization[];
   setCurrentOrg: (org: Organization | null) => void;
-  createOrganization: (name: string, type: Organization['type'], address?: string) => Organization;
-  updateOrganization: (id: string, updates: Partial<Organization>) => void;
-  deleteOrganization: (id: string) => void;
+  createOrganization: (
+    name: string,
+    type: Organization['type'],
+    address?: string
+  ) => Promise<Organization>;
+  updateOrganization: (id: string, updates: Partial<Organization>) => Promise<void>;
+  deleteOrganization: (id: string) => Promise<void>;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -21,24 +25,32 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
 
   useEffect(() => {
-    if (user) {
-      const orgs = storage.getOrganizations();
-      const memberships = storage.getMemberships();
-      const userOrgs = orgs.filter(org => 
-        memberships.some(m => m.userId === user.id && m.organizationId === org.id)
-      );
-      setOrganizations(userOrgs);
-      
-      if (userOrgs.length > 0 && !currentOrg) {
-        setCurrentOrg(userOrgs[0]);
+    const loadOrganizations = async () => {
+      if (user) {
+        const orgs = await storage.getOrganizations();
+        const memberships = await storage.getMemberships();
+        const userOrgs = orgs.filter((org) =>
+          memberships.some((m) => m.userId === user.id && m.organizationId === org.id)
+        );
+        setOrganizations(userOrgs);
+
+        if (userOrgs.length > 0 && !currentOrg) {
+          setCurrentOrg(userOrgs[0]);
+        }
+      } else {
+        setOrganizations([]);
+        setCurrentOrg(null);
       }
-    } else {
-      setOrganizations([]);
-      setCurrentOrg(null);
-    }
+    };
+
+    loadOrganizations();
   }, [user]);
 
-  const createOrganization = (name: string, type: Organization['type'], address?: string): Organization => {
+  const createOrganization = async (
+    name: string,
+    type: Organization['type'],
+    address?: string
+  ): Promise<Organization> => {
     if (!user) throw new Error('User must be logged in');
 
     const newOrg: Organization = {
@@ -50,11 +62,11 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date().toISOString(),
     };
 
-    const orgs = storage.getOrganizations();
-    storage.setOrganizations([...orgs, newOrg]);
+    const orgs = await storage.getOrganizations();
+    await storage.setOrganizations([...orgs, newOrg]);
 
-    const memberships = storage.getMemberships();
-    storage.setMemberships([
+    const memberships = await storage.getMemberships();
+    await storage.setMemberships([
       ...memberships,
       {
         id: crypto.randomUUID(),
@@ -65,37 +77,41 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
     // Assign ADMIN role to the creator
     const roleProvider = createRoleProvider();
-    roleProvider.setUserRole(user.id, newOrg.id, 'ADMIN' as UserRole);
+    await roleProvider.setUserRole(user.id, newOrg.id, 'ADMIN' as UserRole);
 
     setOrganizations([...organizations, newOrg]);
     setCurrentOrg(newOrg);
     return newOrg;
   };
 
-  const updateOrganization = (id: string, updates: Partial<Organization>) => {
-    const orgs = storage.getOrganizations();
-    const updated = orgs.map(org =>
+  const updateOrganization = async (id: string, updates: Partial<Organization>) => {
+    const orgs = await storage.getOrganizations();
+    const updated = orgs.map((org) =>
       org.id === id ? { ...org, ...updates, updatedAt: new Date().toISOString() } : org
     );
-    storage.setOrganizations(updated);
-    setOrganizations(updated.filter(org => 
-      storage.getMemberships().some(m => m.userId === user?.id && m.organizationId === org.id)
-    ));
+    await storage.setOrganizations(updated);
+    const memberships = await storage.getMemberships();
+    setOrganizations(
+      updated.filter((org) =>
+        memberships.some((m) => m.userId === user?.id && m.organizationId === org.id)
+      )
+    );
     if (currentOrg?.id === id) {
-      setCurrentOrg(updated.find(org => org.id === id) || null);
+      setCurrentOrg(updated.find((org) => org.id === id) || null);
     }
   };
 
-  const deleteOrganization = (id: string) => {
-    const orgs = storage.getOrganizations();
-    storage.setOrganizations(orgs.filter(org => org.id !== id));
-    
-    const memberships = storage.getMemberships();
-    storage.setMemberships(memberships.filter(m => m.organizationId !== id));
-    
-    setOrganizations(organizations.filter(org => org.id !== id));
+  const deleteOrganization = async (id: string) => {
+    const orgs = await storage.getOrganizations();
+    await storage.setOrganizations(orgs.filter((org) => org.id !== id));
+
+    const memberships = await storage.getMemberships();
+    await storage.setMemberships(memberships.filter((m) => m.organizationId !== id));
+
+    const remainingOrgs = organizations.filter((org) => org.id !== id);
+    setOrganizations(remainingOrgs);
     if (currentOrg?.id === id) {
-      setCurrentOrg(organizations[0] || null);
+      setCurrentOrg(remainingOrgs[0] || null);
     }
   };
 

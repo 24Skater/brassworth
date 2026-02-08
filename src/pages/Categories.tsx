@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
@@ -7,8 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Category } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Category, Item } from '@/types';
 import { FolderOpen, Pencil, Trash2 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 
@@ -19,10 +27,21 @@ export default function Categories() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '' });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
 
-  const categories = storage.getCategories().filter(cat => cat.organizationId === currentOrg?.id);
+  const loadData = useCallback(async () => {
+    if (!currentOrg) return;
+    const [cats, allItems] = await Promise.all([storage.getCategories(), storage.getItems()]);
+    setCategories(cats.filter((cat) => cat.organizationId === currentOrg.id));
+    setItems(allItems.filter((item) => item.organizationId === currentOrg.id));
+  }, [currentOrg]);
 
-  const handleCreate = () => {
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleCreate = async () => {
     if (!currentOrg || !formData.name) return;
     const newCategory: Category = {
       id: crypto.randomUUID(),
@@ -30,24 +49,32 @@ export default function Categories() {
       name: formData.name,
       description: formData.description,
     };
-    storage.setCategories([...storage.getCategories(), newCategory]);
+    const allCategories = await storage.getCategories();
+    await storage.setCategories([...allCategories, newCategory]);
     setFormData({ name: '', description: '' });
     setIsCreateOpen(false);
+    await loadData();
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (!editingCategory) return;
-    const updated = storage.getCategories().map(cat =>
-      cat.id === editingCategory.id ? { ...cat, name: formData.name, description: formData.description } : cat
+    const allCategories = await storage.getCategories();
+    const updated = allCategories.map((cat) =>
+      cat.id === editingCategory.id
+        ? { ...cat, name: formData.name, description: formData.description }
+        : cat
     );
-    storage.setCategories(updated);
+    await storage.setCategories(updated);
     setIsEditOpen(false);
     setEditingCategory(null);
     setFormData({ name: '', description: '' });
+    await loadData();
   };
 
-  const handleDelete = (id: string) => {
-    storage.setCategories(storage.getCategories().filter(cat => cat.id !== id));
+  const handleDelete = async (id: string) => {
+    const allCategories = await storage.getCategories();
+    await storage.setCategories(allCategories.filter((cat) => cat.id !== id));
+    await loadData();
   };
 
   const openEdit = (category: Category) => {
@@ -57,7 +84,7 @@ export default function Categories() {
   };
 
   const getItemCount = (categoryId: string) => {
-    return storage.getItems().filter(item => item.categoryId === categoryId && !item.isArchived).length;
+    return items.filter((item) => item.categoryId === categoryId && !item.isArchived).length;
   };
 
   if (!currentOrg) {
@@ -82,7 +109,9 @@ export default function Categories() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <p className="text-muted-foreground">{categories.length} {categories.length === 1 ? 'category' : 'categories'}</p>
+          <p className="text-muted-foreground">
+            {categories.length} {categories.length === 1 ? 'category' : 'categories'}
+          </p>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button>Add Category</Button>
@@ -95,16 +124,29 @@ export default function Categories() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="name">Category Name</Label>
-                  <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., Electronics, Furniture" />
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Electronics, Furniture"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="description">Description (Optional)</Label>
-                  <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreate} disabled={!formData.name}>Create</Button>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreate} disabled={!formData.name}>
+                  Create
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -123,10 +165,20 @@ export default function Categories() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(category)} aria-label={`Edit ${category.name}`}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEdit(category)}
+                      aria-label={`Edit ${category.name}`}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)} aria-label={`Delete ${category.name}`}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(category.id)}
+                      aria-label={`Delete ${category.name}`}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -150,16 +202,28 @@ export default function Categories() {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="edit-name">Category Name</Label>
-                <Input id="edit-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
               </div>
               <div>
                 <Label htmlFor="edit-description">Description (Optional)</Label>
-                <Textarea id="edit-description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                <Textarea
+                  id="edit-description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-              <Button onClick={handleEdit} disabled={!formData.name}>Save</Button>
+              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEdit} disabled={!formData.name}>
+                Save
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
@@ -7,8 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Location } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Location, Item } from '@/types';
 import { MapPin, Pencil, Trash2 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 
@@ -19,10 +27,21 @@ export default function Locations() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [formData, setFormData] = useState({ name: '', notes: '' });
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
 
-  const locations = storage.getLocations().filter(loc => loc.organizationId === currentOrg?.id);
+  const loadData = useCallback(async () => {
+    if (!currentOrg) return;
+    const [locs, allItems] = await Promise.all([storage.getLocations(), storage.getItems()]);
+    setLocations(locs.filter((loc) => loc.organizationId === currentOrg.id));
+    setItems(allItems.filter((item) => item.organizationId === currentOrg.id));
+  }, [currentOrg]);
 
-  const handleCreate = () => {
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleCreate = async () => {
     if (!currentOrg || !formData.name) return;
     const newLocation: Location = {
       id: crypto.randomUUID(),
@@ -30,24 +49,30 @@ export default function Locations() {
       name: formData.name,
       notes: formData.notes,
     };
-    storage.setLocations([...storage.getLocations(), newLocation]);
+    const allLocations = await storage.getLocations();
+    await storage.setLocations([...allLocations, newLocation]);
     setFormData({ name: '', notes: '' });
     setIsCreateOpen(false);
+    await loadData();
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (!editingLocation) return;
-    const updated = storage.getLocations().map(loc =>
+    const allLocations = await storage.getLocations();
+    const updated = allLocations.map((loc) =>
       loc.id === editingLocation.id ? { ...loc, name: formData.name, notes: formData.notes } : loc
     );
-    storage.setLocations(updated);
+    await storage.setLocations(updated);
     setIsEditOpen(false);
     setEditingLocation(null);
     setFormData({ name: '', notes: '' });
+    await loadData();
   };
 
-  const handleDelete = (id: string) => {
-    storage.setLocations(storage.getLocations().filter(loc => loc.id !== id));
+  const handleDelete = async (id: string) => {
+    const allLocations = await storage.getLocations();
+    await storage.setLocations(allLocations.filter((loc) => loc.id !== id));
+    await loadData();
   };
 
   const openEdit = (location: Location) => {
@@ -57,7 +82,7 @@ export default function Locations() {
   };
 
   const getItemCount = (locationId: string) => {
-    return storage.getItems().filter(item => item.locationId === locationId && !item.isArchived).length;
+    return items.filter((item) => item.locationId === locationId && !item.isArchived).length;
   };
 
   if (!currentOrg) {
@@ -82,7 +107,9 @@ export default function Locations() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <p className="text-muted-foreground">{locations.length} {locations.length === 1 ? 'location' : 'locations'}</p>
+          <p className="text-muted-foreground">
+            {locations.length} {locations.length === 1 ? 'location' : 'locations'}
+          </p>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
               <Button>Add Location</Button>
@@ -95,16 +122,29 @@ export default function Locations() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="name">Location Name</Label>
-                  <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., Living Room, Basement" />
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g., Living Room, Basement"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="notes">Notes (Optional)</Label>
-                  <Textarea id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
+                  <Textarea
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  />
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreate} disabled={!formData.name}>Create</Button>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreate} disabled={!formData.name}>
+                  Create
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -123,10 +163,20 @@ export default function Locations() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(location)} aria-label={`Edit ${location.name}`}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEdit(location)}
+                      aria-label={`Edit ${location.name}`}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(location.id)} aria-label={`Delete ${location.name}`}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(location.id)}
+                      aria-label={`Delete ${location.name}`}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -150,16 +200,28 @@ export default function Locations() {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="edit-name">Location Name</Label>
-                <Input id="edit-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
               </div>
               <div>
                 <Label htmlFor="edit-notes">Notes (Optional)</Label>
-                <Textarea id="edit-notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
+                <Textarea
+                  id="edit-notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-              <Button onClick={handleEdit} disabled={!formData.name}>Save</Button>
+              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEdit} disabled={!formData.name}>
+                Save
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

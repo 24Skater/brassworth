@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Item } from '@/types';
+import { Item, Photo } from '@/types';
 import { Archive, Trash2, Package } from 'lucide-react';
 import { storage } from '@/lib/storage';
 
@@ -15,28 +16,45 @@ interface ItemGalleryViewProps {
 
 const getConditionColor = (condition: Item['condition']) => {
   switch (condition) {
-    case 'NEW': return 'bg-green-500/10 text-green-500 border-green-500/20';
-    case 'GOOD': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    case 'FAIR': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-    case 'POOR': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-    case 'DAMAGED': return 'bg-red-500/10 text-red-500 border-red-500/20';
-    default: return 'bg-muted text-muted-foreground';
+    case 'NEW':
+      return 'bg-green-500/10 text-green-500 border-green-500/20';
+    case 'GOOD':
+      return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    case 'FAIR':
+      return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+    case 'POOR':
+      return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    case 'DAMAGED':
+      return 'bg-red-500/10 text-red-500 border-red-500/20';
+    default:
+      return 'bg-muted text-muted-foreground';
   }
 };
 
-export function ItemGalleryView({ item, categoryName, locationName, onView, onArchive, onDelete }: ItemGalleryViewProps) {
-  const photos = storage.getPhotos().filter(p => p.itemId === item.id);
-  const firstPhoto = photos[0]?.fileUrl;
+export function ItemGalleryView({
+  item,
+  categoryName,
+  locationName,
+  onView,
+  onArchive,
+  onDelete,
+}: ItemGalleryViewProps) {
+  const [firstPhoto, setFirstPhoto] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const loadPhoto = async () => {
+      const photos = await storage.getPhotos();
+      const itemPhotos = photos.filter((p) => p.itemId === item.id);
+      setFirstPhoto(itemPhotos[0]?.fileUrl);
+    };
+    loadPhoto();
+  }, [item.id]);
 
   return (
     <div className="group cursor-pointer" onClick={onView}>
       <div className="relative aspect-square rounded-lg overflow-hidden bg-muted mb-2">
         {firstPhoto ? (
-          <img
-            src={firstPhoto}
-            alt={item.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={firstPhoto} alt={item.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Package className="h-12 w-12 text-muted-foreground" />
@@ -68,7 +86,10 @@ export function ItemGalleryView({ item, categoryName, locationName, onView, onAr
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
-        <Badge variant="outline" className={`absolute bottom-2 right-2 ${getConditionColor(item.condition)}`}>
+        <Badge
+          variant="outline"
+          className={`absolute bottom-2 right-2 ${getConditionColor(item.condition)}`}
+        >
           {item.condition}
         </Badge>
       </div>

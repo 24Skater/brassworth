@@ -61,11 +61,11 @@ export default function Settings() {
     }
   }, [user, currentOrg, navigate, hasPermission]);
 
-  const handleSaveOrganization = () => {
+  const handleSaveOrganization = async () => {
     if (!currentOrg) return;
 
     try {
-      updateOrganization(currentOrg.id, {
+      await updateOrganization(currentOrg.id, {
         name: orgName,
         type: orgType,
         address: orgAddress,
@@ -76,17 +76,17 @@ export default function Settings() {
     }
   };
 
-  const handleExportData = () => {
+  const handleExportData = async () => {
     if (!currentOrg) return;
 
     try {
-      const items = storage.getItems().filter((item) => item.organizationId === currentOrg.id);
-      const locations = storage
-        .getLocations()
-        .filter((loc) => loc.organizationId === currentOrg.id);
-      const categories = storage
-        .getCategories()
-        .filter((cat) => cat.organizationId === currentOrg.id);
+      const allItems = await storage.getItems();
+      const allLocations = await storage.getLocations();
+      const allCategories = await storage.getCategories();
+
+      const items = allItems.filter((item) => item.organizationId === currentOrg.id);
+      const locations = allLocations.filter((loc) => loc.organizationId === currentOrg.id);
+      const categories = allCategories.filter((cat) => cat.organizationId === currentOrg.id);
 
       const workbook = XLSX.utils.book_new();
 
@@ -138,22 +138,22 @@ export default function Settings() {
     }
   };
 
-  const handleClearData = () => {
+  const handleClearData = async () => {
     if (!currentOrg) return;
     if (!confirm('Are you sure you want to clear all data? This action cannot be undone.')) return;
 
     try {
-      const items = storage.getItems().filter((item) => item.organizationId !== currentOrg.id);
-      const locations = storage
-        .getLocations()
-        .filter((loc) => loc.organizationId !== currentOrg.id);
-      const categories = storage
-        .getCategories()
-        .filter((cat) => cat.organizationId !== currentOrg.id);
+      const allItems = await storage.getItems();
+      const allLocations = await storage.getLocations();
+      const allCategories = await storage.getCategories();
 
-      storage.setItems(items);
-      storage.setLocations(locations);
-      storage.setCategories(categories);
+      const items = allItems.filter((item) => item.organizationId !== currentOrg.id);
+      const locations = allLocations.filter((loc) => loc.organizationId !== currentOrg.id);
+      const categories = allCategories.filter((cat) => cat.organizationId !== currentOrg.id);
+
+      await storage.setItems(items);
+      await storage.setLocations(locations);
+      await storage.setCategories(categories);
 
       toast.success('All data cleared');
     } catch (error) {

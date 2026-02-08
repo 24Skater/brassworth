@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
@@ -6,13 +6,45 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Item, ItemCondition, Category, Location, PurchaseSource } from '@/types';
-import { Search, Plus, Package, Upload, Download, FileSpreadsheet, LayoutGrid, List, Image as ImageIcon, Table as TableIcon } from 'lucide-react';
+import {
+  Search,
+  Plus,
+  Package,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  LayoutGrid,
+  List,
+  Image as ImageIcon,
+  Table as TableIcon,
+} from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { ItemCard } from '@/components/items/ItemCard';
 import { ItemListView } from '@/components/items/ItemListView';
@@ -46,32 +78,51 @@ export default function Items() {
   const [receiptReviewOpen, setReceiptReviewOpen] = useState(false);
   const [parsedReceipt, setParsedReceipt] = useState<ParsedReceipt | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  
-  // Refresh key to trigger data reload without full page refresh
-  const [refreshKey, setRefreshKey] = useState(0);
-  const refreshData = useCallback(() => setRefreshKey(k => k + 1), []);
 
-  // Data is re-fetched when refreshKey changes
-  const allItems = useMemo(
-    () => storage.getItems().filter(item => item.organizationId === currentOrg?.id),
-    [currentOrg?.id, refreshKey]
-  );
+  // State for async data
+  const [allItemsData, setAllItemsData] = useState<Item[]>([]);
+  const [categoriesData, setCategoriesData] = useState<Category[]>([]);
+  const [locationsData, setLocationsData] = useState<Location[]>([]);
+
+  // Load data asynchronously
+  const loadData = useCallback(async () => {
+    if (!currentOrg) return;
+
+    try {
+      const [items, cats, locs] = await Promise.all([
+        storage.getItems(),
+        storage.getCategories(),
+        storage.getLocations(),
+      ]);
+
+      setAllItemsData(items.filter((item) => item.organizationId === currentOrg.id));
+      setCategoriesData(cats.filter((cat) => cat.organizationId === currentOrg.id));
+      setLocationsData(locs.filter((loc) => loc.organizationId === currentOrg.id));
+    } catch (error) {
+      console.error('Failed to load items data:', error);
+    }
+  }, [currentOrg]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Derived data
+  const allItems = allItemsData;
   const items = useMemo(
-    () => showArchived ? allItems.filter(item => item.isArchived) : allItems.filter(item => !item.isArchived),
+    () =>
+      showArchived
+        ? allItems.filter((item) => item.isArchived)
+        : allItems.filter((item) => !item.isArchived),
     [allItems, showArchived]
   );
-  const categories = useMemo(
-    () => storage.getCategories().filter(cat => cat.organizationId === currentOrg?.id),
-    [currentOrg?.id, refreshKey]
-  );
-  const locations = useMemo(
-    () => storage.getLocations().filter(loc => loc.organizationId === currentOrg?.id),
-    [currentOrg?.id, refreshKey]
-  );
+  const categories = categoriesData;
+  const locations = locationsData;
 
   const filteredItems = useMemo(() => {
-    return items.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    return items.filter((item) => {
+      const matchesSearch =
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.model?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = filterCategory === 'all' || item.categoryId === filterCategory;
@@ -82,35 +133,37 @@ export default function Items() {
   }, [items, searchQuery, filterCategory, filterLocation, filterCondition]);
 
   const getCategoryName = (categoryId?: string) => {
-    return categories.find(c => c.id === categoryId)?.name || 'Uncategorized';
+    return categories.find((c) => c.id === categoryId)?.name || 'Uncategorized';
   };
 
   const getLocationName = (locationId?: string) => {
-    return locations.find(l => l.id === locationId)?.name || 'No location';
+    return locations.find((l) => l.id === locationId)?.name || 'No location';
   };
 
-  const handleArchiveItem = (item: Item) => {
-    const allItems = storage.getItems();
-    const updatedItems = allItems.map(i => 
+  const handleArchiveItem = async (item: Item) => {
+    const allItems = await storage.getItems();
+    const updatedItems = allItems.map((i) =>
       i.id === item.id ? { ...i, isArchived: true, updatedAt: new Date().toISOString() } : i
     );
-    storage.setItems(updatedItems);
-    
+    await storage.setItems(updatedItems);
+    await loadData();
+
     toast({
-      title: "Item archived",
+      title: 'Item archived',
       description: `${item.name} has been moved to archive`,
     });
   };
 
-  const handleRestoreItem = (item: Item) => {
-    const allItems = storage.getItems();
-    const updatedItems = allItems.map(i => 
+  const handleRestoreItem = async (item: Item) => {
+    const allItems = await storage.getItems();
+    const updatedItems = allItems.map((i) =>
       i.id === item.id ? { ...i, isArchived: false, updatedAt: new Date().toISOString() } : i
     );
-    storage.setItems(updatedItems);
-    
+    await storage.setItems(updatedItems);
+    await loadData();
+
     toast({
-      title: "Item restored",
+      title: 'Item restored',
       description: `${item.name} has been restored`,
     });
   };
@@ -120,17 +173,18 @@ export default function Items() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!itemToDelete) return;
 
-    const allItems = storage.getItems();
-    const updatedItems = allItems.filter(i => i.id !== itemToDelete.id);
-    storage.setItems(updatedItems);
-    
+    const allItems = await storage.getItems();
+    const updatedItems = allItems.filter((i) => i.id !== itemToDelete.id);
+    await storage.setItems(updatedItems);
+    await loadData();
+
     toast({
-      title: "Item deleted",
+      title: 'Item deleted',
       description: `${itemToDelete.name} has been permanently deleted`,
-      variant: "destructive"
+      variant: 'destructive',
     });
 
     setDeleteDialogOpen(false);
@@ -138,37 +192,39 @@ export default function Items() {
   };
 
   const handleDownloadTemplate = () => {
-    const templateData = [{
-      Name: 'Example Item',
-      Description: 'Example description',
-      Category: 'Electronics',
-      Location: 'Living Room',
-      Brand: 'Samsung',
-      Model: 'XYZ-123',
-      'Serial Number': 'SN123456',
-      Condition: 'GOOD',
-      Quantity: 1,
-      'Purchase Price': 299.99,
-      'Current Estimated Value': 250.00,
-      'Purchase Date': '2024-01-15',
-      'Purchase Source': 'STORE',
-      'Purchase Source Name': 'Best Buy',
-      Notes: 'Example notes'
-    }];
+    const templateData = [
+      {
+        Name: 'Example Item',
+        Description: 'Example description',
+        Category: 'Electronics',
+        Location: 'Living Room',
+        Brand: 'Samsung',
+        Model: 'XYZ-123',
+        'Serial Number': 'SN123456',
+        Condition: 'GOOD',
+        Quantity: 1,
+        'Purchase Price': 299.99,
+        'Current Estimated Value': 250.0,
+        'Purchase Date': '2024-01-15',
+        'Purchase Source': 'STORE',
+        'Purchase Source Name': 'Best Buy',
+        Notes: 'Example notes',
+      },
+    ];
 
     const ws = XLSX.utils.json_to_sheet(templateData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Items');
     XLSX.writeFile(wb, 'import-template.xlsx');
-    
+
     toast({
-      title: "Template downloaded",
-      description: "Fill in the template and import it to add items",
+      title: 'Template downloaded',
+      description: 'Fill in the template and import it to add items',
     });
   };
 
   const handleExport = () => {
-    const exportData = filteredItems.map(item => ({
+    const exportData = filteredItems.map((item) => ({
       Name: item.name,
       Description: item.description || '',
       Category: getCategoryName(item.categoryId),
@@ -183,23 +239,23 @@ export default function Items() {
       'Purchase Date': item.purchaseDate || '',
       'Purchase Source': item.purchaseLocation || '',
       'Purchase Source Name': item.purchaseSourceName || '',
-      Notes: item.notes || ''
+      Notes: item.notes || '',
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Items');
     XLSX.writeFile(wb, `${currentOrg?.name}-items-${new Date().toISOString().split('T')[0]}.xlsx`);
-    
+
     toast({
-      title: "Export successful",
+      title: 'Export successful',
       description: `Exported ${filteredItems.length} items to Excel`,
     });
   };
 
   const processImportFile = (file: File) => {
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const data = new Uint8Array(event.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
@@ -211,23 +267,24 @@ export default function Items() {
         let createdLocations = 0;
 
         // Get existing data
-        const existingItems = storage.getItems();
-        const existingCategories = [...storage.getCategories()];
-        const existingLocations = [...storage.getLocations()];
+        const existingItems = await storage.getItems();
+        const existingCategories = [...(await storage.getCategories())];
+        const existingLocations = [...(await storage.getLocations())];
 
         jsonData.forEach((row) => {
           // Check for existing category or create new one (prevent duplicates)
-          let categoryId = existingCategories.find(c => 
-            c.name.toLowerCase() === row.Category?.toLowerCase() && 
-            c.organizationId === currentOrg!.id
+          let categoryId = existingCategories.find(
+            (c) =>
+              c.name.toLowerCase() === row.Category?.toLowerCase() &&
+              c.organizationId === currentOrg!.id
           )?.id;
-          
+
           if (!categoryId && row.Category) {
             const newCategory: Category = {
               id: crypto.randomUUID(),
               organizationId: currentOrg!.id,
               name: row.Category,
-              description: `Auto-created from import`
+              description: `Auto-created from import`,
             };
             existingCategories.push(newCategory);
             categoryId = newCategory.id;
@@ -235,23 +292,24 @@ export default function Items() {
           }
 
           // Check for existing location or create new one (prevent duplicates)
-          let locationId = existingLocations.find(l => 
-            l.name.toLowerCase() === row.Location?.toLowerCase() && 
-            l.organizationId === currentOrg!.id
+          let locationId = existingLocations.find(
+            (l) =>
+              l.name.toLowerCase() === row.Location?.toLowerCase() &&
+              l.organizationId === currentOrg!.id
           )?.id;
-          
+
           if (!locationId && row.Location) {
             const newLocation: Location = {
               id: crypto.randomUUID(),
               organizationId: currentOrg!.id,
               name: row.Location,
-              notes: `Auto-created from import`
+              notes: `Auto-created from import`,
             };
             existingLocations.push(newLocation);
             locationId = newLocation.id;
             createdLocations++;
           }
-          
+
           const newItem: Item = {
             id: crypto.randomUUID(),
             organizationId: currentOrg!.id,
@@ -264,7 +322,9 @@ export default function Items() {
             serialNumber: row['Serial Number'],
             purchaseDate: row['Purchase Date'],
             purchasePrice: row['Purchase Price'] ? Number(row['Purchase Price']) : undefined,
-            currentEstimatedValue: row['Current Estimated Value'] ? Number(row['Current Estimated Value']) : undefined,
+            currentEstimatedValue: row['Current Estimated Value']
+              ? Number(row['Current Estimated Value'])
+              : undefined,
             purchaseLocation: row['Purchase Source'] as PurchaseSource,
             purchaseSourceName: row['Purchase Source Name'],
             condition: (row.Condition as ItemCondition) || 'GOOD',
@@ -273,7 +333,7 @@ export default function Items() {
             isArchived: false,
             tags: [],
             createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           };
 
           existingItems.push(newItem);
@@ -281,26 +341,26 @@ export default function Items() {
         });
 
         // Save all updated data
-        storage.setItems(existingItems);
-        storage.setCategories(existingCategories);
-        storage.setLocations(existingLocations);
+        await storage.setItems(existingItems);
+        await storage.setCategories(existingCategories);
+        await storage.setLocations(existingLocations);
 
         const messages = [`Imported ${importedCount} items`];
         if (createdCategories > 0) messages.push(`Created ${createdCategories} new categories`);
         if (createdLocations > 0) messages.push(`Created ${createdLocations} new locations`);
 
         toast({
-          title: "Import successful",
+          title: 'Import successful',
           description: messages.join(', '),
         });
-        
+
         setImportDialogOpen(false);
-        refreshData();
+        await loadData();
       } catch (error) {
         toast({
-          title: "Import failed",
-          description: "Please check your Excel file format",
-          variant: "destructive"
+          title: 'Import failed',
+          description: 'Please check your Excel file format',
+          variant: 'destructive',
         });
       }
     };
@@ -328,15 +388,15 @@ export default function Items() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const file = e.dataTransfer.files?.[0];
     if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
       processImportFile(file);
     } else {
       toast({
-        title: "Invalid file",
-        description: "Please drop an Excel file (.xlsx or .xls)",
-        variant: "destructive"
+        title: 'Invalid file',
+        description: 'Please drop an Excel file (.xlsx or .xls)',
+        variant: 'destructive',
       });
     }
   };
@@ -355,34 +415,35 @@ export default function Items() {
     if (selectedItems.size === filteredItems.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(filteredItems.map(item => item.id)));
+      setSelectedItems(new Set(filteredItems.map((item) => item.id)));
     }
   };
 
-  const handleBulkEdit = () => {
+  const handleBulkEdit = async () => {
     if (selectedItems.size === 0) return;
 
-    const allItems = storage.getItems();
-    const updatedItems = allItems.map(item => {
+    const allItems = await storage.getItems();
+    const updatedItems = allItems.map((item) => {
       if (selectedItems.has(item.id)) {
         return {
           ...item,
           categoryId: bulkCategory || item.categoryId,
           locationId: bulkLocation || item.locationId,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         };
       }
       return item;
     });
 
-    storage.setItems(updatedItems);
-    
+    await storage.setItems(updatedItems);
+    await loadData();
+
     const updates = [];
     if (bulkCategory) updates.push('category');
     if (bulkLocation) updates.push('location');
 
     toast({
-      title: "Bulk update successful",
+      title: 'Bulk update successful',
       description: `Updated ${updates.join(' and ')} for ${selectedItems.size} items`,
     });
 
@@ -400,62 +461,39 @@ export default function Items() {
     setReceiptReviewOpen(true);
   };
 
-  const handleReceiptConfirm = (data: ConfirmedReceiptData) => {
+  const handleReceiptConfirm = async (data: ConfirmedReceiptData) => {
     if (!currentOrg) return;
 
-    // Convert receipt file to base64 if available
-    if (receiptFile) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        
-        // Create receipt document
-        const receiptDocument = {
-          id: crypto.randomUUID(),
-          fileName: receiptFile.name,
-          type: 'RECEIPT' as const,
-          organizationId: currentOrg.id,
-          fileUrl: base64,
-          uploadedAt: new Date().toISOString(),
-        };
-        
-        const allDocuments = storage.getDocuments();
-        storage.setDocuments([...allDocuments, receiptDocument]);
-        
-        createItems(receiptDocument.id);
-      };
-      reader.readAsDataURL(receiptFile);
-    } else {
-      createItems();
-    }
+    const createItems = async (docId?: string) => {
+      const allItems = await storage.getItems();
+      const createdItems: Item[] = [];
 
-    function createItems(docId?: string) {
-      const allItems = storage.getItems();
-      const createdItems = [];
-      
-      data.items.forEach(item => {
-      const newItem = {
-        id: crypto.randomUUID(),
-        name: item.description,
-        quantity: item.quantity,
-        purchasePrice: item.unitPrice || item.lineTotal,
-        purchaseDate: data.purchaseDate,
-        purchaseLocation: (data.storeName.toLowerCase().includes('amazon') || data.storeName.toLowerCase().includes('online') ? 'ONLINE' : 'STORE') as PurchaseSource,
-        purchaseSourceName: data.storeName,
-        categoryId: data.categoryId,
-        locationId: data.locationId,
-        organizationId: currentOrg.id,
-        condition: 'NEW' as ItemCondition,
-        isArchived: false,
-        tags: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-        
+      data.items.forEach((item) => {
+        const newItem: Item = {
+          id: crypto.randomUUID(),
+          name: item.description,
+          quantity: item.quantity,
+          purchasePrice: item.unitPrice || item.lineTotal,
+          purchaseDate: data.purchaseDate,
+          purchaseLocation: (data.storeName.toLowerCase().includes('amazon') ||
+          data.storeName.toLowerCase().includes('online')
+            ? 'ONLINE'
+            : 'STORE') as PurchaseSource,
+          purchaseSourceName: data.storeName,
+          categoryId: data.categoryId,
+          locationId: data.locationId,
+          organizationId: currentOrg.id,
+          condition: 'NEW' as ItemCondition,
+          isArchived: false,
+          tags: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
         createdItems.push(newItem);
       });
 
-      storage.setItems([...allItems, ...createdItems]);
+      await storage.setItems([...allItems, ...createdItems]);
 
       toast({
         title: 'Items imported',
@@ -465,9 +503,35 @@ export default function Items() {
       setReceiptReviewOpen(false);
       setParsedReceipt(null);
       setReceiptFile(null);
-      
+
       // Refresh data to show new items
-      refreshData();
+      await loadData();
+    };
+
+    // Convert receipt file to base64 if available
+    if (receiptFile) {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+
+        // Create receipt document
+        const receiptDocument = {
+          id: crypto.randomUUID(),
+          fileName: receiptFile.name,
+          type: 'RECEIPT' as const,
+          organizationId: currentOrg.id,
+          fileUrl: base64,
+          uploadedAt: new Date().toISOString(),
+        };
+
+        const allDocuments = await storage.getDocuments();
+        await storage.setDocuments([...allDocuments, receiptDocument]);
+
+        await createItems(receiptDocument.id);
+      };
+      reader.readAsDataURL(receiptFile);
+    } else {
+      await createItems();
     }
   };
 
@@ -495,8 +559,13 @@ export default function Items() {
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <p className="text-muted-foreground">{filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}</p>
-              <Tabs value={showArchived ? 'archived' : 'active'} onValueChange={(v) => setShowArchived(v === 'archived')}>
+              <p className="text-muted-foreground">
+                {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
+              </p>
+              <Tabs
+                value={showArchived ? 'archived' : 'active'}
+                onValueChange={(v) => setShowArchived(v === 'archived')}
+              >
                 <TabsList>
                   <TabsTrigger value="active">Active</TabsTrigger>
                   <TabsTrigger value="archived">Archived</TabsTrigger>
@@ -547,7 +616,12 @@ export default function Items() {
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search items..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+              <Input
+                placeholder="Search items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
             </div>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
               <SelectTrigger className="w-full md:w-[180px]">
@@ -555,7 +629,11 @@ export default function Items() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(cat => <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>)}
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={filterLocation} onValueChange={setFilterLocation}>
@@ -564,7 +642,11 @@ export default function Items() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Locations</SelectItem>
-                {locations.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
+                {locations.map((loc) => (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={filterCondition} onValueChange={setFilterCondition}>
@@ -580,13 +662,15 @@ export default function Items() {
                 <SelectItem value="DAMAGED">Damaged</SelectItem>
               </SelectContent>
             </Select>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={toggleSelectAll}
               className="whitespace-nowrap"
             >
-              {selectedItems.size === filteredItems.length && filteredItems.length > 0 ? 'Deselect All' : 'Select All'}
+              {selectedItems.size === filteredItems.length && filteredItems.length > 0
+                ? 'Deselect All'
+                : 'Select All'}
             </Button>
           </div>
         </div>
@@ -598,7 +682,9 @@ export default function Items() {
               <p className="text-muted-foreground mb-4">
                 {showArchived ? 'No archived items' : 'No items found'}
               </p>
-              {!showArchived && <Button onClick={() => navigate('/items/new')}>Add your first item</Button>}
+              {!showArchived && (
+                <Button onClick={() => navigate('/items/new')}>Add your first item</Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -612,7 +698,9 @@ export default function Items() {
                     categoryName={getCategoryName(item.categoryId)}
                     locationName={getLocationName(item.locationId)}
                     onView={() => navigate(`/items/${item.id}`)}
-                    onArchive={() => showArchived ? handleRestoreItem(item) : handleArchiveItem(item)}
+                    onArchive={() =>
+                      showArchived ? handleRestoreItem(item) : handleArchiveItem(item)
+                    }
                     onDelete={() => handleDeleteItem(item)}
                     selected={selectedItems.has(item.id)}
                     onToggleSelect={() => toggleItemSelection(item.id)}
@@ -630,7 +718,9 @@ export default function Items() {
                     categoryName={getCategoryName(item.categoryId)}
                     locationName={getLocationName(item.locationId)}
                     onView={() => navigate(`/items/${item.id}`)}
-                    onArchive={() => showArchived ? handleRestoreItem(item) : handleArchiveItem(item)}
+                    onArchive={() =>
+                      showArchived ? handleRestoreItem(item) : handleArchiveItem(item)
+                    }
                     onDelete={() => handleDeleteItem(item)}
                   />
                 ))}
@@ -646,7 +736,9 @@ export default function Items() {
                     categoryName={getCategoryName(item.categoryId)}
                     locationName={getLocationName(item.locationId)}
                     onView={() => navigate(`/items/${item.id}`)}
-                    onArchive={() => showArchived ? handleRestoreItem(item) : handleArchiveItem(item)}
+                    onArchive={() =>
+                      showArchived ? handleRestoreItem(item) : handleArchiveItem(item)
+                    }
                     onDelete={() => handleDeleteItem(item)}
                   />
                 ))}
@@ -659,7 +751,9 @@ export default function Items() {
                 getCategoryName={getCategoryName}
                 getLocationName={getLocationName}
                 onView={(item) => navigate(`/items/${item.id}`)}
-                onArchive={(item) => showArchived ? handleRestoreItem(item) : handleArchiveItem(item)}
+                onArchive={(item) =>
+                  showArchived ? handleRestoreItem(item) : handleArchiveItem(item)
+                }
                 onDelete={handleDeleteItem}
               />
             )}
@@ -675,25 +769,19 @@ export default function Items() {
               Upload an Excel file to import multiple items at once
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                isDragging 
-                  ? 'border-primary bg-primary/5' 
-                  : 'border-border hover:border-primary/50'
+                isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
               }`}
             >
               <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-sm font-medium mb-2">
-                Drag and drop your Excel file here
-              </p>
-              <p className="text-xs text-muted-foreground mb-4">
-                or click to browse
-              </p>
+              <p className="text-sm font-medium mb-2">Drag and drop your Excel file here</p>
+              <p className="text-xs text-muted-foreground mb-4">or click to browse</p>
               <Button variant="outline" asChild>
                 <label className="cursor-pointer">
                   Choose File
@@ -727,7 +815,8 @@ export default function Items() {
           <DialogHeader>
             <DialogTitle>Bulk Edit {selectedItems.size} Items</DialogTitle>
             <DialogDescription>
-              Update category and/or location for all selected items. Leave blank to keep existing values.
+              Update category and/or location for all selected items. Leave blank to keep existing
+              values.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -739,8 +828,10 @@ export default function Items() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Keep existing category</SelectItem>
-                  {categories.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -753,15 +844,19 @@ export default function Items() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Keep existing location</SelectItem>
-                  {locations.map(loc => (
-                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setBulkEditOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setBulkEditOpen(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleBulkEdit} disabled={!bulkCategory && !bulkLocation}>
               Update Items
             </Button>
@@ -774,13 +869,18 @@ export default function Items() {
           <AlertDialogHeader>
             <AlertDialogTitle>Permanently Delete Item?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to permanently delete "{itemToDelete?.name}"? This action cannot be undone.
-              {!itemToDelete?.isArchived && " Consider archiving instead to preserve the item data."}
+              Are you sure you want to permanently delete "{itemToDelete?.name}"? This action cannot
+              be undone.
+              {!itemToDelete?.isArchived &&
+                ' Consider archiving instead to preserve the item data.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete Permanently
             </AlertDialogAction>
           </AlertDialogFooter>
