@@ -334,7 +334,7 @@ jobs:
 
 ## 📞 Need Help?
 
-- Check `docs/PLAN_TO_V1.0.md` for detailed plans
+- Check `docs/ROADMAP.md` for product direction and milestones
 - Review `CONTRIBUTING.md` for development guidelines
 - See `SECURITY.md` for security best practices
 - Open an issue for questions or blockers

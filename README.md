@@ -23,7 +23,7 @@ Built for people with real gear to keep track of: a garage full of tools, a rack
 
 ### What is planned
 
-Check-in / check-out with custody history, depreciation and current-value estimates, full lifecycle states (loaned, broken, in repair, returned, sold), a wishlist with savings goals, sale alerts, and reporting broken down by brand. See [ROADMAP_V1.md](./docs/ROADMAP_V1.md).
+Check-in / check-out with custody history, depreciation and current-value estimates, full lifecycle states (loaned, broken, in repair, returned, sold), a wishlist with savings goals, sale alerts, and reporting broken down by brand. See [the roadmap](./docs/ROADMAP.md).
 
 ## Status: local-first, pre-release
 
@@ -76,8 +76,7 @@ The application will be available at `http://localhost:8080`
 
 - **[Developer Guide](./docs/DEVELOPER_GUIDE.md)** - Guide for contributors
 - **[Architecture](./docs/ARCHITECTURE.md)** - System architecture and design
-- **[Plan to v1.0](./docs/PLAN_TO_V1.0.md)** - Comprehensive development plan
-- **[Roadmap](./docs/ROADMAP_V1.md)** - Feature roadmap and milestones
+- **[Roadmap](./docs/ROADMAP.md)** - Product direction, data model, and release milestones
 
 ### Technical Documentation
 
@@ -165,7 +164,7 @@ For detailed deployment instructions, see the [deployment guide](./docs/DEPLOYME
 
 ### Security Roadmap
 
-See [PLAN_TO_V1.0.md](./docs/PLAN_TO_V1.0.md) for the security hardening plan, including:
+See [SECURITY.md](./SECURITY.md) and the [roadmap](./docs/ROADMAP.md) for the security plan, including:
 
 - Server-side authentication
 - Rate limiting
@@ -246,7 +245,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 
 ## 📋 Roadmap
 
-See [ROADMAP_V1.md](./docs/ROADMAP_V1.md) and [PLAN_TO_V1.0.md](./docs/PLAN_TO_V1.0.md) for detailed roadmap.
+See [the roadmap](./docs/ROADMAP.md) for phases, milestones and the data model.
 
 ### Upcoming Features
 
@@ -277,6 +276,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Status**: 🚧 In Active Development - See [PLAN_TO_V1.0.md](./docs/PLAN_TO_V1.0.md) for progress
+**Status**: 🚧 Pre-release, local-first. See [the roadmap](./docs/ROADMAP.md) for what is next.
 
 Made with ❤️ for the self-hosting community

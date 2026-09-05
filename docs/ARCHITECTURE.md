@@ -301,27 +301,82 @@ Allow/Deny
 - Playwright for user flows
 - Critical path testing
 
-## Future Architecture
+## Planned backend architecture
 
-### Backend Integration
+Decided 2026-09. One codebase serves three deployment tiers.
 
-When adding a backend:
+### Three tiers, one image
 
-1. Implement API providers
-2. Add API client
-3. Update contexts to use API
-4. Add authentication tokens
-5. Implement real-time sync (optional)
+| Tier                | Shape                                          | Auth                            | Data                                           |
+| ------------------- | ---------------------------------------------- | ------------------------------- | ---------------------------------------------- |
+| **0 — Local only**  | No server. What ships today.                   | None. No accounts.              | IndexedDB in the browser                       |
+| **1 — Self-hosted** | One container, one volume, `docker compose up` | Email + password; OIDC optional | SQLite by default, Postgres via `DATABASE_URL` |
+| **2 — Hosted**      | The same image, run by us                      | Email + password, Google, OIDC  | Postgres, multi-tenant                         |
 
-### Microservices (Future)
+Tier 0 is not a stepping stone that gets removed. It is the privacy claim, and the reason
+this project is worth open-sourcing. It stays supported.
 
-Potential services:
+### Stack
 
-- Auth service
-- Storage service
-- Notification service
-- Analytics service
+- **Hono** (or Fastify) for the API, in TypeScript — one language end to end, types shared
+  with the React app
+- **Drizzle ORM** — one schema compiles to both SQLite and Postgres, which is what lets a
+  single codebase serve Tier 1 and Tier 2 without a fork
+- **Better Auth** — email/password plus Google and generic OIDC, self-hostable, no vendor
+  account required. Self-hosters who want local accounts only simply do not set the OAuth
+  environment variables
+- The built SPA is served statically by the same process
+
+### Why not the alternatives
+
+**Supabase** would be the fastest route to a hosted tier, but self-hosting it means running
+a dozen containers. That makes Tier 1 _harder_, which is backwards for a project whose pitch
+is self-hosting, and it shapes the open-source product around one vendor.
+
+**Go or PocketBase** would give the best possible self-host story — a single static binary.
+It costs a second language alongside a React frontend, a smaller shared contributor pool,
+and SQLite-centric assumptions that complicate the hosted tier. The right call for a Go
+shop; the wrong one here.
+
+### Multi-tenancy
+
+Every domain type already carries `organizationId` — `Item`, `Location`, `Category`, `Tag`,
+`Document`. That is the hard part of multi-tenancy and it is already done.
+
+The server's job is to stop trusting the client's claim about which organisation it is in.
+One guard, called by every handler:
+
+```ts
+await requireOrgAccess(userId, orgId, 'canEditItems');
+```
+
+A client-supplied `organizationId` is never accepted without a membership check. This is the
+point at which the four existing roles stop being decorative.
+
+### Auth migration
+
+Passwords are currently hashed with PBKDF2 **in the browser**. Those hashes are worthless
+server-side — they were never a server credential. When the backend lands, hashing moves to
+Argon2id on the server and existing local accounts re-register.
+
+Sessions move from localStorage to httpOnly, SameSite cookies.
+
+### Data migration
+
+Tier 0 data lives in one browser's storage and cannot be automatically migrated to a server.
+The path is export → upload → import, which is why **full export must ship before the first
+public release** rather than after it. Without it, the earliest self-hosters are stranded.
+
+### What to build, in order
+
+1. Remove the synchronous `src/lib/storage.ts` wrapper — nothing network-backed can land while it exists
+2. Server, schema, and auth
+3. `ApiStorageProvider` implementing the existing `StorageProvider` interface
+4. `ApiAuthProvider` implementing the existing `AuthProviderInterface`
+5. Make the `api` provider case fail loudly instead of silently falling back to localStorage
+
+Both seams already exist, so application code barely changes.
 
 ---
 
-**Last Updated**: December 2024
+**Last Updated**: September 2026
