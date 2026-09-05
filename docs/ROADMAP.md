@@ -34,8 +34,8 @@ Verified, not aspirational. Run the checks yourself with the commands in [TESTIN
 | Backend  | **None.** No `fetch`, no `axios`, no API anywhere in `src`             |
 | Storage  | localStorage and IndexedDB providers; the `api` provider is a stub     |
 | Auth     | localStorage records. Not a security boundary — editable from devtools |
-| Tests    | 156 unit, 25 E2E, all green                                            |
-| Coverage | 14.76%, ratcheted so it cannot drop                                    |
+| Tests    | 164 unit, 29 E2E, all green                                            |
+| Coverage | 14.95%, ratcheted so it cannot drop                                    |
 | CI       | Five jobs green on `main`                                              |
 
 ### What already works
@@ -165,7 +165,7 @@ Ordered by dependency, not by appeal. Each phase assumes the one above it.
       collection, which is both the backup story and the migration path when the backend arrives
 - [x] Raise the coverage ratchet
 
-### Phase 2 — Lifecycle 🚧 in progress
+### Phase 2 — Lifecycle ✅ done
 
 _The differentiator. Buildable entirely client-side._
 
@@ -176,8 +176,8 @@ _The differentiator. Buildable entirely client-side._
 - [x] Sold, with sale price, closing the loop against purchase price
 - [x] Item timeline: the whole history of one thing on one screen
 - [x] Overdue loans flagged on the item
-- [ ] Overdue loans surfaced on the dashboard
-- [ ] Status shown in the items list and filterable
+- [x] Overdue loans surfaced on the dashboard
+- [x] Status shown in the items list and filterable
 
 **Deviation from the original plan, deliberately.** This document first proposed deriving
 status and then caching it on the item. The cache is not built. Denormalising invites
@@ -227,13 +227,13 @@ _See [ARCHITECTURE.md](./ARCHITECTURE.md). Three deployment tiers from one codeb
 
 ## Release milestones
 
-| Version  | Gate                                                                             |
-| -------- | -------------------------------------------------------------------------------- |
-| **v0.2** | Phase 1 done. Async storage, export/import working, repo public                  |
-| **v0.4** | Phase 2 done. Lifecycle and custody — the first genuinely differentiated release |
-| **v0.6** | Phase 3 done. Valuation and dashboards                                           |
-| **v0.8** | Phase 4 done. Real auth, real multi-user, self-hostable with a server            |
-| **v1.0** | Phase 5 done, coverage at 80%, hosted tier live at `app.brassworth.com`          |
+| Version  | Gate                                                                                |
+| -------- | ----------------------------------------------------------------------------------- |
+| **v0.2** | Phase 1 done. Async storage, export/import working, repo public                     |
+| **v0.4** | ✅ Phase 2 done. Lifecycle and custody — the first genuinely differentiated release |
+| **v0.6** | Phase 3 done. Valuation and dashboards                                              |
+| **v0.8** | Phase 4 done. Real auth, real multi-user, self-hostable with a server               |
+| **v1.0** | Phase 5 done, coverage at 80%, hosted tier live at `app.brassworth.com`             |
 
 Phase 6 is deliberately after v1.0. It is the most fun and the least load-bearing.
 

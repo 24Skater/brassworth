@@ -47,6 +47,8 @@ import {
 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { ItemCard } from '@/components/items/ItemCard';
+import { groupByItem, isOverdue, statusFor, STATUS_LABELS } from '@/lib/lifecycle';
+import type { ItemEvent, ItemStatus } from '@/types';
 import { ItemListView } from '@/components/items/ItemListView';
 import { ItemGalleryView } from '@/components/items/ItemGalleryView';
 import { ItemTableView } from '@/components/items/ItemTableView';
@@ -64,6 +66,8 @@ export default function Items() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');
   const [filterCondition, setFilterCondition] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [itemEvents, setItemEvents] = useState<ItemEvent[]>([]);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'gallery' | 'table'>('grid');
@@ -96,6 +100,9 @@ export default function Items() {
       ]);
 
       setAllItemsData(items.filter((item) => item.organizationId === currentOrg.id));
+      setItemEvents(
+        (await storage.getItemEvents()).filter((e) => e.organizationId === currentOrg.id)
+      );
       setCategoriesData(cats.filter((cat) => cat.organizationId === currentOrg.id));
       setLocationsData(locs.filter((loc) => loc.organizationId === currentOrg.id));
     } catch (error) {
@@ -119,6 +126,9 @@ export default function Items() {
   const categories = categoriesData;
   const locations = locationsData;
 
+  // One pass over the organisation's events, rather than a query per row.
+  const eventsByItem = useMemo(() => groupByItem(itemEvents), [itemEvents]);
+
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       const matchesSearch =
@@ -128,9 +138,21 @@ export default function Items() {
       const matchesCategory = filterCategory === 'all' || item.categoryId === filterCategory;
       const matchesLocation = filterLocation === 'all' || item.locationId === filterLocation;
       const matchesCondition = filterCondition === 'all' || item.condition === filterCondition;
-      return matchesSearch && matchesCategory && matchesLocation && matchesCondition;
+      const matchesStatus =
+        filterStatus === 'all' || statusFor(eventsByItem, item.id) === filterStatus;
+      return (
+        matchesSearch && matchesCategory && matchesLocation && matchesCondition && matchesStatus
+      );
     });
-  }, [items, searchQuery, filterCategory, filterLocation, filterCondition]);
+  }, [
+    items,
+    searchQuery,
+    filterCategory,
+    filterLocation,
+    filterCondition,
+    filterStatus,
+    eventsByItem,
+  ]);
 
   const getCategoryName = (categoryId?: string) => {
     return categories.find((c) => c.id === categoryId)?.name || 'Uncategorized';
@@ -662,6 +684,19 @@ export default function Items() {
                 <SelectItem value="DAMAGED">Damaged</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-full md:w-[180px]" data-testid="filter-status">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {(Object.keys(STATUS_LABELS) as ItemStatus[]).map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {STATUS_LABELS[status]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               variant="outline"
               size="sm"
@@ -695,6 +730,8 @@ export default function Items() {
                   <ItemCard
                     key={item.id}
                     item={item}
+                    status={statusFor(eventsByItem, item.id)}
+                    overdue={isOverdue(eventsByItem.get(item.id) ?? [])}
                     categoryName={getCategoryName(item.categoryId)}
                     locationName={getLocationName(item.locationId)}
                     onView={() => navigate(`/items/${item.id}`)}

@@ -194,3 +194,46 @@ export function describeEvent(event: ItemEvent): string {
       return label;
   }
 }
+
+/**
+ * Group a flat event list by item.
+ *
+ * Lists render many items at once; fetching each item's events separately would
+ * be one query per row. Load the organisation's events once and index them here.
+ */
+export function groupByItem(events: readonly ItemEvent[]): Map<string, ItemEvent[]> {
+  const byItem = new Map<string, ItemEvent[]>();
+
+  for (const event of events) {
+    const existing = byItem.get(event.itemId);
+    if (existing) {
+      existing.push(event);
+    } else {
+      byItem.set(event.itemId, [event]);
+    }
+  }
+
+  return byItem;
+}
+
+/** Status for one item given a grouped index, defaulting to owned. */
+export function statusFor(byItem: Map<string, ItemEvent[]>, itemId: string): ItemStatus {
+  return deriveStatus(byItem.get(itemId) ?? []);
+}
+
+/** Items that are out and past their due date, most overdue first. */
+export function overdueItems(
+  byItem: Map<string, ItemEvent[]>,
+  now: Date = new Date()
+): Array<{ itemId: string; holder?: string; expectedBackOn: string }> {
+  const overdue: Array<{ itemId: string; holder?: string; expectedBackOn: string }> = [];
+
+  for (const [itemId, events] of byItem) {
+    if (!isOverdue(events, now)) continue;
+
+    const { holder, expectedBackOn } = deriveCustody(events);
+    if (expectedBackOn) overdue.push({ itemId, holder, expectedBackOn });
+  }
+
+  return overdue.sort((a, b) => (a.expectedBackOn < b.expectedBackOn ? -1 : 1));
+}

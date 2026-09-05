@@ -119,3 +119,59 @@ test.describe('Item lifecycle', () => {
     await expect(page.getByText('Loaned out').first()).toBeVisible();
   });
 });
+
+test.describe('Lifecycle visibility', () => {
+  test('shows an overdue loan on the dashboard', async ({ page }) => {
+    await signUpWithProperty(page);
+    await createItem(page, 'Table Saw');
+    await recordEvent(page, /^loaned out$/i, { counterparty: 'Jordan', due: '2020-01-01' });
+
+    await page.goto('/dashboard');
+
+    const card = page.getByTestId('overdue-card');
+    await expect(card).toBeVisible();
+    await expect(card).toContainText('Table Saw');
+    await expect(card).toContainText('Jordan');
+  });
+
+  test('hides the overdue card when nothing is late', async ({ page }) => {
+    await signUpWithProperty(page);
+    await createItem(page, 'Torque Wrench');
+
+    await page.goto('/dashboard');
+
+    await expect(page.getByTestId('overdue-card')).toBeHidden();
+  });
+
+  test('drops the overdue card once the item is returned', async ({ page }) => {
+    await signUpWithProperty(page);
+    await createItem(page, 'Heat Gun');
+    await recordEvent(page, /^loaned out$/i, { counterparty: 'Pat', due: '2020-01-01' });
+
+    await page.goto('/dashboard');
+    await expect(page.getByTestId('overdue-card')).toBeVisible();
+
+    await page.getByTestId('overdue-card').getByRole('button', { name: 'Heat Gun' }).click();
+    await recordEvent(page, /^returned$/i);
+
+    await page.goto('/dashboard');
+    await expect(page.getByTestId('overdue-card')).toBeHidden();
+  });
+
+  test('shows status on the item card and filters by it', async ({ page }) => {
+    await signUpWithProperty(page);
+    await createItem(page, 'Loaned Item');
+    await recordEvent(page, /^loaned out$/i, { counterparty: 'Kim' });
+    await createItem(page, 'Kept Item');
+
+    await page.goto('/items');
+    await expect(page.getByText('Loaned Item')).toBeVisible();
+    await expect(page.getByText('Kept Item')).toBeVisible();
+
+    await page.getByTestId('filter-status').click();
+    await page.getByRole('option', { name: /^loaned out$/i }).click();
+
+    await expect(page.getByText('Loaned Item')).toBeVisible();
+    await expect(page.getByText('Kept Item')).toBeHidden();
+  });
+});

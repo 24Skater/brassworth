@@ -5,7 +5,10 @@ import {
   deriveStatus,
   describeEvent,
   isOverdue,
+  groupByItem,
+  overdueItems,
   sortEvents,
+  statusFor,
   summariseCosts,
 } from '@/lib/lifecycle';
 import type { ItemEvent, ItemEventType } from '@/types';
@@ -298,5 +301,95 @@ describe('describeEvent', () => {
 
   it('falls back to the plain label when there is not', () => {
     expect(describeEvent(event('LOANED_OUT', '2024-01-01T00:00:00.000Z'))).toBe('Loaned out');
+  });
+});
+
+describe('groupByItem', () => {
+  it('indexes events by their item', () => {
+    const events = [
+      event('NOTE', '2024-01-01T00:00:00.000Z', { itemId: 'a' }),
+      event('NOTE', '2024-01-02T00:00:00.000Z', { itemId: 'b' }),
+      event('NOTE', '2024-01-03T00:00:00.000Z', { itemId: 'a' }),
+    ];
+
+    const byItem = groupByItem(events);
+    expect(byItem.get('a')).toHaveLength(2);
+    expect(byItem.get('b')).toHaveLength(1);
+    expect(byItem.get('missing')).toBeUndefined();
+  });
+
+  it('returns an empty index for no events', () => {
+    expect(groupByItem([]).size).toBe(0);
+  });
+});
+
+describe('statusFor', () => {
+  it('defaults to owned for an item with no events', () => {
+    expect(statusFor(new Map(), 'unknown')).toBe('IN_POSSESSION');
+  });
+
+  it('derives from that item only', () => {
+    const byItem = groupByItem([
+      event('LOANED_OUT', '2024-01-01T00:00:00.000Z', { itemId: 'a' }),
+      event('SOLD', '2024-01-01T00:00:00.000Z', { itemId: 'b' }),
+    ]);
+
+    expect(statusFor(byItem, 'a')).toBe('LOANED');
+    expect(statusFor(byItem, 'b')).toBe('SOLD');
+  });
+});
+
+describe('overdueItems', () => {
+  const now = new Date('2024-06-01T00:00:00.000Z');
+
+  it('is empty when nothing is out', () => {
+    expect(overdueItems(groupByItem([]), now)).toEqual([]);
+  });
+
+  it('lists only items past their due date', () => {
+    const byItem = groupByItem([
+      event('LOANED_OUT', '2024-01-01T00:00:00.000Z', {
+        itemId: 'late',
+        counterparty: 'Dave',
+        expectedBackOn: '2024-02-01T00:00:00.000Z',
+      }),
+      event('LOANED_OUT', '2024-01-01T00:00:00.000Z', {
+        itemId: 'not-yet',
+        expectedBackOn: '2024-12-01T00:00:00.000Z',
+      }),
+      event('LOANED_OUT', '2024-01-01T00:00:00.000Z', { itemId: 'no-date' }),
+    ]);
+
+    const overdue = overdueItems(byItem, now);
+    expect(overdue).toHaveLength(1);
+    expect(overdue[0]?.itemId).toBe('late');
+    expect(overdue[0]?.holder).toBe('Dave');
+  });
+
+  it('sorts most overdue first', () => {
+    const byItem = groupByItem([
+      event('LOANED_OUT', '2024-01-01T00:00:00.000Z', {
+        itemId: 'recent',
+        expectedBackOn: '2024-05-01T00:00:00.000Z',
+      }),
+      event('LOANED_OUT', '2024-01-01T00:00:00.000Z', {
+        itemId: 'ancient',
+        expectedBackOn: '2024-02-01T00:00:00.000Z',
+      }),
+    ]);
+
+    expect(overdueItems(byItem, now).map((o) => o.itemId)).toEqual(['ancient', 'recent']);
+  });
+
+  it('excludes items that have come back', () => {
+    const byItem = groupByItem([
+      event('LOANED_OUT', '2024-01-01T00:00:00.000Z', {
+        itemId: 'returned',
+        expectedBackOn: '2024-02-01T00:00:00.000Z',
+      }),
+      event('RETURNED', '2024-03-01T00:00:00.000Z', { itemId: 'returned' }),
+    ]);
+
+    expect(overdueItems(byItem, now)).toEqual([]);
   });
 });

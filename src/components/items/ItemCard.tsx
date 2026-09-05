@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ItemStatusBadge } from './ItemStatusBadge';
+import type { ItemStatus } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Item } from '@/types';
@@ -7,6 +9,8 @@ import { Archive, Trash2 } from 'lucide-react';
 
 interface ItemCardProps {
   item: Item;
+  status?: ItemStatus;
+  overdue?: boolean;
   categoryName: string;
   locationName: string;
   onView: () => void;
@@ -35,6 +39,8 @@ const getConditionColor = (condition: Item['condition']) => {
 
 export function ItemCard({
   item,
+  status,
+  overdue,
   categoryName,
   locationName,
   onView,
@@ -56,9 +62,14 @@ export function ItemCard({
         <CardHeader>
           <div className="flex justify-between items-start">
             <CardTitle className="text-lg">{item.name}</CardTitle>
-            <Badge variant="outline" className={getConditionColor(item.condition)}>
-              {item.condition}
-            </Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge variant="outline" className={getConditionColor(item.condition)}>
+                {item.condition}
+              </Badge>
+              {status && status !== 'IN_POSSESSION' && (
+                <ItemStatusBadge status={status} overdue={overdue} />
+              )}
+            </div>
           </div>
           <CardDescription>{categoryName}</CardDescription>
         </CardHeader>

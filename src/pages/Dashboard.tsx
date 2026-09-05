@@ -5,6 +5,8 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { storage } from '@/lib/storage';
+import { groupByItem, overdueItems } from '@/lib/lifecycle';
+import type { ItemEvent } from '@/types';
 import { Package, MapPin, FolderOpen } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { DashboardSkeleton } from '@/components/common/Skeletons';
@@ -18,6 +20,7 @@ export default function Dashboard() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [itemEvents, setItemEvents] = useState<ItemEvent[]>([]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -34,15 +37,17 @@ export default function Dashboard() {
 
       setDataLoading(true);
       try {
-        const [allItems, allLocations, allCategories] = await Promise.all([
+        const [allItems, allLocations, allCategories, allEvents] = await Promise.all([
           storage.getItems(),
           storage.getLocations(),
           storage.getCategories(),
+          storage.getItemEvents(),
         ]);
 
         setItems(allItems.filter((item) => item.organizationId === currentOrg.id));
         setLocations(allLocations.filter((loc) => loc.organizationId === currentOrg.id));
         setCategories(allCategories.filter((cat) => cat.organizationId === currentOrg.id));
+        setItemEvents(allEvents.filter((e) => e.organizationId === currentOrg.id));
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
       } finally {
@@ -66,6 +71,9 @@ export default function Dashboard() {
   }
 
   if (!user) return null;
+
+  const overdue = overdueItems(groupByItem(itemEvents));
+  const itemName = (itemId: string) => items.find((i) => i.id === itemId)?.name ?? 'Unknown item';
 
   const totalValue = items.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
   const estimatedValue = items.reduce(
@@ -131,6 +139,39 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {overdue.length > 0 && (
+              <Card className="border-destructive" data-testid="overdue-card">
+                <CardHeader>
+                  <CardTitle className="text-destructive">
+                    {overdue.length} item{overdue.length === 1 ? '' : 's'} overdue
+                  </CardTitle>
+                  <CardDescription>Lent out and past the date they were due back.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {overdue.map((entry) => (
+                      <li
+                        key={entry.itemId}
+                        className="flex flex-wrap items-baseline gap-x-2 text-sm"
+                      >
+                        <button
+                          type="button"
+                          className="font-medium underline underline-offset-2 hover:text-primary"
+                          onClick={() => navigate(`/items/${entry.itemId}`)}
+                        >
+                          {itemName(entry.itemId)}
+                        </button>
+                        {entry.holder && <span>with {entry.holder}</span>}
+                        <span className="text-muted-foreground">
+                          due {new Date(entry.expectedBackOn).toLocaleDateString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
