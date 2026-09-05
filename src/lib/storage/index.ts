@@ -6,6 +6,7 @@ import type {
   Category,
   Tag,
   Item,
+  ItemEvent,
   Photo,
   Document,
   UserWithAuth,
@@ -105,6 +106,14 @@ export const storage = {
   // Items
   getItems: async () => getStorageProvider().getItems(),
   setItems: async (items: Item[]) => getStorageProvider().replaceCollection('items', items),
+
+  // Item events (append-only lifecycle log)
+  getItemEvents: async () => getStorageProvider().getItemEvents(),
+  getItemEventsByItem: async (itemId: string) => getStorageProvider().getItemEventsByItem(itemId),
+  createItemEvent: async (event: Omit<ItemEvent, 'id' | 'createdAt'>) =>
+    getStorageProvider().createItemEvent(event),
+  setItemEvents: async (events: ItemEvent[]) =>
+    getStorageProvider().replaceCollection('itemEvents', events),
 
   // Photos
   getPhotos: async () => getStorageProvider().getPhotos(),

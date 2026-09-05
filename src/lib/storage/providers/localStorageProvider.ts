@@ -11,6 +11,7 @@ import {
   Document,
   UserWithAuth,
   UserRoleAssignment,
+  ItemEvent,
 } from '@/types';
 
 const STORAGE_KEYS = {
@@ -23,6 +24,7 @@ const STORAGE_KEYS = {
   CATEGORIES: 'inventory_categories',
   TAGS: 'inventory_tags',
   ITEMS: 'inventory_items',
+  ITEM_EVENTS: 'inventory_item_events',
   PHOTOS: 'inventory_photos',
   DOCUMENTS: 'inventory_documents',
 };
@@ -297,6 +299,8 @@ export class LocalStorageProvider implements StorageProvider {
     const items = await this.getItems();
     const filtered = items.filter((i) => i.id !== id);
     localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(filtered));
+    // The lifecycle log belongs to the item; leaving it behind orphans it.
+    await this.deleteItemEventsByItem(id);
   }
 
   // Photo operations
@@ -483,11 +487,44 @@ export class LocalStorageProvider implements StorageProvider {
     categories: STORAGE_KEYS.CATEGORIES,
     tags: STORAGE_KEYS.TAGS,
     items: STORAGE_KEYS.ITEMS,
+    itemEvents: STORAGE_KEYS.ITEM_EVENTS,
     photos: STORAGE_KEYS.PHOTOS,
     documents: STORAGE_KEYS.DOCUMENTS,
     users: STORAGE_KEYS.USERS,
     userRoles: STORAGE_KEYS.USER_ROLES,
   };
+
+  // --- Item events (append-only) ---
+
+  async getItemEvents(): Promise<ItemEvent[]> {
+    const data = localStorage.getItem(STORAGE_KEYS.ITEM_EVENTS);
+    return data ? JSON.parse(data) : [];
+  }
+
+  async getItemEventsByItem(itemId: string): Promise<ItemEvent[]> {
+    const events = await this.getItemEvents();
+    return events.filter((e) => e.itemId === itemId);
+  }
+
+  async createItemEvent(event: Omit<ItemEvent, 'id' | 'createdAt'>): Promise<ItemEvent> {
+    const events = await this.getItemEvents();
+    const created: ItemEvent = {
+      ...event,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    events.push(created);
+    localStorage.setItem(STORAGE_KEYS.ITEM_EVENTS, JSON.stringify(events));
+    return created;
+  }
+
+  async deleteItemEventsByItem(itemId: string): Promise<void> {
+    const events = await this.getItemEvents();
+    localStorage.setItem(
+      STORAGE_KEYS.ITEM_EVENTS,
+      JSON.stringify(events.filter((e) => e.itemId !== itemId))
+    );
+  }
 
   async replaceCollection<K extends CollectionName>(
     collection: K,
@@ -510,6 +547,7 @@ export class LocalStorageProvider implements StorageProvider {
       categories: await this.getCategories(),
       tags: await this.getTags(),
       items: await this.getItems(),
+      itemEvents: await this.getItemEvents(),
       photos: await this.getPhotos(),
       documents: await this.getDocuments(),
       users: await this.getUsers(),
@@ -539,6 +577,9 @@ export class LocalStorageProvider implements StorageProvider {
     }
     if (parsed.items) {
       localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(parsed.items));
+    }
+    if (parsed.itemEvents) {
+      localStorage.setItem(STORAGE_KEYS.ITEM_EVENTS, JSON.stringify(parsed.itemEvents));
     }
     if (parsed.photos) {
       localStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(parsed.photos));

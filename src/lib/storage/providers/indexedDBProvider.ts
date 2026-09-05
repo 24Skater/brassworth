@@ -12,6 +12,7 @@ import {
   Document,
   UserWithAuth,
   UserRoleAssignment,
+  ItemEvent,
 } from '@/types';
 
 /**
@@ -24,6 +25,7 @@ class HomeAssetKeeperDB extends Dexie {
   categories!: Table<Category, string>;
   tags!: Table<Tag, string>;
   items!: Table<Item, string>;
+  itemEvents!: Table<ItemEvent, string>;
   photos!: Table<Photo, string>;
   documents!: Table<Document, string>;
   users!: Table<UserWithAuth, string>;
@@ -42,6 +44,12 @@ class HomeAssetKeeperDB extends Dexie {
       documents: 'id, organizationId, itemId',
       users: 'id, email',
       userRoles: 'id, userId, organizationId, [userId+organizationId]',
+    });
+
+    // v2 adds the append-only lifecycle log. Dexie applies this on top of an
+    // existing v1 database without touching the stores already there.
+    this.version(2).stores({
+      itemEvents: 'id, itemId, organizationId, occurredAt',
     });
   }
 }
@@ -284,6 +292,8 @@ export class IndexedDBProvider implements StorageProvider {
 
   async deleteItem(id: string): Promise<void> {
     await this.db.items.delete(id);
+    // The lifecycle log belongs to the item; leaving it behind orphans it.
+    await this.deleteItemEventsByItem(id);
   }
 
   // Photo operations
@@ -437,6 +447,30 @@ export class IndexedDBProvider implements StorageProvider {
   }
 
   // Utility operations
+  // --- Item events (append-only) ---
+
+  async getItemEvents(): Promise<ItemEvent[]> {
+    return this.db.itemEvents.toArray();
+  }
+
+  async getItemEventsByItem(itemId: string): Promise<ItemEvent[]> {
+    return this.db.itemEvents.where('itemId').equals(itemId).toArray();
+  }
+
+  async createItemEvent(event: Omit<ItemEvent, 'id' | 'createdAt'>): Promise<ItemEvent> {
+    const created: ItemEvent = {
+      ...event,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    await this.db.itemEvents.add(created);
+    return created;
+  }
+
+  async deleteItemEventsByItem(itemId: string): Promise<void> {
+    await this.db.itemEvents.where('itemId').equals(itemId).delete();
+  }
+
   async replaceCollection<K extends CollectionName>(
     collection: K,
     rows: CollectionRow<K>[]
@@ -459,6 +493,7 @@ export class IndexedDBProvider implements StorageProvider {
       this.db.categories.clear(),
       this.db.tags.clear(),
       this.db.items.clear(),
+      this.db.itemEvents.clear(),
       this.db.photos.clear(),
       this.db.documents.clear(),
       this.db.users.clear(),
@@ -477,6 +512,7 @@ export class IndexedDBProvider implements StorageProvider {
       categories: await this.getCategories(),
       tags: await this.getTags(),
       items: await this.getItems(),
+      itemEvents: await this.getItemEvents(),
       photos: await this.getPhotos(),
       documents: await this.getDocuments(),
       users: await this.getUsers(),
@@ -506,6 +542,9 @@ export class IndexedDBProvider implements StorageProvider {
     }
     if (parsed.items) {
       await this.db.items.bulkPut(parsed.items);
+    }
+    if (parsed.itemEvents) {
+      await this.db.itemEvents.bulkPut(parsed.itemEvents);
     }
     if (parsed.photos) {
       await this.db.photos.bulkPut(parsed.photos);

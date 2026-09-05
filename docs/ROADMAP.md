@@ -34,8 +34,8 @@ Verified, not aspirational. Run the checks yourself with the commands in [TESTIN
 | Backend  | **None.** No `fetch`, no `axios`, no API anywhere in `src`             |
 | Storage  | localStorage and IndexedDB providers; the `api` provider is a stub     |
 | Auth     | localStorage records. Not a security boundary — editable from devtools |
-| Tests    | 108 unit, 19 E2E, all green                                            |
-| Coverage | 13.06%, ratcheted so it cannot drop                                    |
+| Tests    | 156 unit, 25 E2E, all green                                            |
+| Coverage | 14.76%, ratcheted so it cannot drop                                    |
 | CI       | Five jobs green on `main`                                              |
 
 ### What already works
@@ -165,16 +165,29 @@ Ordered by dependency, not by appeal. Each phase assumes the one above it.
       collection, which is both the backup story and the migration path when the backend arrives
 - [x] Raise the coverage ratchet
 
-### Phase 2 — Lifecycle
+### Phase 2 — Lifecycle 🚧 in progress
 
 _The differentiator. Buildable entirely client-side._
 
-- `ItemEvent` log with derived status and current holder
-- Check in / check out with counterparty and expected return date
-- Broken → sent for repair → repair cost → returned
-- Sold, with sale price and marketplace, closing the loop against purchase price
-- Item timeline view: the whole history of one thing on one screen
-- Overdue loans surfaced on the dashboard
+- [x] `ItemEvent` append-only log, stored in both providers and included in backups
+- [x] Status and custody **derived** from the log rather than stored — see the note below
+- [x] Check in / check out with counterparty and expected return date
+- [x] Broken → sent for repair → repair cost → returned
+- [x] Sold, with sale price, closing the loop against purchase price
+- [x] Item timeline: the whole history of one thing on one screen
+- [x] Overdue loans flagged on the item
+- [ ] Overdue loans surfaced on the dashboard
+- [ ] Status shown in the items list and filterable
+
+**Deviation from the original plan, deliberately.** This document first proposed deriving
+status and then caching it on the item. The cache is not built. Denormalising invites
+dual-write bugs — exactly the class of bug that `replaceCollection` was added to fix — and
+there is no measured performance problem to justify it. Derivation is a pure fold over one
+item's events. Cache it when a profile says to, not before.
+
+`ItemStatus` also omits `WISHLIST`. A wanted item is a `WishlistEntry` (Phase 5), not an
+owned item in a special state; putting it in the status union would have made every
+exhaustive switch carry a case that cannot occur.
 
 ### Phase 3 — Value and insight
 

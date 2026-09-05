@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
+import { ItemLifecycle } from '@/components/items/ItemLifecycle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -450,6 +451,11 @@ export default function ItemForm() {
             </CardContent>
           </Card>
         </form>
+
+        {/* History only exists once the item does. */}
+        {isEditing && id && currentOrg && (
+          <ItemLifecycle itemId={id} organizationId={currentOrg.id} />
+        )}
       </main>
     </div>
   );

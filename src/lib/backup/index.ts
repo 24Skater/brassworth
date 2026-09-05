@@ -31,6 +31,7 @@ const backupSchema = z.object({
     categories: z.array(row).default([]),
     tags: z.array(row).default([]),
     items: z.array(row).default([]),
+    itemEvents: z.array(row).default([]),
     photos: z.array(row).default([]),
     documents: z.array(row).default([]),
     users: z.array(row).default([]),
@@ -43,6 +44,7 @@ export type Backup = z.infer<typeof backupSchema>;
 export interface BackupSummary {
   organizations: number;
   items: number;
+  itemEvents: number;
   locations: number;
   categories: number;
   tags: number;
@@ -61,6 +63,7 @@ export async function createBackup(): Promise<string> {
     categories,
     tags,
     items,
+    itemEvents,
     photos,
     documents,
     users,
@@ -73,6 +76,7 @@ export async function createBackup(): Promise<string> {
     storage.getCategories(),
     storage.getTags(),
     storage.getItems(),
+    storage.getItemEvents(),
     storage.getPhotos(),
     storage.getDocuments(),
     storage.getUsers(),
@@ -91,6 +95,7 @@ export async function createBackup(): Promise<string> {
       categories,
       tags,
       items,
+      itemEvents,
       photos,
       documents,
       users,
@@ -142,6 +147,7 @@ export function summarise(backup: Backup): BackupSummary {
   return {
     organizations: d.organizations.length,
     items: d.items.length,
+    itemEvents: d.itemEvents.length,
     locations: d.locations.length,
     categories: d.categories.length,
     tags: d.tags.length,
@@ -171,6 +177,7 @@ export async function restoreBackup(json: string): Promise<BackupSummary> {
   await storage.setCategories(d.categories as never);
   await storage.setTags(d.tags as never);
   await storage.setItems(d.items as never);
+  await storage.setItemEvents(d.itemEvents as never);
   await storage.setPhotos(d.photos as never);
   await storage.setDocuments(d.documents as never);
   await storage.setUsers(d.users as never);

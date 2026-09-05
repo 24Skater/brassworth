@@ -10,6 +10,7 @@ import {
   Document,
   UserWithAuth,
   UserRoleAssignment,
+  ItemEvent,
 } from '@/types';
 
 /**
@@ -70,6 +71,12 @@ export interface StorageProvider {
   createItem(item: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>): Promise<Item>;
   updateItem(id: string, updates: Partial<Item>): Promise<Item>;
   deleteItem(id: string): Promise<void>;
+
+  // Item event operations (append-only lifecycle log)
+  getItemEvents(): Promise<ItemEvent[]>;
+  getItemEventsByItem(itemId: string): Promise<ItemEvent[]>;
+  createItemEvent(event: Omit<ItemEvent, 'id' | 'createdAt'>): Promise<ItemEvent>;
+  deleteItemEventsByItem(itemId: string): Promise<void>;
 
   // Photo operations
   getPhotos(): Promise<Photo[]>;
@@ -136,6 +143,7 @@ export type CollectionMap = {
   categories: Category;
   tags: Tag;
   items: Item;
+  itemEvents: ItemEvent;
   photos: Photo;
   documents: Document;
   users: UserWithAuth;
