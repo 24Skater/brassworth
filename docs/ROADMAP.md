@@ -34,8 +34,8 @@ Verified, not aspirational. Run the checks yourself with the commands in [TESTIN
 | Backend  | **None.** No `fetch`, no `axios`, no API anywhere in `src`             |
 | Storage  | localStorage and IndexedDB providers; the `api` provider is a stub     |
 | Auth     | localStorage records. Not a security boundary — editable from devtools |
-| Tests    | 164 unit, 29 E2E, all green                                            |
-| Coverage | 14.95%, ratcheted so it cannot drop                                    |
+| Tests    | 211 unit, 33 E2E, all green                                            |
+| Coverage | 15.96%, ratcheted so it cannot drop                                    |
 | CI       | Five jobs green on `main`                                              |
 
 ### What already works
@@ -189,13 +189,23 @@ item's events. Cache it when a profile says to, not before.
 owned item in a special state; putting it in the status union would have made every
 exhaustive switch carry a case that cannot occur.
 
-### Phase 3 — Value and insight
+### Phase 3 — Value and insight 🚧 in progress
 
-- `Valuation` with straight-line and declining-balance depreciation
-- Age of ownership, cost of ownership, total repair spend per item
-- Dashboards: value by category, by location, by brand
-- **Brand breakdown reporting** — works identically for tools, IT gear and AV gear, because brand is a field rather than an architecture
-- Export reports for insurance and tax
+- [x] Straight-line and declining-balance depreciation, with a salvage floor
+- [x] Age of ownership, cost of ownership, total repair spend per item
+- [x] Value summary on the item page
+- [ ] Dashboards: value by category, by location, by brand
+- [ ] **Brand breakdown reporting** — works identically for tools, IT gear and AV gear,
+      because brand is a field rather than an architecture
+- [ ] Export reports for insurance and tax
+
+**Deviation, deliberately.** This document sketched a separate `Valuation` collection.
+It is not built. Those settings are strictly one-to-one with an item and have no lifecycle
+of their own, so a separate table would buy nothing and cost a join, a migration and a
+second write path. They live on `Item` as optional fields.
+
+`MARKET_COMPARABLE` is also dropped from the method list. With no price data source behind
+it, it would produce a number that looks authoritative and is invented.
 
 ### Phase 4 — Backend, auth, hosted tier
 

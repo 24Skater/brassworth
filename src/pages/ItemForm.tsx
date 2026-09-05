@@ -3,6 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
 import { ItemLifecycle } from '@/components/items/ItemLifecycle';
+import { ItemValueSummary } from '@/components/items/ItemValueSummary';
+import { DEPRECIATION_LABELS } from '@/lib/valuation';
+import type { DepreciationMethod } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,6 +41,7 @@ export default function ItemForm() {
     purchaseDate: '',
     purchasePrice: undefined,
     currentEstimatedValue: undefined,
+    depreciationMethod: 'NONE',
     purchaseLocation: undefined,
     purchaseSourceName: '',
     condition: 'GOOD',
@@ -105,6 +109,10 @@ export default function ItemForm() {
         purchaseDate: formData.purchaseDate,
         purchasePrice: formData.purchasePrice,
         currentEstimatedValue: formData.currentEstimatedValue,
+        depreciationMethod: formData.depreciationMethod,
+        usefulLifeMonths: formData.usefulLifeMonths,
+        declineRatePerYear: formData.declineRatePerYear,
+        salvageValue: formData.salvageValue,
         purchaseLocation: formData.purchaseLocation,
         purchaseSourceName: formData.purchaseSourceName,
         condition: formData.condition as ItemCondition,
@@ -212,6 +220,97 @@ export default function ItemForm() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
+              </div>
+
+              <div className="space-y-4 rounded-md border border-border p-4">
+                <div>
+                  <Label htmlFor="depreciationMethod">How should value be estimated?</Label>
+                  <Select
+                    value={formData.depreciationMethod ?? 'NONE'}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, depreciationMethod: v as DepreciationMethod })
+                    }
+                  >
+                    <SelectTrigger id="depreciationMethod">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(DEPRECIATION_LABELS) as DepreciationMethod[]).map((method) => (
+                        <SelectItem key={method} value={method}>
+                          {DEPRECIATION_LABELS[method]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Straight line loses the same amount each month. Declining balance loses a share
+                    of what is left each year, which is closer to how tools and electronics behave.
+                  </p>
+                </div>
+
+                {formData.depreciationMethod === 'STRAIGHT_LINE' && (
+                  <div>
+                    <Label htmlFor="usefulLifeMonths">Useful life (months)</Label>
+                    <Input
+                      id="usefulLifeMonths"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={formData.usefulLifeMonths || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          usefulLifeMonths: parseInt(e.target.value, 10) || undefined,
+                        })
+                      }
+                    />
+                  </div>
+                )}
+
+                {formData.depreciationMethod === 'DECLINING_BALANCE' && (
+                  <div>
+                    <Label htmlFor="declineRatePerYear">Value lost per year (%)</Label>
+                    <Input
+                      id="declineRatePerYear"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={
+                        formData.declineRatePerYear !== undefined
+                          ? Math.round(formData.declineRatePerYear * 100)
+                          : ''
+                      }
+                      onChange={(e) => {
+                        const percent = parseFloat(e.target.value);
+                        setFormData({
+                          ...formData,
+                          declineRatePerYear: Number.isFinite(percent) ? percent / 100 : undefined,
+                        });
+                      }}
+                    />
+                  </div>
+                )}
+
+                {(formData.depreciationMethod === 'STRAIGHT_LINE' ||
+                  formData.depreciationMethod === 'DECLINING_BALANCE') && (
+                  <div>
+                    <Label htmlFor="salvageValue">Value it never drops below</Label>
+                    <Input
+                      id="salvageValue"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.salvageValue || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          salvageValue: parseFloat(e.target.value) || undefined,
+                        })
+                      }
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -454,7 +553,10 @@ export default function ItemForm() {
 
         {/* History only exists once the item does. */}
         {isEditing && id && currentOrg && (
-          <ItemLifecycle itemId={id} organizationId={currentOrg.id} />
+          <>
+            <ItemValueSummary itemId={id} />
+            <ItemLifecycle itemId={id} organizationId={currentOrg.id} />
+          </>
         )}
       </main>
     </div>

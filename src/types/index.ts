@@ -80,6 +80,14 @@ export interface Item {
   purchaseDate?: string;
   purchasePrice?: number;
   currentEstimatedValue?: number;
+  /** How to estimate current value. Defaults to NONE. */
+  depreciationMethod?: DepreciationMethod;
+  /** Straight line: months from purchase until it reaches salvage value. */
+  usefulLifeMonths?: number;
+  /** Declining balance: share of remaining value lost each year, 0-1. */
+  declineRatePerYear?: number;
+  /** The floor an item does not depreciate below. */
+  salvageValue?: number;
   purchaseLocation?: PurchaseSource;
   purchaseSourceName?: string;
   condition: ItemCondition;
@@ -90,6 +98,19 @@ export interface Item {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * How an item's current value is estimated.
+ *
+ * Deliberately not a separate `Valuation` collection. The roadmap sketched one,
+ * but these settings are strictly one-to-one with an item and have no lifecycle
+ * of their own — a separate table would buy nothing and cost a join, a
+ * migration and a second write path.
+ *
+ * MARKET_COMPARABLE is also absent: with no price data source behind it, it
+ * would produce a number that looks authoritative and is invented.
+ */
+export type DepreciationMethod = 'NONE' | 'STRAIGHT_LINE' | 'DECLINING_BALANCE' | 'MANUAL';
 
 /**
  * Where an item is in its life. Deliberately separate from `ItemCondition` —
