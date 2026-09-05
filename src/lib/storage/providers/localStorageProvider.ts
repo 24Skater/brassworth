@@ -84,13 +84,15 @@ export class LocalStorageProvider implements StorageProvider {
 
   async updateOrganization(id: string, updates: Partial<Organization>): Promise<Organization> {
     const orgs = await this.getOrganizations();
-    const index = orgs.findIndex((o) => o.id === id);
-    if (index === -1) {
+    const index = orgs.findIndex((entry) => entry.id === id);
+    const existing = orgs[index];
+    if (!existing) {
       throw new Error(`Organization with id ${id} not found`);
     }
-    orgs[index] = { ...orgs[index], ...updates, updatedAt: new Date().toISOString() };
+    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+    orgs[index] = updated;
     localStorage.setItem(STORAGE_KEYS.ORGANIZATIONS, JSON.stringify(orgs));
-    return orgs[index];
+    return updated;
   }
 
   async deleteOrganization(id: string): Promise<void> {
@@ -156,13 +158,15 @@ export class LocalStorageProvider implements StorageProvider {
 
   async updateLocation(id: string, updates: Partial<Location>): Promise<Location> {
     const locations = await this.getLocations();
-    const index = locations.findIndex((l) => l.id === id);
-    if (index === -1) {
+    const index = locations.findIndex((entry) => entry.id === id);
+    const existing = locations[index];
+    if (!existing) {
       throw new Error(`Location with id ${id} not found`);
     }
-    locations[index] = { ...locations[index], ...updates };
+    const updated = { ...existing, ...updates };
+    locations[index] = updated;
     localStorage.setItem(STORAGE_KEYS.LOCATIONS, JSON.stringify(locations));
-    return locations[index];
+    return updated;
   }
 
   async deleteLocation(id: string): Promise<void> {
@@ -200,13 +204,15 @@ export class LocalStorageProvider implements StorageProvider {
 
   async updateCategory(id: string, updates: Partial<Category>): Promise<Category> {
     const categories = await this.getCategories();
-    const index = categories.findIndex((c) => c.id === id);
-    if (index === -1) {
+    const index = categories.findIndex((entry) => entry.id === id);
+    const existing = categories[index];
+    if (!existing) {
       throw new Error(`Category with id ${id} not found`);
     }
-    categories[index] = { ...categories[index], ...updates };
+    const updated = { ...existing, ...updates };
+    categories[index] = updated;
     localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
-    return categories[index];
+    return updated;
   }
 
   async deleteCategory(id: string): Promise<void> {
@@ -244,13 +250,15 @@ export class LocalStorageProvider implements StorageProvider {
 
   async updateTag(id: string, updates: Partial<Tag>): Promise<Tag> {
     const tags = await this.getTags();
-    const index = tags.findIndex((t) => t.id === id);
-    if (index === -1) {
+    const index = tags.findIndex((entry) => entry.id === id);
+    const existing = tags[index];
+    if (!existing) {
       throw new Error(`Tag with id ${id} not found`);
     }
-    tags[index] = { ...tags[index], ...updates };
+    const updated = { ...existing, ...updates };
+    tags[index] = updated;
     localStorage.setItem(STORAGE_KEYS.TAGS, JSON.stringify(tags));
-    return tags[index];
+    return updated;
   }
 
   async deleteTag(id: string): Promise<void> {
@@ -290,13 +298,15 @@ export class LocalStorageProvider implements StorageProvider {
 
   async updateItem(id: string, updates: Partial<Item>): Promise<Item> {
     const items = await this.getItems();
-    const index = items.findIndex((i) => i.id === id);
-    if (index === -1) {
+    const index = items.findIndex((entry) => entry.id === id);
+    const existing = items[index];
+    if (!existing) {
       throw new Error(`Item with id ${id} not found`);
     }
-    items[index] = { ...items[index], ...updates, updatedAt: new Date().toISOString() };
+    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+    items[index] = updated;
     localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
-    return items[index];
+    return updated;
   }
 
   async deleteItem(id: string): Promise<void> {
@@ -336,13 +346,15 @@ export class LocalStorageProvider implements StorageProvider {
 
   async updatePhoto(id: string, updates: Partial<Photo>): Promise<Photo> {
     const photos = await this.getPhotos();
-    const index = photos.findIndex((p) => p.id === id);
-    if (index === -1) {
+    const index = photos.findIndex((entry) => entry.id === id);
+    const existing = photos[index];
+    if (!existing) {
       throw new Error(`Photo with id ${id} not found`);
     }
-    photos[index] = { ...photos[index], ...updates };
+    const updated = { ...existing, ...updates };
+    photos[index] = updated;
     localStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(photos));
-    return photos[index];
+    return updated;
   }
 
   async deletePhoto(id: string): Promise<void> {
@@ -385,13 +397,15 @@ export class LocalStorageProvider implements StorageProvider {
 
   async updateDocument(id: string, updates: Partial<Document>): Promise<Document> {
     const documents = await this.getDocuments();
-    const index = documents.findIndex((d) => d.id === id);
-    if (index === -1) {
+    const index = documents.findIndex((entry) => entry.id === id);
+    const existing = documents[index];
+    if (!existing) {
       throw new Error(`Document with id ${id} not found`);
     }
-    documents[index] = { ...documents[index], ...updates };
+    const updated = { ...existing, ...updates };
+    documents[index] = updated;
     localStorage.setItem(STORAGE_KEYS.DOCUMENTS, JSON.stringify(documents));
-    return documents[index];
+    return updated;
   }
 
   async deleteDocument(id: string): Promise<void> {
@@ -425,13 +439,15 @@ export class LocalStorageProvider implements StorageProvider {
 
   async updateUser(id: string, updates: Partial<UserWithAuth>): Promise<UserWithAuth> {
     const users = await this.getUsers();
-    const index = users.findIndex((u) => u.id === id);
-    if (index === -1) {
+    const index = users.findIndex((entry) => entry.id === id);
+    const existing = users[index];
+    if (!existing) {
       throw new Error(`User with id ${id} not found`);
     }
-    users[index] = { ...users[index], ...updates };
+    const updated = { ...existing, ...updates };
+    users[index] = updated;
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-    return users[index];
+    return updated;
   }
 
   async deleteUser(id: string): Promise<void> {
@@ -464,7 +480,7 @@ export class LocalStorageProvider implements StorageProvider {
 
     const newRole: UserRoleAssignment = {
       ...assignment,
-      id: existingIndex >= 0 ? roles[existingIndex].id : crypto.randomUUID(),
+      id: roles[existingIndex]?.id ?? crypto.randomUUID(),
     };
 
     if (existingIndex >= 0) {
@@ -514,11 +530,13 @@ export class LocalStorageProvider implements StorageProvider {
   async updateWishlistEntry(id: string, updates: Partial<WishlistEntry>): Promise<WishlistEntry> {
     const entries = await this.getWishlistEntries();
     const index = entries.findIndex((e) => e.id === id);
-    if (index === -1) throw new Error(`Wishlist entry with id ${id} not found`);
+    const existing = entries[index];
+    if (!existing) throw new Error(`Wishlist entry with id ${id} not found`);
 
-    entries[index] = { ...entries[index], ...updates, updatedAt: new Date().toISOString() };
+    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+    entries[index] = updated;
     localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(entries));
-    return entries[index];
+    return updated;
   }
 
   async deleteWishlistEntry(id: string): Promise<void> {

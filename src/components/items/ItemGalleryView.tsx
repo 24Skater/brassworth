@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Item, Photo } from '@/types';
+import { Item } from '@/types';
 import { Archive, Trash2, Package } from 'lucide-react';
 import { storage } from '@/lib/storage';
 
 interface ItemGalleryViewProps {
   item: Item;
   categoryName: string;
-  locationName: string;
   onView: () => void;
   onArchive: () => void;
   onDelete: () => void;
@@ -34,7 +33,6 @@ const getConditionColor = (condition: Item['condition']) => {
 export function ItemGalleryView({
   item,
   categoryName,
-  locationName,
   onView,
   onArchive,
   onDelete,

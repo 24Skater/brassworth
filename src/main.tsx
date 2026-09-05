@@ -12,7 +12,6 @@ if (import.meta.env.DEV) {
       import('react').then((React) => {
         import('react-dom/client').then((ReactDOM) => {
           // Initialize axe-core for accessibility testing
-          // @ts-expect-error - axe-core types may not match exactly
           if (axe.default && React.default && ReactDOM.default) {
             axe.default(React.default, ReactDOM.default, 1000);
           }

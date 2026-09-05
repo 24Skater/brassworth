@@ -31,7 +31,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"{src,tests}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"{src,tests}/**/*.{ts,tsx,js,jsx,json,css,md}\"",
-    "type-check": "tsc --noEmit && npm run type-check:server",
+    "type-check": "npm run type-check:app && npm run type-check:node && npm run type-check:server",
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
@@ -43,7 +43,9 @@
     "test:e2e:all": "playwright test",
     "dev:server": "tsx watch server/index.ts",
     "start:server": "tsx server/index.ts",
-    "type-check:server": "tsc -p server/tsconfig.json --noEmit"
+    "type-check:server": "tsc -p server/tsconfig.json --noEmit",
+    "type-check:app": "tsc -p tsconfig.app.json --noEmit",
+    "type-check:node": "tsc -p tsconfig.node.json --noEmit"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",

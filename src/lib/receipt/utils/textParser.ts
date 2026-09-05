@@ -93,6 +93,7 @@ function extractLineItems(lines: string[]): ParsedReceiptItem[] {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    if (line === undefined) continue;
 
     // Skip lines that look like headers or totals
     if (/^(subtotal|tax|total|payment|change|thank you)/i.test(line)) {
@@ -101,7 +102,9 @@ function extractLineItems(lines: string[]): ParsedReceiptItem[] {
 
     const priceMatch = line.match(pricePattern);
     if (priceMatch) {
-      const priceStr = priceMatch[1].replace(',', '');
+      // Group 1 is the price; a match without it is not one we can use.
+      const priceStr = priceMatch[1]?.replace(',', '');
+      if (priceStr === undefined) continue;
       const lineTotal = parseFloat(priceStr);
 
       if (isNaN(lineTotal) || lineTotal <= 0) continue;
@@ -113,7 +116,7 @@ function extractLineItems(lines: string[]): ParsedReceiptItem[] {
       let quantity = 1;
       const qtyMatch = description.match(qtyPattern);
       if (qtyMatch) {
-        quantity = parseInt(qtyMatch[1], 10);
+        quantity = parseInt(qtyMatch[1] ?? '1', 10);
         description = description.replace(qtyMatch[0], '').trim();
       }
 

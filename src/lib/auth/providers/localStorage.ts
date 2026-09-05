@@ -12,7 +12,6 @@ const STORAGE_KEYS = {
 
 // Session configuration (in hours)
 // Can be overridden via environment variables
-const SESSION_EXPIRY_HOURS = parseInt(import.meta.env.VITE_SESSION_EXPIRY_HOURS || '168', 10); // 7 days default
 const SESSION_EXPIRY_HOURS_REMEMBER = parseInt(
   import.meta.env.VITE_SESSION_EXPIRY_HOURS_REMEMBER || '720',
   10
@@ -212,9 +211,10 @@ export class LocalStorageAuthProvider implements AuthProviderInterface {
 
     const users = this.getAllUsers();
     const userIndex = users.findIndex((u) => u.id === user.id);
-    if (userIndex >= 0) {
-      users[userIndex].passwordHash = newHash;
-      users[userIndex].passwordSalt = salt;
+    const stored = users[userIndex];
+    if (stored) {
+      stored.passwordHash = newHash;
+      stored.passwordSalt = salt;
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
     }
   }
@@ -433,8 +433,9 @@ export class LocalStorageRoleProvider implements RoleProviderInterface {
       (r) => r.userId === userId && r.organizationId === organizationId
     );
 
-    if (existingIndex >= 0) {
-      roles[existingIndex].role = role;
+    const existingRole = roles[existingIndex];
+    if (existingRole) {
+      existingRole.role = role;
     } else {
       roles.push({
         id: crypto.randomUUID(),

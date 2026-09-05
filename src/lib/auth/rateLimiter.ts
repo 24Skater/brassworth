@@ -104,7 +104,9 @@ export async function recordFailedAttempt(email: string): Promise<{
     // Calculate lockout if max attempts reached
     if (attempts >= MAX_ATTEMPTS) {
       const lockoutIndex = Math.min(attempts - MAX_ATTEMPTS, LOCKOUT_DURATIONS.length - 1);
-      lockedUntil = now + LOCKOUT_DURATIONS[lockoutIndex];
+      // Clamped above, so this is always in range; the fallback is the longest
+      // lockout rather than a crash if the table is ever changed.
+      lockedUntil = now + (LOCKOUT_DURATIONS[lockoutIndex] ?? LOCKOUT_DURATIONS.at(-1) ?? 0);
     }
   }
 

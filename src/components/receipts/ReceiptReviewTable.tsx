@@ -47,8 +47,10 @@ export function ReceiptReviewTable({
   locations,
 }: ReceiptReviewTableProps) {
   const [storeName, setStoreName] = useState(receipt.storeName || '');
-  const [purchaseDate, setPurchaseDate] = useState(
-    receipt.purchaseDate || new Date().toISOString().split('T')[0]
+  const [purchaseDate, setPurchaseDate] = useState<string>(
+    // split() can return undefined to the type checker; today's date is always
+    // a better default here than an empty field.
+    receipt.purchaseDate || (new Date().toISOString().split('T')[0] ?? '')
   );
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [locationId, setLocationId] = useState<string | undefined>(undefined);
@@ -56,10 +58,10 @@ export function ReceiptReviewTable({
     receipt.items.map((item) => ({ ...item, selected: true }))
   );
 
-  const updateItem = (index: number, field: keyof ParsedReceiptItem, value: any) => {
-    const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setItems(newItems);
+  const updateItem = (index: number, field: keyof ParsedReceiptItem, value: unknown) => {
+    setItems((current) =>
+      current.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
   };
 
   const removeItem = (index: number) => {
@@ -67,15 +69,15 @@ export function ReceiptReviewTable({
   };
 
   const toggleItem = (index: number) => {
-    const newItems = [...items];
-    newItems[index].selected = !newItems[index].selected;
-    setItems(newItems);
+    setItems((current) =>
+      current.map((item, i) => (i === index ? { ...item, selected: !item.selected } : item))
+    );
   };
 
   const handleConfirm = () => {
     const selectedItems = items
       .filter((item) => item.selected)
-      .map(({ selected, ...item }) => item);
+      .map(({ selected: _selected, ...item }) => item);
 
     if (selectedItems.length === 0) {
       alert('Please select at least one item to import.');

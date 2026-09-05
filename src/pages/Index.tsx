@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Package, Shield, FileText, Search } from 'lucide-react';
+import { Package, Shield, Search } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();

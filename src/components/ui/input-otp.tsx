@@ -33,7 +33,13 @@ const InputOTPSlot = React.forwardRef<
   React.ComponentPropsWithoutRef<'div'> & { index: number }
 >(({ index, className, ...props }, ref) => {
   const inputOTPContext = React.useContext(OTPInputContext);
-  const { char, hasFakeCaret, isActive } = inputOTPContext.slots[index];
+  // A slot can be out of range while the input is resizing; rendering an empty
+  // slot beats throwing.
+  const { char, hasFakeCaret, isActive } = inputOTPContext.slots[index] ?? {
+    char: null,
+    hasFakeCaret: false,
+    isActive: false,
+  };
 
   return (
     <div

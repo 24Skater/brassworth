@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -281,8 +280,17 @@ export default function Items() {
       try {
         const data = new Uint8Array(event.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+        const firstSheetName = workbook.SheetNames[0];
+        if (!firstSheetName) {
+          toast({
+            title: 'Nothing to import',
+            description: 'That spreadsheet has no sheets.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = worksheet ? (XLSX.utils.sheet_to_json(worksheet) as any[]) : [];
 
         let importedCount = 0;
         let createdCategories = 0;
@@ -473,7 +481,7 @@ export default function Items() {
     setBulkEditOpen(false);
     setBulkCategory('');
     setBulkLocation('');
-    refreshData();
+    await loadData();
   };
 
   const handleReceiptParsed = (receipt: ParsedReceipt, file?: File) => {
@@ -486,7 +494,7 @@ export default function Items() {
   const handleReceiptConfirm = async (data: ConfirmedReceiptData) => {
     if (!currentOrg) return;
 
-    const createItems = async (docId?: string) => {
+    const createItems = async () => {
       const allItems = await storage.getItems();
       const createdItems: Item[] = [];
 
@@ -549,7 +557,7 @@ export default function Items() {
         const allDocuments = await storage.getDocuments();
         await storage.setDocuments([...allDocuments, receiptDocument]);
 
-        await createItems(receiptDocument.id);
+        await createItems();
       };
       reader.readAsDataURL(receiptFile);
     } else {
@@ -771,7 +779,6 @@ export default function Items() {
                     key={item.id}
                     item={item}
                     categoryName={getCategoryName(item.categoryId)}
-                    locationName={getLocationName(item.locationId)}
                     onView={() => navigate(`/items/${item.id}`)}
                     onArchive={() =>
                       showArchived ? handleRestoreItem(item) : handleArchiveItem(item)

@@ -105,7 +105,7 @@ Run the same checks CI runs:
 ```bash
 npm run lint
 npm run format:check
-npm run type-check
+npm run type-check   # app, node and server configs
 npm run test:coverage
 npm run build
 npm run test:e2e
@@ -117,13 +117,13 @@ All six must pass. If any fails, the PR is not ready.
 
 `.github/workflows/ci.yml` runs five jobs on every pull request:
 
-| Job                    | What it does                                        |
-| ---------------------- | --------------------------------------------------- |
-| Lint, Format and Types | ESLint, Prettier, `tsc --noEmit`                    |
-| Unit Tests             | Vitest with coverage; thresholds enforced           |
-| Build                  | Production build, uploads `dist`                    |
-| E2E Tests              | Playwright on chromium against the production build |
-| Security Audit         | Blocks on critical production vulnerabilities       |
+| Job                    | What it does                                              |
+| ---------------------- | --------------------------------------------------------- |
+| Lint, Format and Types | ESLint, Prettier, and TypeScript across all three configs |
+| Unit Tests             | Vitest with coverage; thresholds enforced                 |
+| Build                  | Production build, uploads `dist`                          |
+| E2E Tests              | Playwright on chromium against the production build       |
+| Security Audit         | Blocks on critical production vulnerabilities             |
 
 Firefox and WebKit run nightly rather than per-PR, to keep pull requests fast. Trigger them on demand from the Actions tab.
 
@@ -136,3 +136,17 @@ Firefox and WebKit run nightly rather than per-PR, to keep pull requests fast. T
 **An E2E spec fails after a UI change** — read `playwright-report/`. CI uploads it as an artifact on every run, pass or fail.
 
 **Coverage drops the build** — you added code without tests. That is the ratchet doing its job.
+
+## A gate that was not checking anything
+
+`npm run type-check` used to run `tsc --noEmit` against the root `tsconfig.json`, which has
+`"files": []` and project references. That resolves to an **empty program**: it type-checked
+nothing and exited zero. The app had never been type-checked in CI.
+
+It was found when a syntax error — a stray double comma in an import — passed the TypeScript
+job and only surfaced as a blank page in an end-to-end test. Turning the gate on properly
+revealed 51 errors, including a call to an undefined function.
+
+`type-check` now names each config explicitly: `type-check:app`, `type-check:node` and
+`type-check:server`. If you add a fourth config, add it there too — a reference alone does
+not check anything.

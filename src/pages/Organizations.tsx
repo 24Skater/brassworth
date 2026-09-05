@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,6 @@ import { Organization } from '@/types';
 import { Home, Church, Building2, FolderOpen, Pencil, Trash2 } from 'lucide-react';
 
 export default function Organizations() {
-  const { user } = useAuth();
   const {
     organizations,
     currentOrg,
