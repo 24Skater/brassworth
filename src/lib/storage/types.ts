@@ -103,6 +103,21 @@ export interface StorageProvider {
   deleteUserRole(userId: string, orgId: string): Promise<void>;
 
   // Utility operations
+  /**
+   * Replace an entire collection, preserving each record's own id and
+   * timestamps.
+   *
+   * Bulk saves previously went through delete-all-then-createX, and every
+   * createX mints a fresh crypto.randomUUID(). That silently reassigned the id
+   * of every existing record on every save, orphaning anything referencing it
+   * (memberships, roles, items, photos, documents). Writing the rows as given
+   * is the only safe way to persist a whole collection.
+   */
+  replaceCollection<K extends CollectionName>(
+    collection: K,
+    rows: CollectionRow<K>[]
+  ): Promise<void>;
+
   clearAll(): Promise<void>;
   exportData(): Promise<string>; // JSON export
   importData(data: string): Promise<void>; // JSON import
@@ -112,3 +127,20 @@ export interface StorageProvider {
  * Storage provider type
  */
 export type StorageProviderType = 'localStorage' | 'indexeddb' | 'api';
+
+/** Collections that support whole-collection replacement. */
+export type CollectionMap = {
+  organizations: Organization;
+  memberships: Membership;
+  locations: Location;
+  categories: Category;
+  tags: Tag;
+  items: Item;
+  photos: Photo;
+  documents: Document;
+  users: UserWithAuth;
+  userRoles: UserRoleAssignment;
+};
+
+export type CollectionName = keyof CollectionMap;
+export type CollectionRow<K extends CollectionName> = CollectionMap[K];

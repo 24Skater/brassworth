@@ -6,7 +6,17 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RoleSelect } from './RoleSelect';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { UserMinus, Mail, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { getRoleLabel } from '@/lib/auth/permissions';
@@ -28,7 +38,7 @@ export function UserCard({ user, userRole }: UserCardProps) {
 
   const handleRoleChange = async (newRole: UserRole) => {
     if (!currentOrg) return;
-    
+
     setIsUpdating(true);
     try {
       setUserRole(user.id, currentOrg.id, newRole);
@@ -43,7 +53,7 @@ export function UserCard({ user, userRole }: UserCardProps) {
 
   const handleRemove = async () => {
     if (!currentOrg) return;
-    
+
     try {
       await removeUser(user.id, currentOrg.id);
       toast.success('User removed from organization');
@@ -60,7 +70,9 @@ export function UserCard({ user, userRole }: UserCardProps) {
             <div className="flex items-center gap-2 mb-2">
               <h3 className="font-semibold text-foreground truncate">{user.name}</h3>
               {isCurrentUser && (
-                <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">You</span>
+                <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                  You
+                </span>
               )}
             </div>
             <div className="space-y-1 text-sm text-muted-foreground">
@@ -78,11 +90,7 @@ export function UserCard({ user, userRole }: UserCardProps) {
             {canManage && !isCurrentUser ? (
               <>
                 <div className="w-48">
-                  <RoleSelect
-                    value={role}
-                    onChange={handleRoleChange}
-                    disabled={isUpdating}
-                  />
+                  <RoleSelect value={role} onChange={handleRoleChange} disabled={isUpdating} />
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -95,7 +103,8 @@ export function UserCard({ user, userRole }: UserCardProps) {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Remove User</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to remove {user.name} from this organization? This action cannot be undone.
+                        Are you sure you want to remove {user.name} from this organization? This
+                        action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

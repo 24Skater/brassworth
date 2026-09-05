@@ -2,7 +2,15 @@ import { useState } from 'react';
 import { UserRole } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,7 +57,8 @@ export function InviteUserDialog() {
         <DialogHeader>
           <DialogTitle>Invite User</DialogTitle>
           <DialogDescription>
-            Add a new user to {currentOrg?.name}. They will receive access based on their assigned role.
+            Add a new user to {currentOrg?.name}. They will receive access based on their assigned
+            role.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">

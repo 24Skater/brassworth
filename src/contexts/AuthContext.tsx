@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  ReactNode,
+} from 'react';
 import { User, UserRole } from '@/types';
 import { createAuthProvider } from '@/lib/auth';
 
@@ -14,7 +22,12 @@ interface AuthContextType {
   isSessionExpired: boolean;
   refreshSession: () => Promise<boolean>;
   listUsers: () => User[];
-  inviteUser: (email: string, name: string, organizationId: string, role: UserRole) => Promise<void>;
+  inviteUser: (
+    email: string,
+    name: string,
+    organizationId: string,
+    role: UserRole
+  ) => Promise<void>;
   removeUser: (userId: string, organizationId: string) => Promise<void>;
 }
 
@@ -24,7 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
-  const authProvider = createAuthProvider();
+  // Memoised: previously this ran on every render, producing a new provider
+  // instance each time and defeating any provider-held state.
+  const authProvider = useMemo(() => createAuthProvider(), []);
 
   // Check session validity
   const checkSession = useCallback(async () => {
@@ -33,24 +48,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setIsSessionExpired(true);
     }
-  }, [user]);
+  }, [authProvider, user]);
 
-  // Initial session check and periodic validation
+  // Initial session check. Runs once on mount.
+  //
+  // This was previously combined with the periodic-check effect and keyed on
+  // [checkSession], which changes whenever `user` does. The result was that
+  // logging in re-ran the whole initialisation pass and immediately cleared the
+  // user it had just set. Keeping the two effects separate fixes that.
   useEffect(() => {
+    let cancelled = false;
+
     const initializeAuth = async () => {
       const isValid = await authProvider.validateSession();
-      if (isValid) {
-        const currentUser = authProvider.getCurrentUser();
-        setUser(currentUser);
-      } else {
-        setUser(null);
-      }
+      if (cancelled) return;
+
+      setUser(isValid ? authProvider.getCurrentUser() : null);
       setIsLoading(false);
     };
 
     initializeAuth();
 
-    // Set up periodic session check
+    return () => {
+      cancelled = true;
+    };
+  }, [authProvider]);
+
+  // Periodic session revalidation, independent of the initial check.
+  useEffect(() => {
     const interval = setInterval(checkSession, SESSION_CHECK_INTERVAL);
     return () => clearInterval(interval);
   }, [checkSession]);
@@ -91,7 +116,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return authProvider.listUsers();
   };
 
-  const inviteUser = async (email: string, name: string, organizationId: string, role: UserRole) => {
+  const inviteUser = async (
+    email: string,
+    name: string,
+    organizationId: string,
+    role: UserRole
+  ) => {
     const result = await authProvider.inviteUser(email, name, organizationId, role);
     if (result.error) {
       throw new Error(result.error);
@@ -106,18 +136,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      signup, 
-      logout, 
-      isLoading,
-      isSessionExpired,
-      refreshSession,
-      listUsers,
-      inviteUser,
-      removeUser,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        signup,
+        logout,
+        isLoading,
+        isSessionExpired,
+        refreshSession,
+        listUsers,
+        inviteUser,
+        removeUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

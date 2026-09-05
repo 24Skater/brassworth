@@ -1,4 +1,11 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Item } from '@/types';
@@ -15,16 +22,29 @@ interface ItemTableViewProps {
 
 const getConditionColor = (condition: Item['condition']) => {
   switch (condition) {
-    case 'NEW': return 'bg-green-500/10 text-green-500 border-green-500/20';
-    case 'GOOD': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    case 'FAIR': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-    case 'POOR': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-    case 'DAMAGED': return 'bg-red-500/10 text-red-500 border-red-500/20';
-    default: return 'bg-muted text-muted-foreground';
+    case 'NEW':
+      return 'bg-green-500/10 text-green-500 border-green-500/20';
+    case 'GOOD':
+      return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    case 'FAIR':
+      return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+    case 'POOR':
+      return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    case 'DAMAGED':
+      return 'bg-red-500/10 text-red-500 border-red-500/20';
+    default:
+      return 'bg-muted text-muted-foreground';
   }
 };
 
-export function ItemTableView({ items, getCategoryName, getLocationName, onView, onArchive, onDelete }: ItemTableViewProps) {
+export function ItemTableView({
+  items,
+  getCategoryName,
+  getLocationName,
+  onView,
+  onArchive,
+  onDelete,
+}: ItemTableViewProps) {
   return (
     <div className="rounded-md border">
       <Table>

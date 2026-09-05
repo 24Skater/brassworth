@@ -1,4 +1,4 @@
-import type { StorageProvider } from '../types';
+import type { CollectionName, CollectionRow, StorageProvider } from '../types';
 import {
   User,
   Organization,
@@ -476,6 +476,27 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   // Utility operations
+  private static readonly COLLECTION_KEYS: Record<CollectionName, string> = {
+    organizations: STORAGE_KEYS.ORGANIZATIONS,
+    memberships: STORAGE_KEYS.MEMBERSHIPS,
+    locations: STORAGE_KEYS.LOCATIONS,
+    categories: STORAGE_KEYS.CATEGORIES,
+    tags: STORAGE_KEYS.TAGS,
+    items: STORAGE_KEYS.ITEMS,
+    photos: STORAGE_KEYS.PHOTOS,
+    documents: STORAGE_KEYS.DOCUMENTS,
+    users: STORAGE_KEYS.USERS,
+    userRoles: STORAGE_KEYS.USER_ROLES,
+  };
+
+  async replaceCollection<K extends CollectionName>(
+    collection: K,
+    rows: CollectionRow<K>[]
+  ): Promise<void> {
+    const key = LocalStorageProvider.COLLECTION_KEYS[collection];
+    localStorage.setItem(key, JSON.stringify(rows));
+  }
+
   async clearAll(): Promise<void> {
     Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
   }

@@ -18,24 +18,38 @@ interface ItemCardProps {
 
 const getConditionColor = (condition: Item['condition']) => {
   switch (condition) {
-    case 'NEW': return 'bg-green-500/10 text-green-500 border-green-500/20';
-    case 'GOOD': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    case 'FAIR': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-    case 'POOR': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-    case 'DAMAGED': return 'bg-red-500/10 text-red-500 border-red-500/20';
-    default: return 'bg-muted text-muted-foreground';
+    case 'NEW':
+      return 'bg-green-500/10 text-green-500 border-green-500/20';
+    case 'GOOD':
+      return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    case 'FAIR':
+      return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+    case 'POOR':
+      return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    case 'DAMAGED':
+      return 'bg-red-500/10 text-red-500 border-red-500/20';
+    default:
+      return 'bg-muted text-muted-foreground';
   }
 };
 
-export function ItemCard({ item, categoryName, locationName, onView, onArchive, onDelete, selected, onToggleSelect }: ItemCardProps) {
+export function ItemCard({
+  item,
+  categoryName,
+  locationName,
+  onView,
+  onArchive,
+  onDelete,
+  selected,
+  onToggleSelect,
+}: ItemCardProps) {
   return (
-    <Card className={`cursor-pointer hover:border-primary transition-colors group relative ${selected ? 'ring-2 ring-primary' : ''}`}>
+    <Card
+      className={`cursor-pointer hover:border-primary transition-colors group relative ${selected ? 'ring-2 ring-primary' : ''}`}
+    >
       {onToggleSelect && (
         <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
-          <Checkbox 
-            checked={selected}
-            onCheckedChange={onToggleSelect}
-          />
+          <Checkbox checked={selected} onCheckedChange={onToggleSelect} />
         </div>
       )}
       <div onClick={onView} className={onToggleSelect ? 'pl-6' : ''}>
@@ -52,8 +66,12 @@ export function ItemCard({ item, categoryName, locationName, onView, onArchive, 
           <div className="space-y-2 text-sm">
             {item.brand && <p className="text-muted-foreground">Brand: {item.brand}</p>}
             <p className="text-muted-foreground">Location: {locationName}</p>
-            {item.purchasePrice && <p className="font-semibold">Value: ${item.purchasePrice.toFixed(2)}</p>}
-            {item.quantity > 1 && <p className="text-muted-foreground">Quantity: {item.quantity}</p>}
+            {item.purchasePrice && (
+              <p className="font-semibold">Value: ${item.purchasePrice.toFixed(2)}</p>
+            )}
+            {item.quantity > 1 && (
+              <p className="text-muted-foreground">Quantity: {item.quantity}</p>
+            )}
           </div>
         </CardContent>
       </div>

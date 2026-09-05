@@ -1,23 +1,27 @@
 import { test, expect } from '@playwright/test';
+import { resetAppState, signUp, signUpWithProperty } from './helpers';
 
-test.describe('Items Management', () => {
-  test.beforeEach(async ({ page }) => {
-    // Navigate to app and login if needed
-    await page.goto('/');
-    // Assuming we're logged in or can access items page
+test.describe('Items', () => {
+  test('prompts to pick a property when none exists', async ({ page }) => {
+    await resetAppState(page);
+    await signUp(page);
+
+    await page.goto('/items');
+    await expect(page.getByText(/no property selected/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /go to properties/i })).toBeVisible();
   });
 
-  test('should display items page', async ({ page }) => {
+  test('opens the items page once a property exists', async ({ page }) => {
+    await signUpWithProperty(page);
+
     await page.goto('/items');
-    await expect(page.getByRole('heading', { name: /items/i })).toBeVisible();
+    await expect(page.getByText(/no property selected/i)).toBeHidden();
   });
 
-  test('should show empty state when no items', async ({ page }) => {
-    await page.goto('/items');
-    // Check for empty state message
-    const emptyState = page.getByText(/no items|empty/i);
-    if (await emptyState.isVisible().catch(() => false)) {
-      expect(emptyState).toBeVisible();
-    }
+  test('opens the new item form', async ({ page }) => {
+    await signUpWithProperty(page);
+
+    await page.goto('/items/new');
+    await expect(page.getByText(/no property selected/i)).toBeHidden();
   });
 });

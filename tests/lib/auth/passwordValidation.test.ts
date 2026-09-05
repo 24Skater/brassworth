@@ -10,7 +10,9 @@ describe('passwordValidation', () => {
     it('should reject passwords shorter than 12 characters', () => {
       const result = validatePasswordStrength('short');
       expect(result.isValid).toBe(false);
-      expect(result.feedback).toContain('at least 12 characters');
+      expect(result.feedback).toEqual(
+        expect.arrayContaining([expect.stringContaining('at least 12 characters')])
+      );
     });
 
     it('should accept strong passwords', () => {

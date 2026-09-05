@@ -157,11 +157,7 @@ export function ReceiptUploadDialog({ open, onOpenChange, onParsed }: ReceiptUpl
                   rows={8}
                   className="mt-2"
                 />
-                <Button
-                  onClick={handleManualText}
-                  disabled={!manualText.trim()}
-                  className="mt-2"
-                >
+                <Button onClick={handleManualText} disabled={!manualText.trim()} className="mt-2">
                   Parse Text
                 </Button>
               </div>

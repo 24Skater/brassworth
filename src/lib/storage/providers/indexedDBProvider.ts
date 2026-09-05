@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { StorageProvider } from '../types';
+import type { CollectionName, CollectionRow, StorageProvider } from '../types';
 import {
   User,
   Organization,
@@ -437,6 +437,20 @@ export class IndexedDBProvider implements StorageProvider {
   }
 
   // Utility operations
+  async replaceCollection<K extends CollectionName>(
+    collection: K,
+    rows: CollectionRow<K>[]
+  ): Promise<void> {
+    // Table names on HomeAssetKeeperDB match the collection names exactly.
+    const table = this.db.table(collection);
+    await this.db.transaction('rw', table, async () => {
+      await table.clear();
+      if (rows.length > 0) {
+        await table.bulkPut(rows);
+      }
+    });
+  }
+
   async clearAll(): Promise<void> {
     await Promise.all([
       this.db.organizations.clear(),

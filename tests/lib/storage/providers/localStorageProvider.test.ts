@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { LocalStorageProvider } from '@/lib/storage/providers/localStorageProvider';
 import type { Item, Organization, Location, Category } from '@/types';
 
@@ -109,10 +109,17 @@ describe('LocalStorageProvider', () => {
         tags: [],
       });
 
+      // Without advancing the clock, create and update land in the same
+      // millisecond and the ISO timestamps compare equal — a flaky assertion.
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      vi.setSystemTime(new Date(Date.parse(created.updatedAt) + 1000));
+
       const updated = await provider.updateItem(created.id, {
         name: 'Updated Item',
         quantity: 2,
       });
+
+      vi.useRealTimers();
 
       expect(updated.name).toBe('Updated Item');
       expect(updated.quantity).toBe(2);

@@ -1,79 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { IndexedDBProvider } from '@/lib/storage/providers/indexedDBProvider';
-import type { Organization, Item, Category, Location, Tag } from '@/types';
 
-// Mock the Dexie library
-vi.mock('dexie', () => {
-  const mockTable = (data: Map<string, unknown>) => ({
-    toArray: vi.fn().mockImplementation(() => Promise.resolve(Array.from(data.values()))),
-    get: vi.fn().mockImplementation((id: string) => Promise.resolve(data.get(id) || null)),
-    add: vi.fn().mockImplementation((item: { id: string }) => {
-      data.set(item.id, item);
-      return Promise.resolve(item.id);
-    }),
-    put: vi.fn().mockImplementation((item: { id: string }) => {
-      data.set(item.id, item);
-      return Promise.resolve(item.id);
-    }),
-    bulkPut: vi.fn().mockImplementation((items: Array<{ id: string }>) => {
-      items.forEach((item) => data.set(item.id, item));
-      return Promise.resolve(items.map((item) => item.id));
-    }),
-    update: vi.fn().mockImplementation((id: string, changes: Record<string, unknown>) => {
-      const existing = data.get(id);
-      if (existing) {
-        data.set(id, { ...existing, ...changes });
-      }
-      return Promise.resolve(1);
-    }),
-    delete: vi.fn().mockImplementation((id: string) => {
-      data.delete(id);
-      return Promise.resolve();
-    }),
-    clear: vi.fn().mockImplementation(() => {
-      data.clear();
-      return Promise.resolve();
-    }),
-    where: vi.fn().mockImplementation((field: string) => ({
-      equals: vi.fn().mockImplementation((value: string) => ({
-        toArray: vi.fn().mockImplementation(() => {
-          return Promise.resolve(
-            Array.from(data.values()).filter((item: Record<string, unknown>) => item[field] === value)
-          );
-        }),
-        and: vi.fn().mockImplementation((predicate: (item: unknown) => boolean) => ({
-          toArray: vi.fn().mockImplementation(() => {
-            return Promise.resolve(
-              Array.from(data.values()).filter(
-                (item: Record<string, unknown>) => item[field] === value && predicate(item)
-              )
-            );
-          }),
-        })),
-      })),
-    })),
-  });
-
-  return {
-    default: class MockDexie {
-      organizations = mockTable(new Map());
-      memberships = mockTable(new Map());
-      locations = mockTable(new Map());
-      categories = mockTable(new Map());
-      tags = mockTable(new Map());
-      items = mockTable(new Map());
-      photos = mockTable(new Map());
-      documents = mockTable(new Map());
-      users = mockTable(new Map());
-      userRoles = mockTable(new Map());
-
-      version() {
-        return { stores: () => {} };
-      }
-    },
-  };
-});
-
+// NOTE: no Dexie mock. These tests run against real Dexie on top of
+// fake-indexeddb (wired up in tests/setup.ts), so they exercise the actual
+// query/transaction behaviour instead of a hand-written stand-in.
 describe('IndexedDBProvider', () => {
   let provider: IndexedDBProvider;
 
@@ -88,11 +18,16 @@ describe('IndexedDBProvider', () => {
 
   describe('User operations', () => {
     it('should get and set user', async () => {
-      const user = { id: '1', email: 'test@example.com', name: 'Test User', createdAt: new Date().toISOString() };
-      
+      const user = {
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User',
+        createdAt: new Date().toISOString(),
+      };
+
       await provider.setUser(user);
       const retrieved = await provider.getUser();
-      
+
       expect(retrieved).toEqual(user);
     });
 
@@ -102,12 +37,17 @@ describe('IndexedDBProvider', () => {
     });
 
     it('should remove user when set to null', async () => {
-      const user = { id: '1', email: 'test@example.com', name: 'Test User', createdAt: new Date().toISOString() };
-      
+      const user = {
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User',
+        createdAt: new Date().toISOString(),
+      };
+
       await provider.setUser(user);
       await provider.setUser(null);
       const retrieved = await provider.getUser();
-      
+
       expect(retrieved).toBeNull();
     });
   });
@@ -148,7 +88,7 @@ describe('IndexedDBProvider', () => {
       });
 
       const updated = await provider.updateOrganization(created.id, { name: 'Updated Org' });
-      
+
       expect(updated.name).toBe('Updated Org');
       expect(updated.type).toBe('home');
     });
@@ -203,7 +143,7 @@ describe('IndexedDBProvider', () => {
       });
 
       const updated = await provider.updateItem(created.id, { name: 'Updated Item', quantity: 5 });
-      
+
       expect(updated.name).toBe('Updated Item');
       expect(updated.quantity).toBe(5);
     });
@@ -224,7 +164,7 @@ describe('IndexedDBProvider', () => {
 
       await provider.deleteItem(created.id);
       const retrieved = await provider.getItem(created.id);
-      
+
       expect(retrieved).toBeNull();
     });
   });
@@ -250,8 +190,10 @@ describe('IndexedDBProvider', () => {
         name: 'Electronics',
       });
 
-      const updated = await provider.updateCategory(created.id, { description: 'Updated description' });
-      
+      const updated = await provider.updateCategory(created.id, {
+        description: 'Updated description',
+      });
+
       expect(updated.description).toBe('Updated description');
     });
   });
@@ -307,7 +249,7 @@ describe('IndexedDBProvider', () => {
       });
 
       const updated = await provider.updateTag(created.id, { name: 'Very Important' });
-      
+
       expect(updated.name).toBe('Very Important');
     });
   });
@@ -325,7 +267,12 @@ describe('IndexedDBProvider', () => {
 
     it('should import data from JSON string', async () => {
       const testData = {
-        user: { id: '1', email: 'test@example.com', name: 'Test', createdAt: new Date().toISOString() },
+        user: {
+          id: '1',
+          email: 'test@example.com',
+          name: 'Test',
+          createdAt: new Date().toISOString(),
+        },
         organizations: [],
         memberships: [],
         locations: [],
@@ -340,7 +287,7 @@ describe('IndexedDBProvider', () => {
 
       await provider.importData(JSON.stringify(testData));
       const user = await provider.getUser();
-      
+
       expect(user).toEqual(testData.user);
     });
   });
@@ -348,7 +295,12 @@ describe('IndexedDBProvider', () => {
   describe('Clear all operations', () => {
     it('should clear all data', async () => {
       // Set up some data
-      await provider.setUser({ id: '1', email: 'test@example.com', name: 'Test', createdAt: new Date().toISOString() });
+      await provider.setUser({
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test',
+        createdAt: new Date().toISOString(),
+      });
       await provider.createOrganization({ name: 'Test Org', type: 'home' });
 
       // Clear all

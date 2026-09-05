@@ -65,7 +65,9 @@ export default function Users() {
         <div className="space-y-4">
           {users.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No users found. Invite your first user to get started.</p>
+              <p className="text-muted-foreground">
+                No users found. Invite your first user to get started.
+              </p>
             </div>
           ) : (
             users.map((usr) => {

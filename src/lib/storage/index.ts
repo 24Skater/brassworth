@@ -1,4 +1,17 @@
 import type { StorageProvider, StorageProviderType } from './types';
+import type {
+  Organization,
+  Membership,
+  Location,
+  Category,
+  Tag,
+  Item,
+  Photo,
+  Document,
+  UserWithAuth,
+  UserRoleAssignment,
+  User,
+} from '@/types';
 import { LocalStorageProvider } from './providers/localStorageProvider';
 import { IndexedDBProvider } from './providers/indexedDBProvider';
 import { autoMigrateIfNeeded } from './migration';
@@ -63,145 +76,53 @@ export function setStorageProvider(provider: StorageProvider): void {
 export const storage = {
   // User
   getUser: async () => getStorageProvider().getUser(),
-  setUser: async (user: any) => getStorageProvider().setUser(user),
+  setUser: async (user: User | null) => getStorageProvider().setUser(user),
 
   // Organizations
   getOrganizations: async () => getStorageProvider().getOrganizations(),
-  setOrganizations: async (orgs: any[]) => {
-    // For backward compatibility, we need to replace all organizations
-    // This is not ideal but maintains compatibility
-    const provider = getStorageProvider();
-    const existing = await provider.getOrganizations();
-    // Delete all existing
-    for (const org of existing) {
-      await provider.deleteOrganization(org.id);
-    }
-    // Create new ones
-    for (const org of orgs) {
-      await provider.createOrganization({
-        name: org.name,
-        type: org.type,
-        address: org.address,
-      });
-    }
-  },
+  setOrganizations: async (orgs: Organization[]) =>
+    getStorageProvider().replaceCollection('organizations', orgs),
 
   // Memberships
   getMemberships: async () => getStorageProvider().getMemberships(),
-  setMemberships: async (memberships: any[]) => {
-    const provider = getStorageProvider();
-    const existing = await provider.getMemberships();
-    for (const m of existing) {
-      await provider.deleteMembership(m.id);
-    }
-    for (const m of memberships) {
-      await provider.createMembership(m);
-    }
-  },
+  setMemberships: async (memberships: Membership[]) =>
+    getStorageProvider().replaceCollection('memberships', memberships),
 
   // Locations
   getLocations: async () => getStorageProvider().getLocations(),
-  setLocations: async (locations: any[]) => {
-    const provider = getStorageProvider();
-    const existing = await provider.getLocations();
-    for (const l of existing) {
-      await provider.deleteLocation(l.id);
-    }
-    for (const l of locations) {
-      await provider.createLocation(l);
-    }
-  },
+  setLocations: async (locations: Location[]) =>
+    getStorageProvider().replaceCollection('locations', locations),
 
   // Categories
   getCategories: async () => getStorageProvider().getCategories(),
-  setCategories: async (categories: any[]) => {
-    const provider = getStorageProvider();
-    const existing = await provider.getCategories();
-    for (const c of existing) {
-      await provider.deleteCategory(c.id);
-    }
-    for (const c of categories) {
-      await provider.createCategory(c);
-    }
-  },
+  setCategories: async (categories: Category[]) =>
+    getStorageProvider().replaceCollection('categories', categories),
 
   // Tags
   getTags: async () => getStorageProvider().getTags(),
-  setTags: async (tags: any[]) => {
-    const provider = getStorageProvider();
-    const existing = await provider.getTags();
-    for (const t of existing) {
-      await provider.deleteTag(t.id);
-    }
-    for (const t of tags) {
-      await provider.createTag(t);
-    }
-  },
+  setTags: async (tags: Tag[]) => getStorageProvider().replaceCollection('tags', tags),
 
   // Items
   getItems: async () => getStorageProvider().getItems(),
-  setItems: async (items: any[]) => {
-    const provider = getStorageProvider();
-    const existing = await provider.getItems();
-    for (const i of existing) {
-      await provider.deleteItem(i.id);
-    }
-    for (const i of items) {
-      await provider.createItem(i);
-    }
-  },
+  setItems: async (items: Item[]) => getStorageProvider().replaceCollection('items', items),
 
   // Photos
   getPhotos: async () => getStorageProvider().getPhotos(),
-  setPhotos: async (photos: any[]) => {
-    const provider = getStorageProvider();
-    const existing = await provider.getPhotos();
-    for (const p of existing) {
-      await provider.deletePhoto(p.id);
-    }
-    for (const p of photos) {
-      await provider.createPhoto(p);
-    }
-  },
+  setPhotos: async (photos: Photo[]) => getStorageProvider().replaceCollection('photos', photos),
 
   // Documents
   getDocuments: async () => getStorageProvider().getDocuments(),
-  setDocuments: async (documents: any[]) => {
-    const provider = getStorageProvider();
-    const existing = await provider.getDocuments();
-    for (const d of existing) {
-      await provider.deleteDocument(d.id);
-    }
-    for (const d of documents) {
-      await provider.createDocument(d);
-    }
-  },
+  setDocuments: async (documents: Document[]) =>
+    getStorageProvider().replaceCollection('documents', documents),
 
   // Users
   getUsers: async () => getStorageProvider().getUsers(),
-  setUsers: async (users: any[]) => {
-    const provider = getStorageProvider();
-    const existing = await provider.getUsers();
-    for (const u of existing) {
-      await provider.deleteUser(u.id);
-    }
-    for (const u of users) {
-      await provider.createUser(u);
-    }
-  },
+  setUsers: async (users: UserWithAuth[]) => getStorageProvider().replaceCollection('users', users),
 
   // User Roles
   getUserRoles: async () => getStorageProvider().getUserRoles(),
-  setUserRoles: async (roles: any[]) => {
-    const provider = getStorageProvider();
-    const existing = await provider.getUserRoles();
-    for (const r of existing) {
-      await provider.deleteUserRole(r.userId, r.organizationId);
-    }
-    for (const r of roles) {
-      await provider.setUserRole(r);
-    }
-  },
+  setUserRoles: async (roles: UserRoleAssignment[]) =>
+    getStorageProvider().replaceCollection('userRoles', roles),
 
   // Clear all
   clearAll: async () => getStorageProvider().clearAll(),

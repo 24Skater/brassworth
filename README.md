@@ -59,6 +59,8 @@ The application will be available at `http://localhost:8080`
 
 ### Developer Documentation
 
+- **[Testing Guide](./docs/TESTING.md)** - Test layers, how to run them, and the pre-PR checklist
+
 - **[Developer Guide](./docs/DEVELOPER_GUIDE.md)** - Guide for contributors
 - **[Architecture](./docs/ARCHITECTURE.md)** - System architecture and design
 - **[Plan to v1.0](./docs/PLAN_TO_V1.0.md)** - Comprehensive development plan

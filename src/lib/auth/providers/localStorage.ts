@@ -13,8 +13,14 @@ const STORAGE_KEYS = {
 // Session configuration (in hours)
 // Can be overridden via environment variables
 const SESSION_EXPIRY_HOURS = parseInt(import.meta.env.VITE_SESSION_EXPIRY_HOURS || '168', 10); // 7 days default
-const SESSION_EXPIRY_HOURS_REMEMBER = parseInt(import.meta.env.VITE_SESSION_EXPIRY_HOURS_REMEMBER || '720', 10); // 30 days if "remember me"
-const SESSION_EXPIRY_HOURS_SHORT = parseInt(import.meta.env.VITE_SESSION_EXPIRY_HOURS_SHORT || '24', 10); // 24 hours if not "remember me"
+const SESSION_EXPIRY_HOURS_REMEMBER = parseInt(
+  import.meta.env.VITE_SESSION_EXPIRY_HOURS_REMEMBER || '720',
+  10
+); // 30 days if "remember me"
+const SESSION_EXPIRY_HOURS_SHORT = parseInt(
+  import.meta.env.VITE_SESSION_EXPIRY_HOURS_SHORT || '24',
+  10
+); // 24 hours if not "remember me"
 
 // PBKDF2 configuration - secure key derivation
 const PBKDF2_ITERATIONS = 100000;
@@ -131,7 +137,11 @@ export class LocalStorageAuthProvider implements AuthProviderInterface {
     // Check if user has salt (new secure format) or needs migration (legacy format)
     if (userWithAuth.passwordSalt) {
       // New secure verification with PBKDF2 + salt
-      isValid = await verifyPassword(password, userWithAuth.passwordHash, userWithAuth.passwordSalt);
+      isValid = await verifyPassword(
+        password,
+        userWithAuth.passwordHash,
+        userWithAuth.passwordSalt
+      );
     } else {
       // Legacy verification for users created before salt was added
       const legacyHash = await legacyHashPassword(password);

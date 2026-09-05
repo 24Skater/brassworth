@@ -28,9 +28,12 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-16">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl font-bold mb-4 text-foreground">Track Your Property with Confidence</h2>
+          <h2 className="text-4xl font-bold mb-4 text-foreground">
+            Track Your Property with Confidence
+          </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Manage items in your home, church, or small organization. Keep records for insurance claims, warranties, and peace of mind.
+            Manage items in your home, church, or small organization. Keep records for insurance
+            claims, warranties, and peace of mind.
           </p>
           <Button size="lg" onClick={() => navigate('/auth')}>
             Start Tracking Now

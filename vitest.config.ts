@@ -21,8 +21,18 @@ export default defineConfig({
         '**/playwright-report/',
         '**/test-results/',
       ],
+      // Ratchet floor, not the goal. These are set just under the current
+      // measured coverage so it cannot regress; raise them as suites land.
+      // Target is 80% per the project testing standard.
+      thresholds: {
+        statements: 12,
+        branches: 55,
+        functions: 30,
+        lines: 12,
+      },
     },
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['tests/**/*.{test,spec}.{ts,tsx}', 'src/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['tests/e2e/**', '**/node_modules/**', '**/dist/**'],
   },
   resolve: {
     alias: {

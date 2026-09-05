@@ -1,5 +1,11 @@
 import { UserRole } from '@/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { getRoleLabel, getRoleDescription } from '@/lib/auth/permissions';
 
 interface RoleSelectProps {

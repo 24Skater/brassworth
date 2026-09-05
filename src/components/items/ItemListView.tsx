@@ -14,16 +14,29 @@ interface ItemListViewProps {
 
 const getConditionColor = (condition: Item['condition']) => {
   switch (condition) {
-    case 'NEW': return 'bg-green-500/10 text-green-500 border-green-500/20';
-    case 'GOOD': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    case 'FAIR': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-    case 'POOR': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-    case 'DAMAGED': return 'bg-red-500/10 text-red-500 border-red-500/20';
-    default: return 'bg-muted text-muted-foreground';
+    case 'NEW':
+      return 'bg-green-500/10 text-green-500 border-green-500/20';
+    case 'GOOD':
+      return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    case 'FAIR':
+      return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+    case 'POOR':
+      return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    case 'DAMAGED':
+      return 'bg-red-500/10 text-red-500 border-red-500/20';
+    default:
+      return 'bg-muted text-muted-foreground';
   }
 };
 
-export function ItemListView({ item, categoryName, locationName, onView, onArchive, onDelete }: ItemListViewProps) {
+export function ItemListView({
+  item,
+  categoryName,
+  locationName,
+  onView,
+  onArchive,
+  onDelete,
+}: ItemListViewProps) {
   return (
     <div
       className="flex items-center gap-4 p-4 border rounded-lg hover:border-primary transition-colors cursor-pointer group"
@@ -40,7 +53,9 @@ export function ItemListView({ item, categoryName, locationName, onView, onArchi
           <span>{categoryName}</span>
           <span>{locationName}</span>
           {item.brand && <span>{item.brand}</span>}
-          {item.purchasePrice && <span className="font-semibold text-foreground">${item.purchasePrice.toFixed(2)}</span>}
+          {item.purchasePrice && (
+            <span className="font-semibold text-foreground">${item.purchasePrice.toFixed(2)}</span>
+          )}
         </div>
       </div>
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

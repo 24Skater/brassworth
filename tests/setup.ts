@@ -1,11 +1,11 @@
+// Provides a real IndexedDB implementation in jsdom, which has none.
+// Must be imported before any module that touches indexedDB (Dexie, rateLimiter).
+import 'fake-indexeddb/auto';
+import { IDBFactory } from 'fake-indexeddb';
+
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
-import { afterEach, vi } from 'vitest';
-
-// Cleanup after each test
-afterEach(() => {
-  cleanup();
-});
+import { afterEach, beforeEach, vi } from 'vitest';
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -22,14 +22,15 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// Mock localStorage
-const localStorageMock = (() => {
+// Mock localStorage with the full Storage surface (key/length included, which
+// the previous mock omitted).
+function createStorageMock(): Storage {
   let store: Record<string, string> = {};
 
   return {
-    getItem: (key: string) => store[key] || null,
+    getItem: (key: string) => (key in store ? store[key] : null),
     setItem: (key: string, value: string) => {
-      store[key] = value.toString();
+      store[key] = String(value);
     },
     removeItem: (key: string) => {
       delete store[key];
@@ -37,9 +38,33 @@ const localStorageMock = (() => {
     clear: () => {
       store = {};
     },
-  };
-})();
+    key: (index: number) => Object.keys(store)[index] ?? null,
+    get length() {
+      return Object.keys(store).length;
+    },
+  } as Storage;
+}
 
 Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock,
+  writable: true,
+  value: createStorageMock(),
+});
+
+Object.defineProperty(window, 'sessionStorage', {
+  writable: true,
+  value: createStorageMock(),
+});
+
+// Isolate every test: the previous setup never reset storage, so state leaked
+// between tests and made failures order-dependent.
+beforeEach(() => {
+  localStorage.clear();
+  sessionStorage.clear();
+  // Fresh IndexedDB per test.
+  globalThis.indexedDB = new IDBFactory();
+});
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
 });

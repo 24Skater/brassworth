@@ -25,14 +25,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'canManageCategories',
     'canExportData',
   ],
-  VIEWER: [
-    'canViewItems',
-    'canExportData',
-  ],
-  CONTRIBUTOR: [
-    'canViewItems',
-    'canAddItems',
-  ],
+  VIEWER: ['canViewItems', 'canExportData'],
+  CONTRIBUTOR: ['canViewItems', 'canAddItems'],
 };
 
 export function hasPermission(role: UserRole | null, permission: Permission): boolean {

@@ -1,11 +1,23 @@
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ParsedReceipt, ParsedReceiptItem } from '@/lib/receipt';
 import { Category, Location } from '@/types';
 
@@ -26,7 +38,14 @@ export interface ConfirmedReceiptData {
   locationId?: string;
 }
 
-export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm, categories, locations }: ReceiptReviewTableProps) {
+export function ReceiptReviewTable({
+  open,
+  onOpenChange,
+  receipt,
+  onConfirm,
+  categories,
+  locations,
+}: ReceiptReviewTableProps) {
   const [storeName, setStoreName] = useState(receipt.storeName || '');
   const [purchaseDate, setPurchaseDate] = useState(
     receipt.purchaseDate || new Date().toISOString().split('T')[0]
@@ -34,7 +53,7 @@ export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm, cat
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [locationId, setLocationId] = useState<string | undefined>(undefined);
   const [items, setItems] = useState<(ParsedReceiptItem & { selected: boolean })[]>(
-    receipt.items.map(item => ({ ...item, selected: true }))
+    receipt.items.map((item) => ({ ...item, selected: true }))
   );
 
   const updateItem = (index: number, field: keyof ParsedReceiptItem, value: any) => {
@@ -54,8 +73,10 @@ export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm, cat
   };
 
   const handleConfirm = () => {
-    const selectedItems = items.filter(item => item.selected).map(({ selected, ...item }) => item);
-    
+    const selectedItems = items
+      .filter((item) => item.selected)
+      .map(({ selected, ...item }) => item);
+
     if (selectedItems.length === 0) {
       alert('Please select at least one item to import.');
       return;
@@ -66,13 +87,13 @@ export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm, cat
       purchaseDate,
       items: selectedItems,
       categoryId,
-      locationId
+      locationId,
     });
   };
 
-  const selectedCount = items.filter(i => i.selected).length;
+  const selectedCount = items.filter((i) => i.selected).length;
   const selectedTotal = items
-    .filter(i => i.selected)
+    .filter((i) => i.selected)
     .reduce((sum, item) => sum + (item.lineTotal || (item.unitPrice || 0) * item.quantity), 0);
 
   return (
@@ -140,7 +161,9 @@ export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm, cat
             <div className="flex justify-between items-center">
               <div>
                 <span className="text-sm text-muted-foreground">Selected Items:</span>
-                <span className="ml-2 font-medium">{selectedCount} of {items.length}</span>
+                <span className="ml-2 font-medium">
+                  {selectedCount} of {items.length}
+                </span>
               </div>
               <div>
                 <span className="text-sm text-muted-foreground">Total:</span>
@@ -184,7 +207,9 @@ export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm, cat
                           type="number"
                           min="1"
                           value={item.quantity}
-                          onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                          onChange={(e) =>
+                            updateItem(index, 'quantity', parseInt(e.target.value) || 1)
+                          }
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -193,7 +218,9 @@ export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm, cat
                           step="0.01"
                           min="0"
                           value={item.unitPrice || ''}
-                          onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || undefined)}
+                          onChange={(e) =>
+                            updateItem(index, 'unitPrice', parseFloat(e.target.value) || undefined)
+                          }
                           placeholder="$0.00"
                         />
                       </td>
@@ -203,7 +230,9 @@ export function ReceiptReviewTable({ open, onOpenChange, receipt, onConfirm, cat
                           step="0.01"
                           min="0"
                           value={item.lineTotal || ''}
-                          onChange={(e) => updateItem(index, 'lineTotal', parseFloat(e.target.value) || undefined)}
+                          onChange={(e) =>
+                            updateItem(index, 'lineTotal', parseFloat(e.target.value) || undefined)
+                          }
                           placeholder="$0.00"
                         />
                       </td>

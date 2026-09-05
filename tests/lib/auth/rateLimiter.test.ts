@@ -9,7 +9,7 @@ import {
 describe('rateLimiter', () => {
   beforeEach(async () => {
     // Clear IndexedDB for each test
-    const dbName = 'homeAssetKeeperDB';
+    const dbName = 'home-asset-keeper'; // must match DB_NAME in src/lib/auth/rateLimiter.ts
     const deleteReq = indexedDB.deleteDatabase(dbName);
     await new Promise((resolve, reject) => {
       deleteReq.onsuccess = () => resolve(undefined);
