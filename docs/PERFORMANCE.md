@@ -1,6 +1,6 @@
 # Performance Optimization Guide
 
-This document outlines the performance optimizations implemented in Home Asset Keeper.
+This document outlines the performance optimizations implemented in Brassworth.
 
 ## Code Splitting
 

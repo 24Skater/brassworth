@@ -1,10 +1,10 @@
 # Accessibility Guide
 
-This document outlines the accessibility features and best practices implemented in Home Asset Keeper.
+This document outlines the accessibility features and best practices implemented in Brassworth.
 
 ## WCAG 2.1 AA Compliance
 
-Home Asset Keeper aims to meet WCAG 2.1 Level AA standards for accessibility.
+Brassworth aims to meet WCAG 2.1 Level AA standards for accessibility.
 
 ### Keyboard Navigation
 

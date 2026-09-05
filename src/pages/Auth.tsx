@@ -90,7 +90,7 @@ export default function Auth() {
           <div className="flex justify-center mb-4">
             <Package className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Home Inventory</CardTitle>
+          <CardTitle className="text-2xl">Brassworth</CardTitle>
           <CardDescription>Track your items, manage your property</CardDescription>
         </CardHeader>
         <CardContent>

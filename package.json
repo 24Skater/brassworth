@@ -1,13 +1,16 @@
 {
-  "name": "home-asset-keeper",
+  "name": "brassworth",
   "version": "0.0.0",
-  "description": "An open-source home inventory and asset management system designed for homeowners, churches, small businesses, and organizations",
+  "description": "Open-source asset tracking for tools, IT and AV gear — catalogue what you own, check it in and out, track where it lives, and follow its value from purchase through repair to resale.",
   "type": "module",
   "private": true,
   "keywords": [
-    "home-inventory",
-    "asset-management",
-    "inventory-tracking",
+    "asset-tracking",
+    "tool-inventory",
+    "equipment-management",
+    "asset-lifecycle",
+    "check-in-check-out",
+    "depreciation",
     "self-hosted",
     "react",
     "typescript"
@@ -16,9 +19,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/24Skater/brassworth.git"
   },
-  "homepage": "",
+  "homepage": "https://brassworth.com",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -142,5 +145,8 @@
     "*.{json,md,css}": [
       "prettier --write"
     ]
+  },
+  "bugs": {
+    "url": "https://github.com/24Skater/brassworth/issues"
   }
 }

@@ -1,6 +1,6 @@
 # Security Headers Configuration Guide
 
-This guide explains how to configure security headers for self-hosted deployments of Home Asset Keeper.
+This guide explains how to configure security headers for self-hosted deployments of Brassworth.
 
 ## Required Security Headers
 
@@ -10,7 +10,7 @@ For production deployments, configure your web server with the following securit
 
 Prevents XSS attacks by controlling which resources can be loaded.
 
-**Recommended CSP for Home Asset Keeper:**
+**Recommended CSP for Brassworth:**
 
 ```
 default-src 'self';
@@ -105,7 +105,7 @@ server {
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
 
     # Root directory
-    root /var/www/home-asset-keeper/dist;
+    root /var/www/brassworth/dist;
     index index.html;
 
     # SPA routing

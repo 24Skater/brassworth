@@ -81,7 +81,7 @@ export default function Dashboard() {
         {!currentOrg ? (
           <Card>
             <CardHeader>
-              <CardTitle>Welcome to Home Inventory</CardTitle>
+              <CardTitle>Welcome to Brassworth</CardTitle>
               <CardDescription>Create your first property to get started</CardDescription>
             </CardHeader>
             <CardContent>

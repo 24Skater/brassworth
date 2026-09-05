@@ -8,17 +8,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: home-asset-keeper-frontend
+    container_name: brassworth-frontend
     restart: unless-stopped
     networks:
-      - home-asset-keeper-network
+      - brassworth-network
     labels:
-      - "com.home-asset-keeper.description=Home Asset Keeper Frontend"
-      - "com.home-asset-keeper.version=0.0.0"
+      - "com.brassworth.description=Brassworth Frontend"
+      - "com.brassworth.version=0.0.0"
 
   nginx:
     image: nginx:alpine
-    container_name: home-asset-keeper-nginx
+    container_name: brassworth-nginx
     ports:
       - "80:80"
       - "443:443"
@@ -30,11 +30,11 @@ services:
     depends_on:
       - frontend
     networks:
-      - home-asset-keeper-network
+      - brassworth-network
     labels:
-      - "com.home-asset-keeper.description=Home Asset Keeper Nginx Reverse Proxy"
+      - "com.brassworth.description=Brassworth Nginx Reverse Proxy"
 
 networks:
-  home-asset-keeper-network:
+  brassworth-network:
     driver: bridge
 

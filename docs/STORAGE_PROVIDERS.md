@@ -1,6 +1,6 @@
 # Storage Providers Guide
 
-Home Asset Keeper uses a provider-based storage architecture, allowing you to choose the storage backend that best fits your needs.
+Brassworth uses a provider-based storage architecture, allowing you to choose the storage backend that best fits your needs.
 
 ## Available Providers
 

@@ -82,7 +82,7 @@ export function Navigation() {
               </SheetTrigger>
               <SheetContent side="left" className="w-72">
                 <SheetHeader className="text-left">
-                  <SheetTitle>Home Inventory</SheetTitle>
+                  <SheetTitle>Brassworth</SheetTitle>
                   {currentOrg && <p className="text-sm text-muted-foreground">{currentOrg.name}</p>}
                 </SheetHeader>
                 <nav className="flex flex-col gap-1 mt-6">
@@ -119,7 +119,7 @@ export function Navigation() {
             </Sheet>
 
             <div>
-              <h1 className="text-xl font-bold text-foreground">Home Inventory</h1>
+              <h1 className="text-xl font-bold text-foreground">Brassworth</h1>
               {currentOrg && (
                 <p className="text-sm text-muted-foreground hidden sm:block">{currentOrg.name}</p>
               )}

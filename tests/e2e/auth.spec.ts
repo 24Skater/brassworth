@@ -9,7 +9,7 @@ test.describe('Authentication', () => {
   test('shows the login and sign up tabs', async ({ page }) => {
     await page.goto('/auth');
 
-    await expect(page.getByRole('heading', { name: /home inventory/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /brassworth/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /login/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /sign up/i })).toBeVisible();
   });

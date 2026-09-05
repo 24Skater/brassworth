@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document summarizes the work completed to prepare **Home Asset Keeper** for open-source release and the path to v1.0.
+This document summarizes the work completed to prepare **Brassworth** for open-source release and the path to v1.0.
 
 ## ✅ Completed Work
 
@@ -26,7 +26,7 @@ This document summarizes the work completed to prepare **Home Asset Keeper** for
   - Consistent editor settings across team
   - File type-specific configurations
 - **Package.json Updates**
-  - Updated project name to `home-asset-keeper`
+  - Updated project name to `brassworth`
   - Added proper metadata (description, keywords, license)
   - Added format and type-check scripts
   - Prepared for testing scripts

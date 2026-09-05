@@ -1,6 +1,6 @@
-# Contributing to Home Asset Keeper
+# Contributing to Brassworth
 
-First off, thank you for considering contributing to Home Asset Keeper! It's people like you that make this project better for everyone.
+First off, thank you for considering contributing to Brassworth! It's people like you that make this project better for everyone.
 
 ## Table of Contents
 
@@ -30,17 +30,20 @@ This project and everyone participating in it is governed by our [Code of Conduc
 1. **Fork the repository** on GitHub
 
 2. **Clone your fork** locally:
+
    ```bash
-   git clone https://github.com/YOUR_USERNAME/home-asset-keeper.git
-   cd home-asset-keeper
+   git clone https://github.com/YOUR_USERNAME/brassworth.git
+   cd brassworth
    ```
 
 3. **Add the upstream remote**:
+
    ```bash
-   git remote add upstream https://github.com/ORIGINAL_OWNER/home-asset-keeper.git
+   git remote add upstream https://github.com/ORIGINAL_OWNER/brassworth.git
    ```
 
 4. **Install dependencies**:
+
    ```bash
    npm install
    # or
@@ -48,11 +51,13 @@ This project and everyone participating in it is governed by our [Code of Conduc
    ```
 
 5. **Create environment file**:
+
    ```bash
    cp .env.example .env
    ```
 
 6. **Start the development server**:
+
    ```bash
    npm run dev
    ```
@@ -64,6 +69,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 ### Branch Naming
 
 Use descriptive branch names:
+
 - `feature/add-barcode-scanning`
 - `fix/login-validation-error`
 - `docs/update-readme`
@@ -82,6 +88,7 @@ type(scope): description
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation only
@@ -92,6 +99,7 @@ type(scope): description
 - `chore`: Build process, dependencies, etc.
 
 **Examples:**
+
 ```
 feat(items): add barcode scanning support
 fix(auth): resolve session timeout issue
@@ -102,16 +110,19 @@ refactor(storage): extract provider interface
 ### Before Submitting
 
 1. **Ensure your code builds**:
+
    ```bash
    npm run build
    ```
 
 2. **Run linting**:
+
    ```bash
    npm run lint
    ```
 
 3. **Run tests** (when available):
+
    ```bash
    npm run test
    ```
@@ -126,12 +137,14 @@ refactor(storage): extract provider interface
 ## Pull Request Process
 
 1. **Update your fork** with the latest upstream changes:
+
    ```bash
    git fetch upstream
    git rebase upstream/main
    ```
 
 2. **Push your branch** to your fork:
+
    ```bash
    git push origin feature/your-feature
    ```
@@ -198,12 +211,12 @@ type User = {
 // Good
 export function ItemCard({ item, onEdit }: ItemCardProps) {
   const { toast } = useToast();
-  
+
   const handleEdit = () => {
     onEdit(item);
     toast({ title: 'Editing item' });
   };
-  
+
   return (
     <Card>
       {/* ... */}
@@ -252,28 +265,35 @@ src/
 
 ```markdown
 ## Description
+
 A clear description of the bug.
 
 ## Steps to Reproduce
+
 1. Go to '...'
 2. Click on '...'
 3. See error
 
 ## Expected Behavior
+
 What you expected to happen.
 
 ## Actual Behavior
+
 What actually happened.
 
 ## Environment
+
 - OS: [e.g., Windows 11, macOS 14]
 - Browser: [e.g., Chrome 120]
 - Version: [e.g., 0.5.0]
 
 ## Screenshots
+
 If applicable, add screenshots.
 
 ## Additional Context
+
 Any other relevant information.
 ```
 
@@ -283,18 +303,23 @@ Any other relevant information.
 
 ```markdown
 ## Summary
+
 Brief description of the feature.
 
 ## Problem
+
 What problem does this solve?
 
 ## Proposed Solution
+
 How should this work?
 
 ## Alternatives Considered
+
 Other approaches you've thought about.
 
 ## Additional Context
+
 Any mockups, examples, or references.
 ```
 
@@ -313,16 +338,16 @@ See [SECURITY.md](SECURITY.md) for responsible disclosure.
 
 ## Questions?
 
-- Open a [GitHub Discussion](https://github.com/OWNER/home-asset-keeper/discussions)
+- Open a [GitHub Discussion](https://github.com/OWNER/brassworth/discussions)
 - Check existing documentation
 - Review closed issues for similar questions
 
 ## Recognition
 
 Contributors are recognized in:
+
 - The README.md contributors section
 - Release notes for significant contributions
 - The project's GitHub contributors page
 
-Thank you for helping make Home Asset Keeper better! 🏠📦
-
+Thank you for helping make Brassworth better! 🏠📦

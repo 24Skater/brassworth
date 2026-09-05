@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: home-asset-keeper
+    container_name: brassworth
     ports:
       - "${PORT:-80}:80"
     restart: unless-stopped
@@ -18,12 +18,12 @@ services:
     environment:
       - NODE_ENV=production
     labels:
-      - "com.home-asset-keeper.description=Home Asset Keeper Frontend"
-      - "com.home-asset-keeper.version=0.0.0"
+      - "com.brassworth.description=Brassworth Frontend"
+      - "com.brassworth.version=0.0.0"
     networks:
-      - home-asset-keeper-network
+      - brassworth-network
 
 networks:
-  home-asset-keeper-network:
+  brassworth-network:
     driver: bridge
 

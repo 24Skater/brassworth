@@ -1,26 +1,39 @@
-# Home Asset Keeper
+# Brassworth
 
-> An open-source home inventory and asset management system designed for homeowners, churches, small businesses, and organizations.
+> Track what you own, for as long as you own it. Open-source asset tracking for tools, IT gear, and AV equipment.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3-blue.svg)](https://react.dev/)
 
-## 🎯 Overview
+## Overview
 
-**Home Asset Keeper** is a privacy-first, self-hostable application for tracking and managing your assets. Whether you're a homeowner keeping track of personal property, a church managing equipment, or a small business inventorying assets, this tool helps you organize everything in one place.
+Most inventory apps tell you what you have right now. **Brassworth** follows the whole life of a thing you own — what you paid, where it lives, who borrowed it, when it broke, what the repair cost, and what it was finally worth when you sold it.
 
-### Key Features
+Built for people with real gear to keep track of: a garage full of tools, a rack of network equipment, a case of cameras, or a church hall of equipment shared between people.
 
-- 🏠 **Multi-Organization Support** - Manage multiple properties or locations
-- 👥 **Role-Based Access Control** - ADMIN, MANAGER, CONTRIBUTOR, and VIEWER roles
-- 📦 **Comprehensive Item Management** - Track items with categories, locations, tags, and more
-- 📸 **Receipt Scanning** - OCR-powered receipt scanning with Tesseract.js
-- 📊 **Multiple View Modes** - Grid, list, gallery, and table views
-- 📥 **Import/Export** - Excel import and export functionality
-- 🎨 **Beautiful UI** - Modern interface built with shadcn/ui and Tailwind CSS
-- 🔒 **Privacy-First** - Self-hostable, your data stays yours
-- 🚀 **Easy Deployment** - Docker support for one-command deployment
+### What it does today
+
+- **Detailed catalogue** — items with brand, model, serial number, category, location, tags, and photos
+- **Multiple properties** — separate your home, workshop, office, or job site
+- **Receipt scanning** — OCR via Tesseract.js, plus PDF parsing
+- **Several views** — grid, list, gallery, and table
+- **Import and export** — Excel in and out
+- **Light and dark** — the Workshop palette, in both
+
+### What is planned
+
+Check-in / check-out with custody history, depreciation and current-value estimates, full lifecycle states (loaned, broken, in repair, returned, sold), a wishlist with savings goals, sale alerts, and reporting broken down by brand. See [ROADMAP_V1.md](./docs/ROADMAP_V1.md).
+
+## Status: local-first, pre-release
+
+Be aware of what this is right now:
+
+- **There is no server.** Everything runs in your browser and your data lives in that browser's storage. Nothing is uploaded anywhere.
+- **The sign-in screen is not a security boundary.** Accounts and roles are records in local storage — anyone with access to the browser can edit them. Treat this as a single-user local application until the backend lands.
+- **Export your data** if it matters to you. Clearing site data deletes it.
+
+A real backend with enforced authentication, plus an optional hosted tier, is the next major milestone.
 
 ## 🚀 Quick Start
 
@@ -33,8 +46,8 @@
 
 ```bash
 # Clone the repository
-git clone <YOUR_GIT_URL>
-cd home-asset-keeper
+git clone https://github.com/24Skater/brassworth.git
+cd brassworth
 
 # Install dependencies
 npm install
@@ -188,7 +201,7 @@ npm run test:coverage # Run tests with coverage
 ### Project Structure
 
 ```
-home-asset-keeper/
+brassworth/
 ├── src/
 │   ├── components/     # React components
 │   │   ├── ui/        # shadcn/ui components
@@ -258,8 +271,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-org/home-asset-keeper/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/home-asset-keeper/discussions)
+- **Issues**: [GitHub Issues](https://github.com/your-org/brassworth/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/brassworth/discussions)
 - **Security**: See [SECURITY.md](./SECURITY.md) for vulnerability reporting
 
 ---

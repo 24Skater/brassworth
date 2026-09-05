@@ -2,13 +2,13 @@
 
 ## General
 
-### What is Home Asset Keeper?
+### What is Brassworth?
 
-Home Asset Keeper is an open-source, self-hostable application for tracking and managing assets. It's designed for homeowners, churches, small businesses, and organizations.
+Brassworth is an open-source, self-hostable application for tracking and managing assets. It's designed for homeowners, churches, small businesses, and organizations.
 
 ### Is it free?
 
-Yes! Home Asset Keeper is open-source and free to use. You can self-host it on your own server.
+Yes! Brassworth is open-source and free to use. You can self-host it on your own server.
 
 ### Do I need a server?
 
@@ -25,7 +25,7 @@ Yes! When self-hosted, all your data stays on your server. The application inclu
 
 ## Installation & Setup
 
-### How do I install Home Asset Keeper?
+### How do I install Brassworth?
 
 See the [Quick Start Guide](./QUICK_START_GUIDE.md) for detailed installation instructions.
 

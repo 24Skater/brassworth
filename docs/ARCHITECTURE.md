@@ -1,6 +1,6 @@
 # Architecture Documentation
 
-This document describes the architecture and design decisions of Home Asset Keeper.
+This document describes the architecture and design decisions of Brassworth.
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@ This document describes the architecture and design decisions of Home Asset Keep
 
 ## System Overview
 
-Home Asset Keeper is a client-side React application with a provider-based architecture that allows for flexible backend integration.
+Brassworth is a client-side React application with a provider-based architecture that allows for flexible backend integration.
 
 ### High-Level Architecture
 

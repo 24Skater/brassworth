@@ -1,8 +1,8 @@
-# Home Asset Keeper - Comprehensive Plan to v1.0 Release
+# Brassworth - Comprehensive Plan to v1.0 Release
 
 ## 📋 Executive Summary
 
-This document outlines a comprehensive plan to transform **Home Asset Keeper** from a prototype into a production-ready, open-source, self-hostable application. The plan prioritizes security, maintainability, and ease of deployment while maintaining compatibility with Lovable.dev.
+This document outlines a comprehensive plan to transform **Brassworth** from a prototype into a production-ready, open-source, self-hostable application. The plan prioritizes security, maintainability, and ease of deployment while maintaining compatibility with Lovable.dev.
 
 **Current State**: Frontend-only prototype with localStorage persistence  
 **Target State**: Production-ready, secure, self-hostable application with optional backend  
@@ -12,7 +12,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
 
 ## 🎯 Project Overview
 
-**Home Asset Keeper** is a home inventory and asset management system designed for:
+**Brassworth** is an asset lifecycle tracking system for tools, IT gear and AV equipment, designed for:
 
 - 🏠 Homeowners tracking personal property
 - ⛪ Churches managing equipment and supplies
@@ -128,7 +128,7 @@ This document outlines a comprehensive plan to transform **Home Asset Keeper** f
   - Support different environments (dev, staging, prod)
 
 - [ ] **Package.json Improvements**
-  - Update project name to `home-asset-keeper`
+  - Update project name to `brassworth`
   - Add proper description, keywords, author
   - Add repository, license, homepage
   - Add scripts: `format`, `type-check`, `test`, `test:coverage`

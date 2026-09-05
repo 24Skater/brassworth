@@ -1,6 +1,6 @@
 # User Guide
 
-Welcome to Home Asset Keeper! This guide will help you get started and make the most of the application.
+Welcome to Brassworth! This guide will help you get started and make the most of the application.
 
 ## Table of Contents
 

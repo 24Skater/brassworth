@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers various deployment options for Home Asset Keeper.
+This guide covers various deployment options for Brassworth.
 
 ## Quick Start with Docker
 
@@ -16,7 +16,7 @@ This guide covers various deployment options for Home Asset Keeper.
 
    ```bash
    git clone <repository-url>
-   cd home-asset-keeper
+   cd brassworth
    ```
 
 2. **Build and run**:
@@ -142,14 +142,14 @@ docker-compose up -d
 
 ```bash
 # Build image
-docker build -t home-asset-keeper:latest .
+docker build -t brassworth:latest .
 
 # Run container
 docker run -d \
-  --name home-asset-keeper \
+  --name brassworth \
   -p 80:80 \
   --restart unless-stopped \
-  home-asset-keeper:latest
+  brassworth:latest
 ```
 
 ### 3. Static Hosting
@@ -201,18 +201,18 @@ docker-compose up -d --build
 
 ```bash
 # Pull latest image
-docker pull home-asset-keeper:latest
+docker pull brassworth:latest
 
 # Stop and remove old container
-docker stop home-asset-keeper
-docker rm home-asset-keeper
+docker stop brassworth
+docker rm brassworth
 
 # Run new container
 docker run -d \
-  --name home-asset-keeper \
+  --name brassworth \
   -p 80:80 \
   --restart unless-stopped \
-  home-asset-keeper:latest
+  brassworth:latest
 ```
 
 ## Backup and Restore
@@ -263,14 +263,14 @@ docker-compose logs -f frontend
 **Docker Standalone**:
 
 ```bash
-docker logs -f home-asset-keeper
+docker logs -f brassworth
 ```
 
 ### Resource Usage
 
 ```bash
 # Docker stats
-docker stats home-asset-keeper
+docker stats brassworth
 
 # Or with docker-compose
 docker-compose stats
@@ -372,8 +372,8 @@ services:
 
 1. Create new Web Service
 2. Connect repository
-3. Set build command: `docker build -t home-asset-keeper .`
-4. Set start command: `docker run -p $PORT:80 home-asset-keeper`
+3. Set build command: `docker build -t brassworth .`
+4. Set start command: `docker run -p $PORT:80 brassworth`
 5. Deploy!
 
 ### DigitalOcean App Platform

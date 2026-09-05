@@ -1,6 +1,6 @@
 # Authentication Provider Guide
 
-This guide explains how to implement custom authentication providers for the Home Inventory application.
+This guide explains how to implement custom authentication providers for the Brassworth application.
 
 ## Overview
 
@@ -13,12 +13,21 @@ All authentication providers must implement the `AuthProviderInterface`:
 ```typescript
 interface AuthProviderInterface {
   login(email: string, password: string): Promise<{ user: User | null; error?: string }>;
-  signup(email: string, password: string, name: string): Promise<{ user: User | null; error?: string }>;
+  signup(
+    email: string,
+    password: string,
+    name: string
+  ): Promise<{ user: User | null; error?: string }>;
   logout(): Promise<void>;
   getCurrentUser(): User | null;
   validateSession(): Promise<boolean>;
   listUsers(): User[];
-  inviteUser(email: string, name: string, organizationId: string, role: UserRole): Promise<{ user: User | null; error?: string }>;
+  inviteUser(
+    email: string,
+    name: string,
+    organizationId: string,
+    role: UserRole
+  ): Promise<{ user: User | null; error?: string }>;
   removeUser(userId: string, organizationId: string): Promise<{ success: boolean; error?: string }>;
 }
 ```
@@ -80,7 +89,7 @@ import { MyCustomAuthProvider } from './providers/myCustomProvider';
 export function createAuthProvider(): AuthProviderInterface {
   // You can use environment variables to switch providers
   const providerType = import.meta.env.VITE_AUTH_PROVIDER || 'localStorage';
-  
+
   switch (providerType) {
     case 'custom':
       return new MyCustomAuthProvider();
@@ -215,10 +224,10 @@ export class LDAPAuthProvider implements AuthProviderInterface {
     }
 
     const { user } = await response.json();
-    
+
     // Store user session
     sessionStorage.setItem('ldap_user', JSON.stringify(user));
-    
+
     return { user };
   }
 
@@ -306,6 +315,7 @@ VITE_OAUTH_REDIRECT_URI=https://your-app.com/callback
 ## Support
 
 For questions or issues:
+
 1. Check the [GitHub Issues](https://github.com/your-repo/issues)
 2. Join our [Discord community](https://discord.gg/your-invite)
 3. Email support@example.com

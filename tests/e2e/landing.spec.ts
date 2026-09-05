@@ -9,10 +9,8 @@ test.describe('Landing page', () => {
   test('renders the marketing content', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: /home inventory/i })).toBeVisible();
-    await expect(
-      page.getByRole('heading', { name: /track your property with confidence/i })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /brassworth/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /track what you own/i })).toBeVisible();
   });
 
   test('routes to the auth page from the primary call to action', async ({ page }) => {

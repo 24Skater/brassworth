@@ -1,6 +1,6 @@
 # Developer Guide
 
-This guide is for developers who want to contribute to or extend Home Asset Keeper.
+This guide is for developers who want to contribute to or extend Brassworth.
 
 ## Table of Contents
 
@@ -26,7 +26,7 @@ This guide is for developers who want to contribute to or extend Home Asset Keep
 ```bash
 # Clone repository
 git clone <repository-url>
-cd home-asset-keeper
+cd brassworth
 
 # Install dependencies
 npm install
@@ -56,7 +56,7 @@ npm run test:e2e     # Run E2E tests
 ## Project Structure
 
 ```
-home-asset-keeper/
+brassworth/
 ├── src/
 │   ├── components/      # React components
 │   │   ├── ui/         # shadcn/ui components
