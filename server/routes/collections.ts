@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   categories,
   documents,
+  gearProfiles,
   itemEvents,
   items,
   locations,
@@ -35,6 +36,7 @@ const itemSchema = z.object({
   brand: optionalString,
   model: optionalString,
   serialNumber: optionalString,
+  gearProfileId: optionalString,
   purchaseDate: optionalString,
   purchasePrice: z.number().optional().nullable(),
   currentEstimatedValue: z.number().optional().nullable(),
@@ -157,6 +159,41 @@ const userRoleSchema = z.object({
   role: z.enum(['ADMIN', 'MANAGER', 'CONTRIBUTOR', 'VIEWER']),
 });
 
+/**
+ * A gear profile the organisation wrote itself.
+ *
+ * `source` is not accepted from the client and `licence` is not stored: every
+ * row in this table is a USER record by construction, and letting a request
+ * declare otherwise would let somebody mint rows that the UI treats as
+ * read-only catalogue data.
+ *
+ * `specs` arrives as an array and is stored as JSON text, because specs vary by
+ * product type — columns would mean a new column per type.
+ */
+const gearSpecSchema = z.object({
+  label: z.string().trim().min(1).max(80),
+  value: z.string().trim().min(1).max(200),
+  unit: z.string().trim().max(20).optional(),
+});
+
+const gearProfileSchema = z
+  .object({
+    id: z.string().min(1).optional(),
+    brand: z.string().trim().min(1).max(120),
+    model: z.string().trim().min(1).max(120),
+    productType: z.string().trim().max(120).optional().nullable(),
+    specs: z.union([z.array(gearSpecSchema).max(80), z.string()]).optional(),
+    manualUrl: optionalString,
+    partsUrl: optionalString,
+    productUrl: optionalString,
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+  })
+  .transform((profile) => ({
+    ...profile,
+    specs: typeof profile.specs === 'string' ? profile.specs : JSON.stringify(profile.specs ?? []),
+  }));
+
 export interface CollectionSpec {
   table:
     | typeof items
@@ -169,7 +206,8 @@ export interface CollectionSpec {
     | typeof userRoles
     | typeof wishlistEntries
     | typeof savingsContributions
-    | typeof priceObservations;
+    | typeof priceObservations
+    | typeof gearProfiles;
   schema: z.ZodType<Record<string, unknown>>;
   /** Permission needed to read. */
   read: Permission;
@@ -220,6 +258,12 @@ export const COLLECTIONS = {
   prices: {
     table: priceObservations,
     schema: priceSchema,
+    read: 'canViewItems',
+    write: 'canAddItems',
+  },
+  'gear-profiles': {
+    table: gearProfiles,
+    schema: gearProfileSchema,
     read: 'canViewItems',
     write: 'canAddItems',
   },

@@ -32,10 +32,10 @@ Verified, not aspirational. Run the checks yourself with the commands in [TESTIN
 | -------- | ----------------------------------------------------------------------- |
 | Frontend | React 18 + TypeScript + Vite, shadcn/ui, Workshop palette               |
 | Backend  | Hono API in `server/`, wired to the app via `VITE_STORAGE_PROVIDER=api` |
-| Storage  | localStorage and IndexedDB providers; the `api` provider is a stub      |
+| Storage  | localStorage, IndexedDB and API providers, all three real               |
 | Auth     | Server-enforced in the API tier; still localStorage in the local tier   |
-| Tests    | 349 unit and server, 37 E2E, all green                                  |
-| Coverage | 29.14%, ratcheted so it cannot drop                                     |
+| Tests    | 1001 unit and server, 60 E2E, all green                                 |
+| Coverage | 87.9% statements, 87.6% branches, 80.1% functions; ratcheted            |
 | CI       | Five jobs green on `main`                                               |
 
 ### What already works
@@ -259,6 +259,12 @@ towards outstanding totals, because that money has been spent.
 **Buying records an `ACQUIRED` event, not just a purchase date.** The new item therefore
 starts life with the same history every other item has.
 
+**Backup coverage was a defect, fixed in Phase 6.** The wishlist, its savings log and its price
+history were added here and never wired into export or restore, so backing up and restoring
+silently destroyed all three — including the savings log, which is append-only precisely so
+that money records cannot be lost. `tests/lib/backupCoverage.test.ts` now asserts the whole
+surface, so the next collection cannot be forgotten the same way.
+
 **Prices are a series, not a latest value.** A single current price cannot answer "is this
 actually a good deal or just what it always costs", which is what a price alert is really
 being asked. Alerts fire only against an explicit target — alerting on "it moved a bit"
@@ -272,12 +278,61 @@ cannot be read rather than assuming permission, keeps a minimum gap between requ
 host and honours any `Crawl-delay`, accepts only `https`, and is **off unless a self-hoster
 sets `PRICE_WATCH_ENABLED=true`**. Manual price entry needs none of that and always works.
 
-### Phase 6 — Gear profiles
+### Phase 6 — Gear profiles ✅ done
 
-- A single generic **Tool Profile** feature. Brand is data, not architecture, so Milwaukee, DeWalt, Makita, Ryobi and Festool all work on day one and no module carries anyone else's trademark
-- Serial and model capture from a photo of the data plate, using the Tesseract OCR already shipped
-- A community catalogue under a licence we control, plus optional user-supplied API keys for anyone with legitimate vendor access
-- **No plugin SDK yet.** Build a second and third profile concretely, then extract the interface from real examples. An abstraction designed from one case is reliably the wrong abstraction
+_See [CATALOGUE.md](./CATALOGUE.md)._
+
+- [x] A single generic **gear profile** feature. Brand is a string on a row, so Milwaukee,
+      DeWalt, Makita, Ryobi and Festool all work on day one and no module carries anyone
+      else's trademark. The shipped catalogue spans power tools, network gear and audio gear
+      through one code path
+- [x] Serial and model capture from a photo of the data plate, using the Tesseract OCR already
+      shipped for receipts
+- [x] A community catalogue under **ODbL 1.0**, with contents under DbCL 1.0
+- [x] Optional vendor catalogue sources with a user-supplied API key, **server-side**
+- [x] No plugin SDK
+
+**Catalogue records are never stored.** They ship with the app and are merged in at read time;
+only profiles somebody writes themselves are persisted. Storing them would copy a read-only
+dataset into every tenant, put data that is not the user's into every backup, and turn a
+catalogue update into a migration.
+
+That forces the next decision: a catalogue profile's id is **derived** from its brand and model
+(`catalogue:dewalt::dcd791d2`) rather than assigned, so an item's link survives the catalogue
+being updated, reordered or replaced by a vendor feed. The link is to a model, not to a row in
+a file. For the same reason `items.gear_profile_id` is deliberately **not a foreign key** — it
+holds either a stored profile's id or a derived catalogue id, and a constraint would reject
+exactly the links the catalogue exists to create.
+
+**Specs are label/value pairs, not typed fields.** A drill, a rack switch and a camera body
+share almost no spec fields; a typed record would grow a new optional column per product type,
+which is a vendor module wearing a different hat.
+
+**ODbL rather than Creative Commons.** This is a database of facts, and ODbL is the licence
+written for that case — the one OpenStreetMap uses. Share-alike is what "a licence we control"
+means in practice: CC0 would be easier to contribute to and would give away exactly that
+control.
+
+**Vendor API keys live on the server, deliberately.** A browser cannot hold a key — anything
+the client can send, a user can read out of the bundle or the network tab. So a vendor source
+is `GEAR_CATALOGUE_URL` plus an optional key in the server environment, off unless configured,
+following the rule price watching set in Phase 5. A vendor document is validated by exactly the
+same rules as the shipped file: it is not more trusted for having been paid for.
+
+**The plate reader recognises only known brands.** Guessing the maker from the most prominent
+line reliably returns `MADE IN CHINA` or `INDUSTRIAL TOOL CO.`, and a confidently wrong brand
+is worse than a blank one. Same call as dropping `MARKET_COMPARABLE`. What it recognises
+therefore grows with the catalogue rather than with a hardcoded list.
+
+**A profile fills blank fields only, and never copies specs onto the item.** Somebody who typed
+`DEWALT (used)` meant it. Specs stay on the profile so that correcting one fixes every item
+sharing the model — the entire reason profiles exist rather than more item fields.
+
+**Deviation, deliberately.** This document proposed "optional user-supplied API keys" alongside
+a community catalogue, which reads as per-vendor integrations. There is no per-vendor module
+and no plugin SDK: a vendor source is a URL returning a document in the documented format.
+Building an interface with no implementation behind it is the abstraction-from-one-case the
+roadmap warns against, and it works today with any vendor that publishes JSON.
 
 ---
 
@@ -289,9 +344,11 @@ sets `PRICE_WATCH_ENABLED=true`**. Manual price entry needs none of that and alw
 | **v0.4** | ✅ Phase 2 done. Lifecycle and custody — the first genuinely differentiated release |
 | **v0.6** | Phase 3 done. Valuation and dashboards                                              |
 | **v0.8** | ✅ Phase 4 done. Real auth, real multi-user, self-hostable with a server            |
-| **v1.0** | Phase 5 done ✅, coverage at 80%, hosted tier live at `app.brassworth.com`          |
+| **v1.0** | ✅ Phase 5 done and coverage past 80%. Hosted tier at `app.brassworth.com` to come  |
+| **v1.1** | ✅ Phase 6 done. Gear profiles, the community catalogue, and data plate scanning    |
 
-Phase 6 is deliberately after v1.0. It is the most fun and the least load-bearing.
+Phase 6 was deliberately scheduled after v1.0 — the most fun and the least load-bearing — and
+shipped there.
 
 ---
 

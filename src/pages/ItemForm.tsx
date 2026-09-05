@@ -1,7 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
+import { GearProfilePicker } from '@/components/gear/GearProfilePicker';
+import { GearProfilePanel } from '@/components/gear/GearProfilePanel';
+import { DataPlateScanner } from '@/components/gear/DataPlateScanner';
+import { applyProfile, profileLabel } from '@/lib/gear';
+import { brandsFrom } from '@/lib/gear/dataPlate';
+import { availableProfiles, fetchVendorCatalogue } from '@/lib/gear/resolve';
+import type { GearProfile } from '@/types';
+import type { DataPlateReading } from '@/lib/gear/dataPlate';
 import { ItemLifecycle } from '@/components/items/ItemLifecycle';
 import { ItemValueSummary } from '@/components/items/ItemValueSummary';
 import { DEPRECIATION_LABELS } from '@/lib/valuation';
@@ -31,6 +39,7 @@ export default function ItemForm() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [gearProfiles, setGearProfiles] = useState<GearProfile[]>([]);
 
   const [formData, setFormData] = useState<Partial<Item>>({
     name: '',
@@ -54,9 +63,22 @@ export default function ItemForm() {
 
   const loadData = useCallback(async () => {
     if (!currentOrg) return;
-    const [cats, locs] = await Promise.all([storage.getCategories(), storage.getLocations()]);
+    const [cats, locs, stored, vendor] = await Promise.all([
+      storage.getCategories(),
+      storage.getLocations(),
+      storage.getGearProfiles(),
+      // A vendor catalogue is optional and resolves to an empty list when the
+      // server has none configured, so this never blocks the form.
+      fetchVendorCatalogue(),
+    ]);
     setCategories(cats.filter((cat) => cat.organizationId === currentOrg.id));
     setLocations(locs.filter((loc) => loc.organizationId === currentOrg.id));
+    setGearProfiles(
+      availableProfiles(
+        stored.filter((profile) => profile.organizationId === currentOrg.id),
+        vendor
+      )
+    );
   }, [currentOrg]);
 
   useEffect(() => {
@@ -78,6 +100,55 @@ export default function ItemForm() {
     };
     loadItem();
   }, [id, isEditing]);
+
+  const selectedProfile = useMemo(
+    () => gearProfiles.find((profile) => profile.id === formData.gearProfileId) ?? null,
+    [gearProfiles, formData.gearProfileId]
+  );
+
+  const knownBrands = useMemo(() => brandsFrom(gearProfiles), [gearProfiles]);
+
+  /**
+   * Linking a profile fills what the form has left blank and nothing else.
+   *
+   * `applyProfile` never overwrites a value already typed — somebody who wrote
+   * `DEWALT (used)` in the brand box meant it, and a catalogue tidying it to
+   * `DeWalt` would be the app arguing with its user.
+   */
+  const handleSelectProfile = (profile: GearProfile) => {
+    setFormData((current) => applyProfile(current as Item, profile));
+    toast({
+      title: 'Gear profile linked',
+      description: `${profileLabel(profile)} — specifications come from the profile.`,
+    });
+  };
+
+  /**
+   * A data plate read fills blank fields only, for the same reason, and because
+   * OCR on scratched metal is not reliable enough to overwrite anything.
+   */
+  const handleDataPlate = (reading: DataPlateReading) => {
+    const filled: Partial<Item> = {};
+    if (reading.brand && !formData.brand?.trim()) filled.brand = reading.brand;
+    if (reading.model && !formData.model?.trim()) filled.model = reading.model;
+    if (reading.serialNumber && !formData.serialNumber?.trim()) {
+      filled.serialNumber = reading.serialNumber;
+    }
+
+    if (Object.keys(filled).length === 0) {
+      toast({
+        title: 'Nothing new on that plate',
+        description: 'Everything it could fill in is already filled in.',
+      });
+      return;
+    }
+
+    setFormData((current) => ({ ...current, ...filled }));
+    toast({
+      title: 'Data plate read',
+      description: `Filled in ${Object.keys(filled).join(', ')}. Check it before saving.`,
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +177,7 @@ export default function ItemForm() {
         brand: formData.brand,
         model: formData.model,
         serialNumber: formData.serialNumber,
+        gearProfileId: formData.gearProfileId,
         purchaseDate: formData.purchaseDate,
         purchasePrice: formData.purchasePrice,
         currentEstimatedValue: formData.currentEstimatedValue,
@@ -353,6 +425,15 @@ export default function ItemForm() {
                 </div>
               </div>
 
+              <GearProfilePicker
+                profiles={gearProfiles}
+                selected={selectedProfile}
+                onSelect={handleSelectProfile}
+                onClear={() => setFormData({ ...formData, gearProfileId: undefined })}
+              />
+
+              <DataPlateScanner knownBrands={knownBrands} onRead={handleDataPlate} />
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="brand">Brand</Label>
@@ -550,6 +631,9 @@ export default function ItemForm() {
             </CardContent>
           </Card>
         </form>
+
+        {/* What is known about the model, shared by every item that is one. */}
+        {selectedProfile && <GearProfilePanel profile={selectedProfile} />}
 
         {/* History only exists once the item does. */}
         {isEditing && id && currentOrg && (

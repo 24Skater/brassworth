@@ -15,6 +15,7 @@ import type {
   WishlistEntry,
   SavingsContribution,
   PriceObservation,
+  GearProfile,
 } from '@/types';
 
 /**
@@ -42,6 +43,7 @@ const COLLECTION_PATHS: Record<CollectionName, string> = {
   wishlistEntries: 'wishlist',
   savingsContributions: 'savings',
   priceObservations: 'prices',
+  gearProfiles: 'gear-profiles',
   // Organisations and memberships are not tenant-scoped collections; they are
   // how a caller discovers which tenants exist for them at all.
   organizations: 'organizations',
@@ -379,6 +381,26 @@ export class ApiStorageProvider implements StorageProvider {
     await Promise.all(rows.map((row) => this.deleteScoped('priceObservations', row.id)));
   }
 
+  // --- Gear profiles (the organisation's own; the catalogue is never stored) ---
+
+  async getGearProfiles(): Promise<GearProfile[]> {
+    return (await this.listScoped<GearProfile>('gearProfiles')).map(normaliseGearProfile);
+  }
+  async getGearProfile(id: string): Promise<GearProfile | null> {
+    return (await this.getGearProfiles()).find((p) => p.id === id) ?? null;
+  }
+  async createGearProfile(
+    profile: Omit<GearProfile, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<GearProfile> {
+    return normaliseGearProfile(await this.createScoped<GearProfile>('gearProfiles', profile));
+  }
+  async updateGearProfile(id: string, updates: Partial<GearProfile>): Promise<GearProfile> {
+    return normaliseGearProfile(await this.updateScoped<GearProfile>('gearProfiles', id, updates));
+  }
+  async deleteGearProfile(id: string): Promise<void> {
+    await this.deleteScoped('gearProfiles', id);
+  }
+
   // --- Photos ---
 
   async getPhotos(): Promise<Photo[]> {
@@ -519,6 +541,7 @@ export class ApiStorageProvider implements StorageProvider {
       wishlistEntries,
       savingsContributions,
       priceObservations,
+      gearProfiles,
       photos,
       documents,
     ] = await Promise.all([
@@ -531,6 +554,7 @@ export class ApiStorageProvider implements StorageProvider {
       this.getWishlistEntries(),
       this.getSavingsContributions(),
       this.getPriceObservations(),
+      this.getGearProfiles(),
       this.getPhotos(),
       this.getDocuments(),
     ]);
@@ -546,6 +570,7 @@ export class ApiStorageProvider implements StorageProvider {
         wishlistEntries,
         savingsContributions,
         priceObservations,
+        gearProfiles,
         photos,
         documents,
       },
@@ -562,6 +587,7 @@ export class ApiStorageProvider implements StorageProvider {
       'locations',
       'categories',
       'tags',
+      'gearProfiles',
       'items',
       'itemEvents',
       'wishlistEntries',
@@ -578,6 +604,26 @@ export class ApiStorageProvider implements StorageProvider {
       }
     }
   }
+}
+
+/**
+ * `specs` is stored as a JSON column, so it arrives as a string over the wire
+ * and as an array from the local providers. Normalising here keeps every caller
+ * dealing with one shape.
+ */
+function normaliseGearProfile(profile: GearProfile): GearProfile {
+  const raw: unknown = profile.specs;
+
+  if (typeof raw === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      return { ...profile, specs: Array.isArray(parsed) ? parsed : [] };
+    } catch {
+      return { ...profile, specs: [] };
+    }
+  }
+
+  return { ...profile, specs: Array.isArray(raw) ? raw : [] };
 }
 
 /** SQLite has no boolean, so `isArchived` arrives as 0 or 1. */

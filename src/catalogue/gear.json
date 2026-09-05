@@ -1,0 +1,184 @@
+{
+  "formatVersion": 1,
+  "name": "Brassworth community catalogue",
+  "licence": "ODbL-1.0",
+  "updatedAt": "2026-09-05T00:00:00.000Z",
+  "profiles": [
+    {
+      "brand": "DeWalt",
+      "model": "DCD791D2",
+      "productType": "Cordless drill/driver",
+      "specs": [
+        { "label": "Battery platform", "value": "20V MAX XR" },
+        { "label": "Chuck", "value": "1/2", "unit": "in" },
+        { "label": "Motor", "value": "Brushless" }
+      ]
+    },
+    {
+      "brand": "DeWalt",
+      "model": "DCS570B",
+      "productType": "Circular saw",
+      "specs": [
+        { "label": "Battery platform", "value": "20V MAX" },
+        { "label": "Blade", "value": "7-1/4", "unit": "in" },
+        { "label": "Motor", "value": "Brushless" }
+      ]
+    },
+    {
+      "brand": "DeWalt",
+      "model": "DCF887B",
+      "productType": "Impact driver",
+      "specs": [
+        { "label": "Battery platform", "value": "20V MAX XR" },
+        { "label": "Drive", "value": "1/4", "unit": "in hex" },
+        { "label": "Motor", "value": "Brushless" }
+      ]
+    },
+    {
+      "brand": "Milwaukee",
+      "model": "2804-20",
+      "productType": "Hammer drill/driver",
+      "specs": [
+        { "label": "Battery platform", "value": "M18 FUEL" },
+        { "label": "Chuck", "value": "1/2", "unit": "in" },
+        { "label": "Motor", "value": "Brushless" }
+      ]
+    },
+    {
+      "brand": "Milwaukee",
+      "model": "2853-20",
+      "productType": "Impact driver",
+      "specs": [
+        { "label": "Battery platform", "value": "M18 FUEL" },
+        { "label": "Drive", "value": "1/4", "unit": "in hex" },
+        { "label": "Motor", "value": "Brushless" }
+      ]
+    },
+    {
+      "brand": "Makita",
+      "model": "XPH12Z",
+      "productType": "Hammer driver-drill",
+      "specs": [
+        { "label": "Battery platform", "value": "18V LXT" },
+        { "label": "Chuck", "value": "1/2", "unit": "in" },
+        { "label": "Motor", "value": "Brushless" }
+      ]
+    },
+    {
+      "brand": "Makita",
+      "model": "XDT16Z",
+      "productType": "Impact driver",
+      "specs": [
+        { "label": "Battery platform", "value": "18V LXT" },
+        { "label": "Drive", "value": "1/4", "unit": "in hex" },
+        { "label": "Motor", "value": "Brushless" }
+      ]
+    },
+    {
+      "brand": "Ryobi",
+      "model": "P252",
+      "productType": "Cordless drill/driver",
+      "specs": [
+        { "label": "Battery platform", "value": "18V ONE+" },
+        { "label": "Chuck", "value": "1/2", "unit": "in" },
+        { "label": "Motor", "value": "Brushless" }
+      ]
+    },
+    {
+      "brand": "Bosch",
+      "model": "GSR18V-535C",
+      "productType": "Cordless drill/driver",
+      "specs": [
+        { "label": "Battery platform", "value": "18V" },
+        { "label": "Chuck", "value": "1/2", "unit": "in" },
+        { "label": "Motor", "value": "Brushless" }
+      ]
+    },
+    {
+      "brand": "Festool",
+      "model": "TS 55",
+      "productType": "Track saw",
+      "specs": [
+        { "label": "Power", "value": "Corded" },
+        { "label": "Blade", "value": "160", "unit": "mm" }
+      ]
+    },
+    {
+      "brand": "Cisco",
+      "model": "SG350-28",
+      "productType": "Managed network switch",
+      "specs": [
+        { "label": "Ports", "value": "24 × Gigabit Ethernet" },
+        { "label": "Uplinks", "value": "4 × SFP" },
+        { "label": "Form factor", "value": "1U rack" }
+      ]
+    },
+    {
+      "brand": "Ubiquiti",
+      "model": "USW-24-POE",
+      "productType": "Managed network switch",
+      "specs": [
+        { "label": "Ports", "value": "24 × Gigabit Ethernet" },
+        { "label": "PoE", "value": "16 × PoE+" },
+        { "label": "Form factor", "value": "1U rack" }
+      ]
+    },
+    {
+      "brand": "Netgear",
+      "model": "GS308",
+      "productType": "Unmanaged network switch",
+      "specs": [
+        { "label": "Ports", "value": "8 × Gigabit Ethernet" },
+        { "label": "Form factor", "value": "Desktop" }
+      ]
+    },
+    {
+      "brand": "Shure",
+      "model": "SM58",
+      "productType": "Vocal microphone",
+      "specs": [
+        { "label": "Type", "value": "Dynamic" },
+        { "label": "Polar pattern", "value": "Cardioid" },
+        { "label": "Connector", "value": "XLR" }
+      ]
+    },
+    {
+      "brand": "Shure",
+      "model": "SM57",
+      "productType": "Instrument microphone",
+      "specs": [
+        { "label": "Type", "value": "Dynamic" },
+        { "label": "Polar pattern", "value": "Cardioid" },
+        { "label": "Connector", "value": "XLR" }
+      ]
+    },
+    {
+      "brand": "Yamaha",
+      "model": "MG10XU",
+      "productType": "Analogue mixer",
+      "specs": [
+        { "label": "Channels", "value": "10" },
+        { "label": "Effects", "value": "SPX digital" },
+        { "label": "Interface", "value": "USB" }
+      ]
+    },
+    {
+      "brand": "Canon",
+      "model": "EOS R6",
+      "productType": "Mirrorless camera",
+      "specs": [
+        { "label": "Sensor", "value": "Full-frame CMOS" },
+        { "label": "Mount", "value": "Canon RF" }
+      ]
+    },
+    {
+      "brand": "Sony",
+      "model": "ILCE-7M3",
+      "productType": "Mirrorless camera",
+      "specs": [
+        { "label": "Sensor", "value": "Full-frame CMOS" },
+        { "label": "Mount", "value": "Sony E" }
+      ]
+    }
+  ]
+}

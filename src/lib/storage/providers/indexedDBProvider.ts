@@ -16,6 +16,7 @@ import {
   WishlistEntry,
   SavingsContribution,
   PriceObservation,
+  GearProfile,
 } from '@/types';
 
 /**
@@ -32,6 +33,7 @@ class HomeAssetKeeperDB extends Dexie {
   wishlistEntries!: Table<WishlistEntry, string>;
   savingsContributions!: Table<SavingsContribution, string>;
   priceObservations!: Table<PriceObservation, string>;
+  gearProfiles!: Table<GearProfile, string>;
   photos!: Table<Photo, string>;
   documents!: Table<Document, string>;
   users!: Table<UserWithAuth, string>;
@@ -68,6 +70,13 @@ class HomeAssetKeeperDB extends Dexie {
     // v4 adds the price history behind a wishlist entry.
     this.version(4).stores({
       priceObservations: 'id, wishlistEntryId, organizationId, observedAt',
+    });
+
+    // v5 adds the organisation's own gear profiles. The shipped catalogue is
+    // deliberately not a store — it is read-only data merged in at read time,
+    // so writing it here would copy it into every browser and every backup.
+    this.version(5).stores({
+      gearProfiles: 'id, organizationId, brand, model',
     });
   }
 }
@@ -579,6 +588,49 @@ export class IndexedDBProvider implements StorageProvider {
     await this.db.priceObservations.where('wishlistEntryId').equals(entryId).delete();
   }
 
+  // --- Gear profiles (the organisation's own; the catalogue is never stored) ---
+
+  async getGearProfiles(): Promise<GearProfile[]> {
+    return this.db.gearProfiles.toArray();
+  }
+
+  async getGearProfile(id: string): Promise<GearProfile | null> {
+    return (await this.db.gearProfiles.get(id)) ?? null;
+  }
+
+  async createGearProfile(
+    profile: Omit<GearProfile, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<GearProfile> {
+    const now = new Date().toISOString();
+    const created: GearProfile = {
+      ...profile,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    await this.db.gearProfiles.add(created);
+    return created;
+  }
+
+  async updateGearProfile(id: string, updates: Partial<GearProfile>): Promise<GearProfile> {
+    const existing = await this.db.gearProfiles.get(id);
+    if (!existing) throw new Error(`Gear profile not found: ${id}`);
+
+    const updated: GearProfile = {
+      ...existing,
+      ...updates,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    await this.db.gearProfiles.put(updated);
+    return updated;
+  }
+
+  async deleteGearProfile(id: string): Promise<void> {
+    await this.db.gearProfiles.delete(id);
+  }
+
   async replaceCollection<K extends CollectionName>(
     collection: K,
     rows: CollectionRow<K>[]
@@ -605,6 +657,7 @@ export class IndexedDBProvider implements StorageProvider {
       this.db.wishlistEntries.clear(),
       this.db.savingsContributions.clear(),
       this.db.priceObservations.clear(),
+      this.db.gearProfiles.clear(),
       this.db.photos.clear(),
       this.db.documents.clear(),
       this.db.users.clear(),
@@ -627,6 +680,7 @@ export class IndexedDBProvider implements StorageProvider {
       wishlistEntries: await this.getWishlistEntries(),
       savingsContributions: await this.getSavingsContributions(),
       priceObservations: await this.getPriceObservations(),
+      gearProfiles: await this.getGearProfiles(),
       photos: await this.getPhotos(),
       documents: await this.getDocuments(),
       users: await this.getUsers(),
@@ -665,6 +719,9 @@ export class IndexedDBProvider implements StorageProvider {
     }
     if (parsed.savingsContributions) {
       await this.db.savingsContributions.bulkPut(parsed.savingsContributions);
+    }
+    if (parsed.gearProfiles) {
+      await this.db.gearProfiles.bulkPut(parsed.gearProfiles);
     }
     if (parsed.priceObservations) {
       await this.db.priceObservations.bulkPut(parsed.priceObservations);

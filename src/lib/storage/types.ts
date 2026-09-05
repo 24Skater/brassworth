@@ -14,6 +14,7 @@ import {
   WishlistEntry,
   SavingsContribution,
   PriceObservation,
+  GearProfile,
 } from '@/types';
 
 /**
@@ -106,6 +107,22 @@ export interface StorageProvider {
   ): Promise<PriceObservation>;
   deletePriceObservationsByEntry(entryId: string): Promise<void>;
 
+  /**
+   * Gear profile operations.
+   *
+   * Only the organisation's *own* profiles live here. The shipped catalogue is
+   * merged in at read time and never written — persisting a read-only dataset
+   * into every tenant would bloat every backup and turn a catalogue update into
+   * a migration. See `src/lib/gear/catalogue.ts`.
+   */
+  getGearProfiles(): Promise<GearProfile[]>;
+  getGearProfile(id: string): Promise<GearProfile | null>;
+  createGearProfile(
+    profile: Omit<GearProfile, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<GearProfile>;
+  updateGearProfile(id: string, updates: Partial<GearProfile>): Promise<GearProfile>;
+  deleteGearProfile(id: string): Promise<void>;
+
   // Photo operations
   getPhotos(): Promise<Photo[]>;
   getPhotosByItem(itemId: string): Promise<Photo[]>;
@@ -175,6 +192,7 @@ export type CollectionMap = {
   wishlistEntries: WishlistEntry;
   savingsContributions: SavingsContribution;
   priceObservations: PriceObservation;
+  gearProfiles: GearProfile;
   photos: Photo;
   documents: Document;
   users: UserWithAuth;

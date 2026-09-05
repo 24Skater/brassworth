@@ -127,6 +127,15 @@ export const items = sqliteTable(
     brand: text('brand'),
     model: text('model'),
     serialNumber: text('serial_number'),
+    /**
+     * The make and model this item is an instance of.
+     *
+     * Deliberately *not* a foreign key. The value is either a stored gear
+     * profile's id or a catalogue id derived from brand and model, and the
+     * catalogue is never written to the database — so a constraint here would
+     * reject exactly the links the catalogue exists to create.
+     */
+    gearProfileId: text('gear_profile_id'),
     purchaseDate: text('purchase_date'),
     purchasePrice: real('purchase_price'),
     currentEstimatedValue: real('current_estimated_value'),
@@ -367,6 +376,38 @@ export const priceObservations = sqliteTable(
   })
 );
 
+/**
+ * A make and model, described once by the organisation itself.
+ *
+ * Only the organisation's own profiles are stored. The shipped catalogue is
+ * read-only data merged in by the client at read time — writing it here would
+ * copy the same rows into every tenant and turn a catalogue update into a
+ * migration.
+ */
+export const gearProfiles = sqliteTable(
+  'gear_profiles',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    brand: text('brand').notNull(),
+    model: text('model').notNull(),
+    productType: text('product_type'),
+    /** A JSON array of {label, value, unit?}. Specs vary by product type, so
+     * columns would mean a new column per type — see the note on GearSpec. */
+    specs: text('specs').notNull().default('[]'),
+    manualUrl: text('manual_url'),
+    partsUrl: text('parts_url'),
+    productUrl: text('product_url'),
+    ...timestamps,
+  },
+  (table) => ({
+    byOrg: index('gear_profiles_org_idx').on(table.organizationId),
+    byModel: index('gear_profiles_model_idx').on(table.brand, table.model),
+  })
+);
+
 export const schema = {
   users,
   sessions,
@@ -385,4 +426,5 @@ export const schema = {
   wishlistEntries,
   savingsContributions,
   priceObservations,
+  gearProfiles,
 };
