@@ -3,7 +3,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import type { Database } from './db';
-import { memberships, organizations, sessions, users } from './db/schema';
+import { memberships, oidcAccounts, organizations, sessions, users } from './db/schema';
 import { hashPassword, verifyPassword } from './auth/password';
 import {
   buildClearedSessionCookie,
@@ -17,11 +17,25 @@ import {
 } from './auth/session';
 import { AccessError, isRole, requireOrgAccess, type Role } from './auth/access';
 import { COLLECTIONS, isCollection } from './routes/collections';
+import {
+  LoginAttemptStore,
+  buildAuthorizationUrl,
+  decideLink,
+  getConfiguration,
+  identityFromClaims,
+  readOidcSettings,
+  type OidcSettings,
+} from './auth/oidc';
+import { authorizationCodeGrant } from 'openid-client';
 
 export interface AppOptions {
   db: Database;
   /** Cookies are only marked Secure when the deployment is actually on HTTPS. */
   secureCookies?: boolean;
+  /** Null disables single sign-on entirely, which is the default. */
+  oidc?: OidcSettings | null;
+  /** Where the browser lands after a successful provider sign-in. */
+  postLoginRedirect?: string;
 }
 
 interface Viewer {
@@ -49,8 +63,15 @@ const orgInput = z.object({
 
 const normaliseEmail = (email: string) => email.trim().toLowerCase();
 
-export function createApp({ db, secureCookies = false }: AppOptions) {
+export function createApp({
+  db,
+  secureCookies = false,
+  oidc,
+  postLoginRedirect = '/dashboard',
+}: AppOptions) {
   const app = new Hono<Env>();
+  const oidcSettings = oidc === undefined ? readOidcSettings() : oidc;
+  const loginAttempts = new LoginAttemptStore();
 
   const lookupRole = async (userId: string, organizationId: string): Promise<Role | null> => {
     const [row] = await db
@@ -153,6 +174,12 @@ export function createApp({ db, secureCookies = false }: AppOptions) {
     const hash = user?.passwordHash ?? (await placeholderHash());
     const valid = await verifyPassword(parsed.data.password, hash);
 
+    if (user && !user.passwordHash) {
+      // An account created through an identity provider has no password to
+      // check. Saying so beats an "incorrect password" they can never satisfy.
+      return c.json({ error: 'This account signs in through your identity provider.' }, 401);
+    }
+
     if (!user || !valid) {
       return c.json({ error: 'Email address or password is incorrect.' }, 401);
     }
@@ -175,6 +202,103 @@ export function createApp({ db, secureCookies = false }: AppOptions) {
     const viewer = c.get('viewer');
     if (!viewer) return c.json({ error: 'Not signed in.' }, 401);
     return c.json({ user: viewer });
+  });
+
+  // --- Sign-in through an identity provider ---
+  //
+  // Absent unless configured. A self-hoster who wants local accounts only never
+  // sets these variables and never sees this path.
+
+  app.get('/api/auth/oidc/status', (c) =>
+    c.json(oidcSettings ? { enabled: true, label: oidcSettings.label } : { enabled: false })
+  );
+
+  app.get('/api/auth/oidc/start', async (c) => {
+    if (!oidcSettings) return c.json({ error: 'Single sign-on is not configured.' }, 404);
+
+    try {
+      const { url } = await buildAuthorizationUrl(oidcSettings, loginAttempts);
+      return c.redirect(url);
+    } catch (error) {
+      console.error('Could not start single sign-on:', error);
+      return c.json({ error: 'Could not reach the identity provider.' }, 502);
+    }
+  });
+
+  app.get('/api/auth/oidc/callback', async (c) => {
+    if (!oidcSettings) return c.json({ error: 'Single sign-on is not configured.' }, 404);
+
+    const state = c.req.query('state');
+    // Consumed whether or not it turns out valid, so a state cannot be replayed.
+    const attempt = state ? loginAttempts.take(state) : null;
+    if (!attempt) {
+      return c.json({ error: 'That sign-in attempt has expired. Try again.' }, 400);
+    }
+
+    let identity;
+    try {
+      const config = await getConfiguration(oidcSettings);
+      const tokens = await authorizationCodeGrant(config, new URL(c.req.url), {
+        pkceCodeVerifier: attempt.codeVerifier,
+        expectedNonce: attempt.nonce,
+        expectedState: state,
+      });
+      identity = identityFromClaims((tokens.claims() ?? {}) as Record<string, unknown>);
+    } catch (error) {
+      console.error('Single sign-on callback failed:', error);
+      return c.json({ error: 'Could not complete sign-in.' }, 401);
+    }
+
+    const [link] = await db
+      .select({ userId: oidcAccounts.userId })
+      .from(oidcAccounts)
+      .where(
+        and(
+          eq(oidcAccounts.provider, oidcSettings.provider),
+          eq(oidcAccounts.subject, identity.subject)
+        )
+      )
+      .limit(1);
+
+    const [byEmail] = identity.email
+      ? await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.email, identity.email))
+          .limit(1)
+      : [];
+
+    const outcome = decideLink(identity, link?.userId ?? null, byEmail?.id ?? null);
+
+    if (outcome.action === 'refuse') {
+      return c.json({ error: outcome.reason }, 403);
+    }
+
+    let userId: string;
+    if (outcome.action === 'create') {
+      userId = randomUUID();
+      await db.insert(users).values({
+        id: userId,
+        // A provider that sends no address still gets a usable local record.
+        email: outcome.email ?? `${identity.subject}@${oidcSettings.provider}.local`,
+        name: outcome.name ?? 'New user',
+        // No password: this account signs in through the provider only.
+        passwordHash: null,
+      });
+    } else {
+      userId = outcome.userId;
+    }
+
+    if (outcome.action !== 'existing-link') {
+      await db
+        .insert(oidcAccounts)
+        .values({ provider: oidcSettings.provider, subject: identity.subject, userId })
+        .onConflictDoNothing();
+    }
+
+    const token = await startSession(userId);
+    c.header('Set-Cookie', buildSessionCookie(token, cookieOptions()));
+    return c.redirect(postLoginRedirect);
   });
 
   // --- Organisations ---

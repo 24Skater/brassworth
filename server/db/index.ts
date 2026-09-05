@@ -37,7 +37,7 @@ export async function migrate(client: Client): Promise<void> {
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL,
       name TEXT NOT NULL,
-      password_hash TEXT NOT NULL,
+      password_hash TEXT,
       created_at TEXT NOT NULL DEFAULT (current_timestamp),
       updated_at TEXT NOT NULL DEFAULT (current_timestamp)
     )`,
@@ -49,6 +49,14 @@ export async function migrate(client: Client): Promise<void> {
       created_at TEXT NOT NULL DEFAULT (current_timestamp)
     )`,
     `CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions (user_id)`,
+    `CREATE TABLE IF NOT EXISTS oidc_accounts (
+      provider TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TEXT NOT NULL DEFAULT (current_timestamp)
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS oidc_accounts_unique ON oidc_accounts (provider, subject)`,
+    `CREATE INDEX IF NOT EXISTS oidc_accounts_user_idx ON oidc_accounts (user_id)`,
     `CREATE TABLE IF NOT EXISTS organizations (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,

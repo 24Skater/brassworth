@@ -393,6 +393,39 @@ public release** rather than after it. Without it, the earliest self-hosters are
 
 Both seams already exist, so application code barely changes.
 
+### Running it
+
+One image serves the API and the built app on **one origin**. That is what makes the session
+cookie need no cross-site configuration and lets a self-hoster run one container rather than
+wiring a reverse proxy between two.
+
+```bash
+docker compose up -d
+```
+
+SQLite lives on a named volume. Put a reverse proxy in front for HTTPS and keep
+`NODE_ENV=production` set, which is what marks the session cookie `Secure`.
+
+For Postgres or a hosted libSQL, point `DATABASE_URL` at it — the same schema, unchanged.
+
+### Sign-in through an identity provider
+
+Optional and **off unless configured**. `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`
+and `OIDC_REDIRECT_URI` are required together; with any of them missing the routes report
+themselves unavailable rather than half-enabling. A self-hoster who wants local accounts only
+sets none of them and never sees the path.
+
+The flow uses `openid-client` rather than being hand-rolled. Email and password with
+server-side sessions is a well-trodden pattern worth writing out; OAuth is not — state, nonce
+and PKCE all have to be right, and getting one wrong is a login bypass rather than a bug.
+
+**Accounts link by subject, never by email alone.** An address can change hands, so a
+provider that does not verify addresses would otherwise let somebody claim an existing
+account simply by asserting its address. Auto-linking to an existing local account happens
+only when the provider marks the address verified; otherwise the attempt is refused and
+explained. An account created this way has no password, and the password form says so rather
+than returning an "incorrect password" that could never be satisfied.
+
 ### Server layout
 
 `server/` sits beside `src/` with its own tsconfig, rather than restructuring into a

@@ -29,8 +29,12 @@ export const users = sqliteTable(
     id: text('id').primaryKey(),
     email: text('email').notNull(),
     name: text('name').notNull(),
-    /** scrypt output; see server/auth/password.ts for the format. */
-    passwordHash: text('password_hash').notNull(),
+    /**
+     * scrypt output; see server/auth/password.ts. Null for accounts that only
+     * ever sign in through an identity provider and therefore have no password
+     * to check.
+     */
+    passwordHash: text('password_hash'),
     ...timestamps,
   },
   (table) => ({
@@ -54,6 +58,26 @@ export const sessions = sqliteTable(
   },
   (table) => ({
     byUser: index('sessions_user_idx').on(table.userId),
+  })
+);
+
+/** Links a provider subject to a local account. */
+export const oidcAccounts = sqliteTable(
+  'oidc_accounts',
+  {
+    provider: text('provider').notNull(),
+    subject: text('subject').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`(current_timestamp)`),
+  },
+  (table) => ({
+    // Linking is by subject, never by email alone: an address can change hands.
+    unique: uniqueIndex('oidc_accounts_unique').on(table.provider, table.subject),
+    byUser: index('oidc_accounts_user_idx').on(table.userId),
   })
 );
 
@@ -272,6 +296,7 @@ export const userRoles = sqliteTable(
 export const schema = {
   users,
   sessions,
+  oidcAccounts,
   organizations,
   memberships,
   items,

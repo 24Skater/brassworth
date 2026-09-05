@@ -28,15 +28,15 @@ Someone with real gear to account for: a garage of tools, a rack of network equi
 
 Verified, not aspirational. Run the checks yourself with the commands in [TESTING.md](./TESTING.md).
 
-|          | State                                                                  |
-| -------- | ---------------------------------------------------------------------- |
-| Frontend | React 18 + TypeScript + Vite, shadcn/ui, Workshop palette              |
-| Backend  | Hono API in `server/`, not yet wired to the browser app                |
-| Storage  | localStorage and IndexedDB providers; the `api` provider is a stub     |
-| Auth     | localStorage records. Not a security boundary — editable from devtools |
-| Tests    | 288 unit and server, 37 E2E, all green                                 |
-| Coverage | 22.13%, ratcheted so it cannot drop                                    |
-| CI       | Five jobs green on `main`                                              |
+|          | State                                                                   |
+| -------- | ----------------------------------------------------------------------- |
+| Frontend | React 18 + TypeScript + Vite, shadcn/ui, Workshop palette               |
+| Backend  | Hono API in `server/`, wired to the app via `VITE_STORAGE_PROVIDER=api` |
+| Storage  | localStorage and IndexedDB providers; the `api` provider is a stub      |
+| Auth     | Server-enforced in the API tier; still localStorage in the local tier   |
+| Tests    | 349 unit and server, 37 E2E, all green                                  |
+| Coverage | 29.14%, ratcheted so it cannot drop                                     |
+| CI       | Five jobs green on `main`                                               |
 
 ### What already works
 
@@ -149,7 +149,7 @@ interface PriceWatch {
 }
 ```
 
-A wishlist entry converts to a real `Item` on purchase, carrying its saved history across. Price checking needs a server — see the sequencing note in Phase 4.
+A wishlist entry converts to a real `Item` on purchase, carrying its saved history across. Price checking needs a scheduled server-side job, which Phase 4 provides.
 
 ---
 
@@ -207,7 +207,7 @@ second write path. They live on `Item` as optional fields.
 `MARKET_COMPARABLE` is also dropped from the method list. With no price data source behind
 it, it would produce a number that looks authoritative and is invented.
 
-### Phase 4 — Backend, auth, hosted tier 🚧 in progress
+### Phase 4 — Backend, auth, hosted tier ✅ done
 
 _See [ARCHITECTURE.md](./ARCHITECTURE.md). Three deployment tiers from one codebase._
 
@@ -215,13 +215,11 @@ _See [ARCHITECTURE.md](./ARCHITECTURE.md). Three deployment tiers from one codeb
 - [x] Server-side password hashing — **scrypt**, not Argon2id; see the note below
 - [x] Sessions as opaque tokens in httpOnly, SameSite cookies. Only a hash is stored
 - [x] One `requireOrgAccess(userId, orgId, permission)` guard, with the four roles enforced
-- [x] The `api` storage provider case now **fails loudly** instead of silently writing to
-      localStorage behind an operator who configured a server
-- [ ] `ApiStorageProvider` and `ApiAuthProvider` wiring the frontend to it
-- [ ] Remaining tables: locations, categories, tags, photos, documents, user roles
-- [ ] Docker packaging
-- [ ] Google and generic OIDC, optional and off by default
-- [ ] Price watching, which needs the scheduled server-side job this phase provides
+- [x] `ApiStorageProvider` and `ApiAuthProvider` behind the interfaces that already existed
+- [x] Every remaining table: locations, categories, tags, photos, documents, user roles
+- [x] The `api` storage provider **fails loudly** rather than silently writing to localStorage
+- [x] Docker packaging — one image serving the API and the built app on one origin
+- [x] Generic OIDC, optional and **off unless configured**
 
 **scrypt rather than Argon2id, deliberately.** Argon2 is the stronger first choice on paper,
 but every Node binding is a native module, and this project's pitch to self-hosters is that
@@ -231,6 +229,16 @@ standard library. Stored hashes are self-describing, so the parameters can chang
 **A non-member gets 404, not 403.** Telling a stranger "that property exists, you just
 cannot see it" leaks which properties exist. A member who lacks the specific permission gets
 403, because they already know it exists.
+
+**OIDC links by subject, never by email alone.** An address can change hands, so a provider
+that does not verify addresses would otherwise let somebody claim an existing account by
+asserting its address. Auto-linking to an existing account happens only when the provider
+says the address is verified; otherwise the attempt is refused and explained.
+
+**Price watching moved to Phase 5.** This document previously placed it here because it needs
+a scheduled server-side job, which now exists. But a price watch watches a _wishlist entry_,
+and wishlist entries are Phase 5 — building a watcher with nothing to watch is infrastructure
+for a feature that does not exist yet. It belongs with the thing it operates on.
 
 ### Phase 5 — Wishlist and acquisition
 
@@ -254,7 +262,7 @@ cannot see it" leaks which properties exist. A member who lacks the specific per
 | **v0.2** | Phase 1 done. Async storage, export/import working, repo public                     |
 | **v0.4** | ✅ Phase 2 done. Lifecycle and custody — the first genuinely differentiated release |
 | **v0.6** | Phase 3 done. Valuation and dashboards                                              |
-| **v0.8** | Phase 4 done. Real auth, real multi-user, self-hostable with a server               |
+| **v0.8** | ✅ Phase 4 done. Real auth, real multi-user, self-hostable with a server            |
 | **v1.0** | Phase 5 done, coverage at 80%, hosted tier live at `app.brassworth.com`             |
 
 Phase 6 is deliberately after v1.0. It is the most fun and the least load-bearing.

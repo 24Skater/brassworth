@@ -1,29 +1,37 @@
-version: '3.8'
+# Brassworth, self-hosted.
+#
+#   docker compose up -d
+#
+# That is the whole thing. SQLite on a volume, no external database, no reverse
+# proxy required. Point a proxy at port 3000 when you want HTTPS, and set
+# NODE_ENV=production so the session cookie is marked Secure.
 
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  brassworth:
+    build: .
+    image: brassworth:latest
     container_name: brassworth
-    ports:
-      - "${PORT:-80}:80"
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    ports:
+      - '${PORT:-3000}:3000'
     environment:
-      - NODE_ENV=production
-    labels:
-      - "com.brassworth.description=Brassworth Frontend"
-      - "com.brassworth.version=0.0.0"
-    networks:
-      - brassworth-network
+      NODE_ENV: production
+      DATABASE_URL: file:/app/data/brassworth.db
+      # How long a session lasts before it has to be renewed.
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-168}
 
-networks:
-  brassworth-network:
-    driver: bridge
+      # --- Optional: sign in through an identity provider ---
+      # Leave these unset for local accounts only. All four are required
+      # together; the sign-in route reports itself unavailable without them.
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-}
+      OIDC_LABEL: ${OIDC_LABEL:-}
+      OIDC_PROVIDER: ${OIDC_PROVIDER:-}
+    volumes:
+      # Your data. Without this, it dies with the container.
+      - brassworth-data:/app/data
 
+volumes:
+  brassworth-data:

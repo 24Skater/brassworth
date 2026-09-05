@@ -25,15 +25,35 @@ Built for people with real gear to keep track of: a garage full of tools, a rack
 
 Check-in / check-out with custody history, depreciation and current-value estimates, full lifecycle states (loaned, broken, in repair, returned, sold), a wishlist with savings goals, sale alerts, and reporting broken down by brand. See [the roadmap](./docs/ROADMAP.md).
 
-## Status: local-first, pre-release
+## Two ways to run it
+
+**Local-first** — the default. `npm run dev`. No server, no accounts, everything in your
+browser. This mode is not going away; it is the privacy claim.
+
+**Self-hosted with a server** — real accounts, real roles, several people sharing a property:
+
+```bash
+docker compose up -d
+```
+
+One container, SQLite on a volume, no external database. Sign-in through Google or any other
+OIDC provider is optional and off unless you configure it. See
+[ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+
+## Status: pre-release
 
 Be aware of what this is right now:
 
-- **There is no server.** Everything runs in your browser and your data lives in that browser's storage. Nothing is uploaded anywhere.
-- **The sign-in screen is not a security boundary.** Accounts and roles are records in local storage — anyone with access to the browser can edit them. Treat this as a single-user local application until the backend lands.
-- **Export your data** if it matters to you. Clearing site data deletes it.
+- **In local-first mode there is no server.** Everything runs in your browser and your data
+  lives in that browser's storage. Nothing is uploaded anywhere.
+- **In local-first mode the sign-in screen is not a security boundary.** Accounts and roles
+  are records in local storage — anyone with access to the browser can edit them. Treat it as
+  a single-user local application.
+- **Run the server if you need real accounts.** Roles are then enforced server-side on every
+  request, passwords are hashed with scrypt, and sessions are httpOnly cookies.
+- **Export your data** either way. In local-first mode, clearing site data deletes it.
 
-A real backend with enforced authentication, plus an optional hosted tier, is the next major milestone.
+A hosted tier is the next major milestone.
 
 ## 🚀 Quick Start
 
