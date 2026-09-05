@@ -41,3 +41,6 @@ playwright/.cache
 
 # OS
 Thumbs.db
+
+# Server
+data/

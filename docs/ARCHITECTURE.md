@@ -356,8 +356,20 @@ point at which the four existing roles stop being decorative.
 ### Auth migration
 
 Passwords are currently hashed with PBKDF2 **in the browser**. Those hashes are worthless
-server-side — they were never a server credential. When the backend lands, hashing moves to
-Argon2id on the server and existing local accounts re-register.
+server-side — they were never a server credential. Hashing now happens on the server and
+existing local accounts re-register.
+
+**scrypt, not Argon2id.** Argon2 is the stronger first choice on paper, but every Node
+binding for it is a native module, and this project's pitch to self-hosters is that running
+it is easy. scrypt is OWASP's named second choice, is memory-hard, and ships in Node's
+standard library — no compiler, no prebuilt-binary roulette on somebody's NAS. Parameters
+follow the OWASP cheat sheet (N=2^17, r=8, p=1), and stored hashes are self-describing so
+those parameters can change later without stranding anyone.
+
+**Sessions are opaque tokens, not JWTs.** A JWT cannot be revoked without a denylist, which
+is the same database round-trip a JWT exists to avoid — so it buys nothing here and costs
+the ability to log someone out. Only the SHA-256 of a token is stored, so a leaked database
+does not hand over usable sessions.
 
 Sessions move from localStorage to httpOnly, SameSite cookies.
 
@@ -369,13 +381,38 @@ public release** rather than after it. Without it, the earliest self-hosters are
 
 ### What to build, in order
 
-1. Remove the synchronous `src/lib/storage.ts` wrapper — nothing network-backed can land while it exists
-2. Server, schema, and auth
-3. `ApiStorageProvider` implementing the existing `StorageProvider` interface
-4. `ApiAuthProvider` implementing the existing `AuthProviderInterface`
-5. Make the `api` provider case fail loudly instead of silently falling back to localStorage
+1. ~~Remove the synchronous `src/lib/storage.ts` wrapper~~ — done
+2. ~~Server, schema, and auth~~ — done, in `server/`
+3. ~~Make the `api` provider case fail loudly~~ — done; it throws rather than quietly
+   writing to localStorage behind an operator who configured a server
+4. `ApiStorageProvider` implementing the existing `StorageProvider` interface
+5. `ApiAuthProvider` implementing the existing `AuthProviderInterface`
+6. Remaining tables: locations, categories, tags, photos, documents, user roles
+7. Docker packaging, then OIDC — which _should_ use a library rather than being
+   hand-rolled; the risky parts of auth are the flows, not the hashing
 
 Both seams already exist, so application code barely changes.
+
+### Server layout
+
+`server/` sits beside `src/` with its own tsconfig, rather than restructuring into a
+workspace monorepo. A monorepo would touch every path, the CI config and the Docker build
+to buy nothing a solo pre-1.0 project needs yet.
+
+```
+server/
+  app.ts            Hono routes and the composition root
+  index.ts          Node entrypoint
+  db/schema.ts      Drizzle schema
+  db/index.ts       Connection and table creation
+  auth/password.ts  scrypt hashing
+  auth/session.ts   Token generation, hashing, cookie construction
+  auth/access.ts    The permission matrix and requireOrgAccess
+```
+
+**libSQL, not better-sqlite3.** Both speak SQLite; better-sqlite3 is a native module that
+has to compile or find a prebuilt binary, which is a support burden for a project whose
+pitch is that self-hosting is easy.
 
 ---
 

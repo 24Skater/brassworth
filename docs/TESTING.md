@@ -39,6 +39,14 @@ npm run test:ui         # Vitest UI
 
 Because state resets per test, tests must not depend on execution order. If a test only passes when run after another, it is broken.
 
+### Server — Vitest
+
+Location: `tests/server/`. Runs in Node, not jsdom.
+
+The API tests are **integration tests against the real Hono app and a real in-memory
+database** — no mocks. The properties they assert (tenant isolation, session invalidation)
+are exactly the ones a mock would let through.
+
 ### End-to-end — Playwright
 
 Location: `tests/e2e/*.spec.ts`.
@@ -88,7 +96,7 @@ Thresholds live in `vitest.config.ts` and fail the build when coverage drops bel
 
 They are a **ratchet, not a target**. They currently sit just under measured coverage so it cannot regress. The project standard is 80%; raise the numbers as suites land, and never lower them to make a build pass.
 
-Current baseline: **17.29% statements**. That figure is low because the suite had never actually run until recently — not because the code is untestable. The largest gaps are `src/pages`, `src/components` and `src/lib/receipt`.
+Current baseline: **22.13% statements**. That figure is low because the suite had never actually run until recently — not because the code is untestable. The largest gaps are `src/pages`, `src/components` and `src/lib/receipt`.
 
 ## Before you open a pull request
 

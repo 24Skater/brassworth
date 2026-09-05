@@ -31,11 +31,11 @@ Verified, not aspirational. Run the checks yourself with the commands in [TESTIN
 |          | State                                                                  |
 | -------- | ---------------------------------------------------------------------- |
 | Frontend | React 18 + TypeScript + Vite, shadcn/ui, Workshop palette              |
-| Backend  | **None.** No `fetch`, no `axios`, no API anywhere in `src`             |
+| Backend  | Hono API in `server/`, not yet wired to the browser app                |
 | Storage  | localStorage and IndexedDB providers; the `api` provider is a stub     |
 | Auth     | localStorage records. Not a security boundary — editable from devtools |
-| Tests    | 241 unit, 37 E2E, all green                                            |
-| Coverage | 17.29%, ratcheted so it cannot drop                                    |
+| Tests    | 288 unit and server, 37 E2E, all green                                 |
+| Coverage | 22.13%, ratcheted so it cannot drop                                    |
 | CI       | Five jobs green on `main`                                              |
 
 ### What already works
@@ -207,18 +207,30 @@ second write path. They live on `Item` as optional fields.
 `MARKET_COMPARABLE` is also dropped from the method list. With no price data source behind
 it, it would produce a number that looks authoritative and is invented.
 
-### Phase 4 — Backend, auth, hosted tier
+### Phase 4 — Backend, auth, hosted tier 🚧 in progress
 
 _See [ARCHITECTURE.md](./ARCHITECTURE.md). Three deployment tiers from one codebase._
 
-- Hono + Drizzle + Better Auth in a single container. SQLite by default, Postgres via `DATABASE_URL`
-- Server-side password hashing with Argon2id. The existing browser PBKDF2 hashes are worthless server-side — those users re-register
-- Sessions in httpOnly cookies, not localStorage
-- One `requireOrgAccess(userId, orgId, permission)` guard every handler calls. This is the point at which the four roles become real
-- `ApiStorageProvider` and `ApiAuthProvider` behind the interfaces that already exist
-- Make the `api` provider stub fail loudly instead of silently falling back
-- Google and generic OIDC sign-in, optional and off by default so self-hosters are not forced into it
-- **Price watching lands here**, not earlier — scraping retailer prices needs a scheduled server-side job, and doing it from the browser would be both unreliable and rude
+- [x] Hono API in `server/`, Drizzle over libSQL. SQLite by default via `DATABASE_URL`
+- [x] Server-side password hashing — **scrypt**, not Argon2id; see the note below
+- [x] Sessions as opaque tokens in httpOnly, SameSite cookies. Only a hash is stored
+- [x] One `requireOrgAccess(userId, orgId, permission)` guard, with the four roles enforced
+- [x] The `api` storage provider case now **fails loudly** instead of silently writing to
+      localStorage behind an operator who configured a server
+- [ ] `ApiStorageProvider` and `ApiAuthProvider` wiring the frontend to it
+- [ ] Remaining tables: locations, categories, tags, photos, documents, user roles
+- [ ] Docker packaging
+- [ ] Google and generic OIDC, optional and off by default
+- [ ] Price watching, which needs the scheduled server-side job this phase provides
+
+**scrypt rather than Argon2id, deliberately.** Argon2 is the stronger first choice on paper,
+but every Node binding is a native module, and this project's pitch to self-hosters is that
+running it is easy. scrypt is OWASP's named second choice, is memory-hard, and ships in the
+standard library. Stored hashes are self-describing, so the parameters can change later.
+
+**A non-member gets 404, not 403.** Telling a stranger "that property exists, you just
+cannot see it" leaks which properties exist. A member who lacks the specific permission gets
+403, because they already know it exists.
 
 ### Phase 5 — Wishlist and acquisition
 

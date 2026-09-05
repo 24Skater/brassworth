@@ -42,11 +42,12 @@ export function createStorageProvider(): StorageProvider {
       });
       break;
     case 'api':
-      // APIProvider will be implemented when backend is ready
-      // For now, fall back to localStorage
-      console.warn('API provider not yet implemented, falling back to localStorage');
-      storageProviderInstance = new LocalStorageProvider();
-      break;
+      // Fail loudly. Silently falling back to localStorage would mean an
+      // operator who configured a server watched their data quietly go into the
+      // browser instead, and only discover it when the browser was cleared.
+      throw new Error(
+        'VITE_STORAGE_PROVIDER=api is not implemented yet. Use "localStorage" or "indexeddb".'
+      );
     default:
       console.warn(`Unknown storage provider type: ${providerType}, using localStorage`);
       storageProviderInstance = new LocalStorageProvider();

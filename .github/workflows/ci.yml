@@ -37,6 +37,7 @@ jobs:
       - name: Prettier
         run: npm run format:check
 
+      # Covers both the browser app and the server, which have separate configs.
       - name: TypeScript
         run: npm run type-check
 
