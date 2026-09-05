@@ -34,8 +34,8 @@ Verified, not aspirational. Run the checks yourself with the commands in [TESTIN
 | Backend  | **None.** No `fetch`, no `axios`, no API anywhere in `src`             |
 | Storage  | localStorage and IndexedDB providers; the `api` provider is a stub     |
 | Auth     | localStorage records. Not a security boundary — editable from devtools |
-| Tests    | 211 unit, 33 E2E, all green                                            |
-| Coverage | 15.96%, ratcheted so it cannot drop                                    |
+| Tests    | 241 unit, 37 E2E, all green                                            |
+| Coverage | 17.29%, ratcheted so it cannot drop                                    |
 | CI       | Five jobs green on `main`                                              |
 
 ### What already works
@@ -189,15 +189,15 @@ item's events. Cache it when a profile says to, not before.
 owned item in a special state; putting it in the status union would have made every
 exhaustive switch carry a case that cannot occur.
 
-### Phase 3 — Value and insight 🚧 in progress
+### Phase 3 — Value and insight ✅ done
 
 - [x] Straight-line and declining-balance depreciation, with a salvage floor
 - [x] Age of ownership, cost of ownership, total repair spend per item
 - [x] Value summary on the item page
-- [ ] Dashboards: value by category, by location, by brand
-- [ ] **Brand breakdown reporting** — works identically for tools, IT gear and AV gear,
+- [x] Dashboards: value by category, by location, by brand
+- [x] **Brand breakdown reporting** — works identically for tools, IT gear and AV gear,
       because brand is a field rather than an architecture
-- [ ] Export reports for insurance and tax
+- [x] Export reports for insurance and tax (CSV, RFC 4180 escaped)
 
 **Deviation, deliberately.** This document sketched a separate `Valuation` collection.
 It is not built. Those settings are strictly one-to-one with an item and have no lifecycle

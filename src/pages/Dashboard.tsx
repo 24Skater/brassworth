@@ -6,8 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { storage } from '@/lib/storage';
 import { groupByItem, overdueItems } from '@/lib/lifecycle';
+import {
+  buildReport,
+  byBrand,
+  byCategory,
+  byLocation,
+  heldItems,
+  portfolioTotals,
+  reportFileName,
+  reportToCsv,
+} from '@/lib/reporting';
+import { ValueBreakdown } from '@/components/ValueBreakdown';
+import { toast } from 'sonner';
 import type { ItemEvent } from '@/types';
-import { Package, MapPin, FolderOpen } from 'lucide-react';
+import { Package, MapPin, FolderOpen, FileDown } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { DashboardSkeleton } from '@/components/common/Skeletons';
 import { Item, Location, Category } from '@/types';
@@ -72,14 +84,36 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const overdue = overdueItems(groupByItem(itemEvents));
+  const eventsByItem = groupByItem(itemEvents);
+  const overdue = overdueItems(eventsByItem);
+  const held = heldItems(items, eventsByItem);
+  const totals = portfolioTotals(items, eventsByItem);
+  const categoryBreakdown = byCategory(held, eventsByItem, categories);
+  const locationBreakdown = byLocation(held, eventsByItem, locations);
+  const brandBreakdown = byBrand(held, eventsByItem);
+
+  const handleDownloadReport = () => {
+    try {
+      const csv = reportToCsv(buildReport(items, eventsByItem, categories, locations));
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = reportFileName();
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Report downloaded');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not build the report');
+    }
+  };
+
   const itemName = (itemId: string) => items.find((i) => i.id === itemId)?.name ?? 'Unknown item';
 
-  const totalValue = items.reduce((sum, item) => sum + (item.purchasePrice || 0), 0);
-  const estimatedValue = items.reduce(
-    (sum, item) => sum + (item.currentEstimatedValue || item.purchasePrice || 0),
-    0
-  );
+  // Both figures now come from the valuation engine, so depreciation and sold
+  // items are reflected rather than every item counting at its purchase price.
+  const totalValue = totals.purchaseTotal;
+  const estimatedValue = totals.currentTotal;
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,6 +207,12 @@ export default function Dashboard() {
               </Card>
             )}
 
+            <ValueBreakdown
+              byCategory={categoryBreakdown}
+              byLocation={locationBreakdown}
+              byBrand={brandBreakdown}
+            />
+
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -202,6 +242,15 @@ export default function Dashboard() {
                   >
                     <FolderOpen className="h-4 w-4 mr-2" />
                     Manage Categories
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={handleDownloadReport}
+                    data-testid="download-report"
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    Download report (CSV)
                   </Button>
                 </CardContent>
               </Card>
