@@ -10,6 +10,7 @@ import type {
   WishlistEntry,
   SavingsContribution,
   PriceObservation,
+  GearProfile,
   Photo,
   Document,
   UserWithAuth,
@@ -155,6 +156,17 @@ export const storage = {
     getStorageProvider().createPriceObservation(o),
   setPriceObservations: async (rows: PriceObservation[]) =>
     getStorageProvider().replaceCollection('priceObservations', rows),
+
+  // Gear profiles (the organisation's own; the catalogue is merged in at read time)
+  getGearProfiles: async () => getStorageProvider().getGearProfiles(),
+  getGearProfile: async (id: string) => getStorageProvider().getGearProfile(id),
+  createGearProfile: async (profile: Omit<GearProfile, 'id' | 'createdAt' | 'updatedAt'>) =>
+    getStorageProvider().createGearProfile(profile),
+  updateGearProfile: async (id: string, updates: Partial<GearProfile>) =>
+    getStorageProvider().updateGearProfile(id, updates),
+  deleteGearProfile: async (id: string) => getStorageProvider().deleteGearProfile(id),
+  setGearProfiles: async (rows: GearProfile[]) =>
+    getStorageProvider().replaceCollection('gearProfiles', rows),
 
   // Photos
   getPhotos: async () => getStorageProvider().getPhotos(),

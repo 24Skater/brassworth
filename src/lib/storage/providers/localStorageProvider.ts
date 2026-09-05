@@ -15,6 +15,7 @@ import {
   WishlistEntry,
   SavingsContribution,
   PriceObservation,
+  GearProfile,
 } from '@/types';
 
 const STORAGE_KEYS = {
@@ -31,6 +32,7 @@ const STORAGE_KEYS = {
   WISHLIST: 'inventory_wishlist',
   SAVINGS: 'inventory_savings',
   PRICES: 'inventory_price_observations',
+  GEAR_PROFILES: 'inventory_gear_profiles',
   PHOTOS: 'inventory_photos',
   DOCUMENTS: 'inventory_documents',
 };
@@ -615,6 +617,59 @@ export class LocalStorageProvider implements StorageProvider {
     );
   }
 
+  // --- Gear profiles (the organisation's own; the catalogue is never stored) ---
+
+  async getGearProfiles(): Promise<GearProfile[]> {
+    const data = localStorage.getItem(STORAGE_KEYS.GEAR_PROFILES);
+    return data ? JSON.parse(data) : [];
+  }
+
+  async getGearProfile(id: string): Promise<GearProfile | null> {
+    return (await this.getGearProfiles()).find((p) => p.id === id) ?? null;
+  }
+
+  async createGearProfile(
+    profile: Omit<GearProfile, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<GearProfile> {
+    const profiles = await this.getGearProfiles();
+    const now = new Date().toISOString();
+    const created: GearProfile = {
+      ...profile,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    profiles.push(created);
+    localStorage.setItem(STORAGE_KEYS.GEAR_PROFILES, JSON.stringify(profiles));
+    return created;
+  }
+
+  async updateGearProfile(id: string, updates: Partial<GearProfile>): Promise<GearProfile> {
+    const profiles = await this.getGearProfiles();
+    const index = profiles.findIndex((p) => p.id === id);
+    if (index === -1) throw new Error(`Gear profile not found: ${id}`);
+
+    const existing = profiles[index] as GearProfile;
+    const updated: GearProfile = {
+      ...existing,
+      ...updates,
+      id: existing.id,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    profiles[index] = updated;
+    localStorage.setItem(STORAGE_KEYS.GEAR_PROFILES, JSON.stringify(profiles));
+    return updated;
+  }
+
+  async deleteGearProfile(id: string): Promise<void> {
+    const profiles = await this.getGearProfiles();
+    localStorage.setItem(
+      STORAGE_KEYS.GEAR_PROFILES,
+      JSON.stringify(profiles.filter((p) => p.id !== id))
+    );
+  }
+
   private static readonly COLLECTION_KEYS: Record<CollectionName, string> = {
     organizations: STORAGE_KEYS.ORGANIZATIONS,
     memberships: STORAGE_KEYS.MEMBERSHIPS,
@@ -626,6 +681,7 @@ export class LocalStorageProvider implements StorageProvider {
     wishlistEntries: STORAGE_KEYS.WISHLIST,
     savingsContributions: STORAGE_KEYS.SAVINGS,
     priceObservations: STORAGE_KEYS.PRICES,
+    gearProfiles: STORAGE_KEYS.GEAR_PROFILES,
     photos: STORAGE_KEYS.PHOTOS,
     documents: STORAGE_KEYS.DOCUMENTS,
     users: STORAGE_KEYS.USERS,
@@ -689,6 +745,7 @@ export class LocalStorageProvider implements StorageProvider {
       wishlistEntries: await this.getWishlistEntries(),
       savingsContributions: await this.getSavingsContributions(),
       priceObservations: await this.getPriceObservations(),
+      gearProfiles: await this.getGearProfiles(),
       photos: await this.getPhotos(),
       documents: await this.getDocuments(),
       users: await this.getUsers(),
@@ -730,6 +787,9 @@ export class LocalStorageProvider implements StorageProvider {
     }
     if (parsed.priceObservations) {
       localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(parsed.priceObservations));
+    }
+    if (parsed.gearProfiles) {
+      localStorage.setItem(STORAGE_KEYS.GEAR_PROFILES, JSON.stringify(parsed.gearProfiles));
     }
     if (parsed.photos) {
       localStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(parsed.photos));

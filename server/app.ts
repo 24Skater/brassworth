@@ -17,6 +17,7 @@ import {
 } from './auth/session';
 import { AccessError, isRole, requireOrgAccess, type Role } from './auth/access';
 import { COLLECTIONS, isCollection } from './routes/collections';
+import { catalogueSourceFrom, fetchCatalogue } from './gear/catalogueSource';
 import {
   LoginAttemptStore,
   buildAuthorizationUrl,
@@ -123,6 +124,30 @@ export function createApp({
   });
 
   app.get('/api/health', (c) => c.json({ ok: true }));
+
+  /**
+   * The optional vendor catalogue.
+   *
+   * Off unless a self-hoster sets GEAR_CATALOGUE_URL, and the API key that goes
+   * with it never leaves the server — that is the whole reason this is a route
+   * rather than a fetch from the browser. The client validates whatever comes
+   * back against the same rules as the shipped catalogue, so a vendor document
+   * gets no more trust than a bundled one.
+   */
+  app.get('/api/catalogue', async (c) => {
+    const outcome = await fetchCatalogue(catalogueSourceFrom());
+
+    switch (outcome.status) {
+      case 'disabled':
+        return c.json({ configured: false });
+      case 'ok':
+        return c.json({ configured: true, name: outcome.name, document: outcome.document });
+      case 'refused':
+        return c.json({ configured: true, error: outcome.reason }, 400);
+      case 'error':
+        return c.json({ configured: true, error: outcome.reason }, 502);
+    }
+  });
 
   // --- Authentication ---
 

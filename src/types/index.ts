@@ -77,6 +77,12 @@ export interface Item {
   brand?: string;
   model?: string;
   serialNumber?: string;
+  /**
+   * The make and model this item is an instance of, when it has been matched
+   * to a gear profile. Specs stay on the profile rather than being copied onto
+   * the item, so correcting a spec fixes every item that shares the model.
+   */
+  gearProfileId?: string;
   purchaseDate?: string;
   purchasePrice?: number;
   currentEstimatedValue?: number;
@@ -249,4 +255,63 @@ export interface Document {
   fileName: string;
   fileUrl: string;
   uploadedAt: string;
+}
+
+/**
+ * Where a gear profile came from.
+ *
+ * CATALOGUE records are read-only: they ship with the app or come from a
+ * catalogue source, and editing one locally would silently fork it and then
+ * lose the edit on the next catalogue update. USER records are the
+ * organisation's own and are fully editable.
+ */
+export type GearProfileSource = 'CATALOGUE' | 'USER';
+
+/**
+ * One labelled fact about a make and model.
+ *
+ * Deliberately a label/value pair rather than a typed record with `voltage`,
+ * `weight` and so on. A cordless drill, a network switch and a camera body
+ * share almost no spec fields, and the roadmap is explicit that this is *one
+ * generic* profile feature — a typed record would grow a new optional field for
+ * every product type anyone ever added, which is a vendor module wearing a
+ * different hat.
+ */
+export interface GearSpec {
+  label: string;
+  value: string;
+  /** Rendered after the value, e.g. `18` + `V`. */
+  unit?: string;
+}
+
+/**
+ * A make and model described once, reusable by every item that is one.
+ *
+ * Brand is a string on this record, never a module. That is the whole reason
+ * Milwaukee, DeWalt, Makita, Ryobi and Festool all work on day one without the
+ * project carrying anyone else's trademark in a directory name.
+ */
+export interface GearProfile {
+  id: string;
+  /** Brand as published, e.g. `DeWalt`. Matching normalises it; display does not. */
+  brand: string;
+  model: string;
+  /** What kind of thing it is, e.g. `Cordless drill`. Free text from the catalogue. */
+  productType?: string;
+  specs: GearSpec[];
+  manualUrl?: string;
+  partsUrl?: string;
+  productUrl?: string;
+  source: GearProfileSource;
+  /**
+   * The licence the record was published under. Catalogue records carry it so
+   * the terms travel with the data rather than living only in a README.
+   */
+  licence?: string;
+  /** Which catalogue source supplied it. Absent on USER records. */
+  sourceName?: string;
+  /** Set only on USER records — catalogue records are not tenant-scoped. */
+  organizationId?: string;
+  createdAt: string;
+  updatedAt: string;
 }

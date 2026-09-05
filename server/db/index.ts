@@ -84,6 +84,7 @@ export async function migrate(client: Client): Promise<void> {
       brand TEXT,
       model TEXT,
       serial_number TEXT,
+      gear_profile_id TEXT,
       purchase_date TEXT,
       purchase_price REAL,
       current_estimated_value REAL,
@@ -213,6 +214,21 @@ export async function migrate(client: Client): Promise<void> {
     )`,
     `CREATE INDEX IF NOT EXISTS price_observations_entry_idx ON price_observations (wishlist_entry_id)`,
     `CREATE INDEX IF NOT EXISTS price_observations_org_idx ON price_observations (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS gear_profiles (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      brand TEXT NOT NULL,
+      model TEXT NOT NULL,
+      product_type TEXT,
+      specs TEXT NOT NULL DEFAULT '[]',
+      manual_url TEXT,
+      parts_url TEXT,
+      product_url TEXT,
+      created_at TEXT NOT NULL DEFAULT (current_timestamp),
+      updated_at TEXT NOT NULL DEFAULT (current_timestamp)
+    )`,
+    `CREATE INDEX IF NOT EXISTS gear_profiles_org_idx ON gear_profiles (organization_id)`,
+    `CREATE INDEX IF NOT EXISTS gear_profiles_model_idx ON gear_profiles (brand, model)`,
   ];
 
   // Foreign keys are off by default in SQLite; the cascades above depend on it.
@@ -220,4 +236,29 @@ export async function migrate(client: Client): Promise<void> {
   for (const statement of statements) {
     await client.execute(statement);
   }
+
+  // `CREATE TABLE IF NOT EXISTS` does nothing to a table that already exists,
+  // so a database created before this column existed would never gain it.
+  await addColumnIfMissing(client, 'items', 'gear_profile_id', 'TEXT');
+}
+
+/**
+ * Add a column only when it is not already there.
+ *
+ * SQLite has no `ADD COLUMN IF NOT EXISTS`, and running the ALTER twice is an
+ * error rather than a no-op — so the column list is read first. This is what
+ * stands in for a migrations directory until the schema starts changing often
+ * enough to need one.
+ */
+async function addColumnIfMissing(
+  client: Client,
+  table: string,
+  column: string,
+  definition: string
+): Promise<void> {
+  const info = await client.execute(`PRAGMA table_info(${table})`);
+  const present = info.rows.some((row) => row.name === column);
+  if (present) return;
+
+  await client.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }

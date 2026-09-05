@@ -32,6 +32,10 @@ const backupSchema = z.object({
     tags: z.array(row).default([]),
     items: z.array(row).default([]),
     itemEvents: z.array(row).default([]),
+    wishlistEntries: z.array(row).default([]),
+    savingsContributions: z.array(row).default([]),
+    priceObservations: z.array(row).default([]),
+    gearProfiles: z.array(row).default([]),
     photos: z.array(row).default([]),
     documents: z.array(row).default([]),
     users: z.array(row).default([]),
@@ -45,6 +49,10 @@ export interface BackupSummary {
   organizations: number;
   items: number;
   itemEvents: number;
+  wishlistEntries: number;
+  savingsContributions: number;
+  priceObservations: number;
+  gearProfiles: number;
   locations: number;
   categories: number;
   tags: number;
@@ -64,6 +72,10 @@ export async function createBackup(): Promise<string> {
     tags,
     items,
     itemEvents,
+    wishlistEntries,
+    savingsContributions,
+    priceObservations,
+    gearProfiles,
     photos,
     documents,
     users,
@@ -77,6 +89,10 @@ export async function createBackup(): Promise<string> {
     storage.getTags(),
     storage.getItems(),
     storage.getItemEvents(),
+    storage.getWishlistEntries(),
+    storage.getSavingsContributions(),
+    storage.getPriceObservations(),
+    storage.getGearProfiles(),
     storage.getPhotos(),
     storage.getDocuments(),
     storage.getUsers(),
@@ -96,6 +112,10 @@ export async function createBackup(): Promise<string> {
       tags,
       items,
       itemEvents,
+      wishlistEntries,
+      savingsContributions,
+      priceObservations,
+      gearProfiles,
       photos,
       documents,
       users,
@@ -148,6 +168,10 @@ export function summarise(backup: Backup): BackupSummary {
     organizations: d.organizations.length,
     items: d.items.length,
     itemEvents: d.itemEvents.length,
+    wishlistEntries: d.wishlistEntries.length,
+    savingsContributions: d.savingsContributions.length,
+    priceObservations: d.priceObservations.length,
+    gearProfiles: d.gearProfiles.length,
     locations: d.locations.length,
     categories: d.categories.length,
     tags: d.tags.length,
@@ -176,8 +200,13 @@ export async function restoreBackup(json: string): Promise<BackupSummary> {
   await storage.setLocations(d.locations as never);
   await storage.setCategories(d.categories as never);
   await storage.setTags(d.tags as never);
+  // Gear profiles before items: an item may name the profile it is an instance of.
+  await storage.setGearProfiles(d.gearProfiles as never);
   await storage.setItems(d.items as never);
   await storage.setItemEvents(d.itemEvents as never);
+  await storage.setWishlistEntries(d.wishlistEntries as never);
+  await storage.setSavingsContributions(d.savingsContributions as never);
+  await storage.setPriceObservations(d.priceObservations as never);
   await storage.setPhotos(d.photos as never);
   await storage.setDocuments(d.documents as never);
   await storage.setUsers(d.users as never);

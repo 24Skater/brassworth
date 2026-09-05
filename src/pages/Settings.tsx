@@ -103,10 +103,14 @@ export default function Settings() {
 
       // Validate and describe the file before destroying anything.
       const counts = summarise(parseBackup(text));
+      // Name the wishlist explicitly: it is a separate body of work from the
+      // items, and "N items" alone would understate what is being replaced.
       const confirmed = window.confirm(
-        `Restore ${counts.items} item(s) across ${counts.organizations} propert(ies)?
+        `Restore ${counts.items} item(s) and ${counts.wishlistEntries} wishlist entr(ies) ` +
+          `across ${counts.organizations} propert(ies)?
 
-` + 'This replaces everything currently stored in this browser. It cannot be undone.'
+` +
+          'This replaces everything currently stored in this browser. It cannot be undone.'
       );
       if (!confirmed) return;
 
