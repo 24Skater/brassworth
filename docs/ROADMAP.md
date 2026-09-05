@@ -34,24 +34,23 @@ Verified, not aspirational. Run the checks yourself with the commands in [TESTIN
 | Backend  | **None.** No `fetch`, no `axios`, no API anywhere in `src`             |
 | Storage  | localStorage and IndexedDB providers; the `api` provider is a stub     |
 | Auth     | localStorage records. Not a security boundary — editable from devtools |
-| Tests    | 93 unit, 16 E2E, all green                                             |
-| Coverage | 12.61%, ratcheted so it cannot drop                                    |
+| Tests    | 108 unit, 19 E2E, all green                                            |
+| Coverage | 13.06%, ratcheted so it cannot drop                                    |
 | CI       | Five jobs green on `main`                                              |
 
 ### What already works
 
 Item CRUD with brand, model and serial number. Categories, hierarchical locations, tags. Multiple properties. Receipt OCR via Tesseract.js and PDF parsing. Excel import and export. Four view modes. Light and dark.
 
-### What blocks everything else
+### The seam that used to block everything
 
-`src/lib/storage.ts` is a **synchronous** wrapper, localStorage-only by its own docstring, imported by all 8 pages and contexts. Until it is gone:
+`src/lib/storage.ts` was a **synchronous** wrapper, localStorage-only by its own docstring,
+imported by all 8 pages and contexts. It meant the IndexedDB provider was bypassed by the real
+UI and no API provider could ever be wired in.
 
-- The IndexedDB provider is bypassed by the real UI
-- No API provider can be wired in
-- No sync, no server, no hosted tier
-- No feature below that needs async data access can land cleanly
-
-This is the single highest-leverage piece of work in the project.
+It is gone. Every call site already awaited its result — awaiting a non-Promise is a no-op, so
+the sync wrapper worked by accident — which made the removal a deletion rather than a rewrite.
+`@/lib/storage` now resolves to the async provider facade.
 
 ---
 
@@ -158,14 +157,13 @@ A wishlist entry converts to a real `Item` on purchase, carrying its saved histo
 
 Ordered by dependency, not by appeal. Each phase assumes the one above it.
 
-### Phase 1 — Unblock the data layer
+### Phase 1 — Unblock the data layer ✅ done
 
-_Nothing else can start cleanly until this lands._
-
-- Migrate all 8 pages and contexts off the synchronous `src/lib/storage.ts`
-- Delete the wrapper; IndexedDB becomes the real default
-- Ship **full export and import** — this is both the backup story and the migration path when the backend arrives, and it must exist before any public release so early self-hosters are never stranded
-- Raise the coverage ratchet as each page gains tests
+- [x] Migrate all 8 pages and contexts off the synchronous `src/lib/storage.ts`
+- [x] Delete the wrapper; every import now resolves to the async provider facade
+- [x] Ship **full export and import** — a versioned, validated JSON backup covering every
+      collection, which is both the backup story and the migration path when the backend arrives
+- [x] Raise the coverage ratchet
 
 ### Phase 2 — Lifecycle
 

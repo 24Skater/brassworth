@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -20,10 +20,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { UserCard } from '@/components/users/UserCard';
 import { InviteUserDialog } from '@/components/users/InviteUserDialog';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ArrowLeft, Save, Download, Upload, Shield } from 'lucide-react';
+import { ArrowLeft, Save, Download, Upload, Shield, DatabaseBackup } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { storage } from '@/lib/storage';
+import { createBackup, backupFileName, restoreBackup, parseBackup, summarise } from '@/lib/backup';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -73,6 +74,50 @@ export default function Settings() {
       toast.success('Organization settings updated');
     } catch (error) {
       toast.error('Failed to update organization');
+    }
+  };
+
+  const backupInputRef = useRef<HTMLInputElement>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
+
+  const handleDownloadBackup = async () => {
+    try {
+      const json = await createBackup();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = backupFileName();
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Backup downloaded');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not create the backup');
+    }
+  };
+
+  const handleRestoreBackup = async (file: File) => {
+    setIsRestoring(true);
+    try {
+      const text = await file.text();
+
+      // Validate and describe the file before destroying anything.
+      const counts = summarise(parseBackup(text));
+      const confirmed = window.confirm(
+        `Restore ${counts.items} item(s) across ${counts.organizations} propert(ies)?
+
+` + 'This replaces everything currently stored in this browser. It cannot be undone.'
+      );
+      if (!confirmed) return;
+
+      const restored = await restoreBackup(text);
+      toast.success(`Restored ${restored.items} item(s). Reloading…`);
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not restore that backup');
+    } finally {
+      setIsRestoring(false);
+      if (backupInputRef.current) backupInputRef.current.value = '';
     }
   };
 
@@ -314,8 +359,53 @@ export default function Settings() {
           <TabsContent value="data" className="space-y-4">
             <Card>
               <CardHeader>
+                <CardTitle>Backup and restore</CardTitle>
+                <CardDescription>
+                  Your data lives in this browser and nowhere else. Clearing site data deletes it. A
+                  backup captures everything — every property, item, photo and document — and is the
+                  only way to move your data to another browser or machine.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={handleDownloadBackup}>
+                    <DatabaseBackup className="h-4 w-4 mr-2" />
+                    Download backup
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={isRestoring}
+                    onClick={() => backupInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isRestoring ? 'Restoring…' : 'Restore from backup'}
+                  </Button>
+                  <input
+                    ref={backupInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    className="hidden"
+                    aria-label="Choose a backup file to restore"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleRestoreBackup(file);
+                    }}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Restoring replaces everything currently stored. The file also contains account
+                  records, so keep it somewhere private.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Export Data</CardTitle>
-                <CardDescription>Download all your inventory data as an Excel file</CardDescription>
+                <CardDescription>
+                  A spreadsheet of items, locations and categories for this property. Useful for
+                  reports — for a complete copy of your data, use the backup above.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button onClick={handleExportData}>

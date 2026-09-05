@@ -1,14 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { storage } from '@/lib/storage';
+import { storage, setStorageProvider } from '@/lib/storage';
+import { LocalStorageProvider } from '@/lib/storage/providers/localStorageProvider';
 import type { User, Organization, Item } from '@/types';
 
-describe('storage', () => {
+/**
+ * The storage facade is fully asynchronous. It used to be fronted by a
+ * synchronous wrapper (`src/lib/storage.ts`) that only worked with the
+ * localStorage provider; that wrapper is gone, so every call awaits.
+ */
+describe('storage facade', () => {
   beforeEach(() => {
-    localStorage.clear();
+    setStorageProvider(new LocalStorageProvider());
   });
 
-  describe('User storage', () => {
-    it('should store and retrieve user', () => {
+  describe('user', () => {
+    it('stores and retrieves the current user', async () => {
       const user: User = {
         id: '1',
         email: 'test@example.com',
@@ -16,18 +22,16 @@ describe('storage', () => {
         createdAt: new Date().toISOString(),
       };
 
-      storage.setUser(user);
-      const retrieved = storage.getUser();
+      await storage.setUser(user);
 
-      expect(retrieved).toEqual(user);
+      expect(await storage.getUser()).toEqual(user);
     });
 
-    it('should return null when no user is stored', () => {
-      const user = storage.getUser();
-      expect(user).toBeNull();
+    it('returns null when no user is stored', async () => {
+      expect(await storage.getUser()).toBeNull();
     });
 
-    it('should remove user when set to null', () => {
+    it('removes the user when set to null', async () => {
       const user: User = {
         id: '1',
         email: 'test@example.com',
@@ -35,16 +39,15 @@ describe('storage', () => {
         createdAt: new Date().toISOString(),
       };
 
-      storage.setUser(user);
-      storage.setUser(null);
-      const retrieved = storage.getUser();
+      await storage.setUser(user);
+      await storage.setUser(null);
 
-      expect(retrieved).toBeNull();
+      expect(await storage.getUser()).toBeNull();
     });
   });
 
-  describe('Organization storage', () => {
-    it('should store and retrieve organizations', () => {
+  describe('organizations', () => {
+    it('stores and retrieves organizations', async () => {
       const orgs: Organization[] = [
         {
           id: '1',
@@ -55,57 +58,76 @@ describe('storage', () => {
         },
       ];
 
-      storage.setOrganizations(orgs);
-      const retrieved = storage.getOrganizations();
+      await storage.setOrganizations(orgs);
 
-      expect(retrieved).toEqual(orgs);
+      expect(await storage.getOrganizations()).toEqual(orgs);
     });
 
-    it('should return empty array when no organizations are stored', () => {
-      const orgs = storage.getOrganizations();
-      expect(orgs).toEqual([]);
+    it('returns an empty array when none are stored', async () => {
+      expect(await storage.getOrganizations()).toEqual([]);
+    });
+
+    it('preserves ids and timestamps across a save', async () => {
+      const org: Organization = {
+        id: 'fixed-id',
+        name: 'Test Org',
+        type: 'home',
+        createdAt: '2020-01-01T00:00:00.000Z',
+        updatedAt: '2020-01-01T00:00:00.000Z',
+      };
+
+      await storage.setOrganizations([org]);
+      const [stored] = await storage.getOrganizations();
+
+      expect(stored?.id).toBe('fixed-id');
+      expect(stored?.createdAt).toBe('2020-01-01T00:00:00.000Z');
     });
   });
 
-  describe('Item storage', () => {
-    it('should store and retrieve items', () => {
-      const items: Item[] = [
-        {
-          id: '1',
-          organizationId: 'org1',
-          name: 'Test Item',
-          condition: 'GOOD',
-          quantity: 1,
-          isArchived: false,
-          tags: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
-
-      storage.setItems(items);
-      const retrieved = storage.getItems();
-
-      expect(retrieved).toEqual(items);
+  describe('items', () => {
+    const makeItem = (id: string): Item => ({
+      id,
+      organizationId: 'org1',
+      name: `Item ${id}`,
+      condition: 'GOOD',
+      quantity: 1,
+      isArchived: false,
+      tags: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
 
-    it('should return empty array when no items are stored', () => {
-      const items = storage.getItems();
-      expect(items).toEqual([]);
+    it('stores and retrieves items', async () => {
+      const items = [makeItem('1')];
+
+      await storage.setItems(items);
+
+      expect(await storage.getItems()).toEqual(items);
+    });
+
+    it('returns an empty array when none are stored', async () => {
+      expect(await storage.getItems()).toEqual([]);
+    });
+
+    it('replaces the collection rather than appending to it', async () => {
+      await storage.setItems([makeItem('1'), makeItem('2')]);
+      await storage.setItems([makeItem('1')]);
+
+      const stored = await storage.getItems();
+      expect(stored).toHaveLength(1);
+      expect(stored[0]?.id).toBe('1');
     });
   });
 
   describe('clearAll', () => {
-    it('should clear all storage', () => {
-      const user: User = {
+    it('clears every collection', async () => {
+      await storage.setUser({
         id: '1',
         email: 'test@example.com',
         name: 'Test User',
         createdAt: new Date().toISOString(),
-      };
-
-      storage.setUser(user);
-      storage.setOrganizations([
+      });
+      await storage.setOrganizations([
         {
           id: '1',
           name: 'Test Org',
@@ -115,10 +137,10 @@ describe('storage', () => {
         },
       ]);
 
-      storage.clearAll();
+      await storage.clearAll();
 
-      expect(storage.getUser()).toBeNull();
-      expect(storage.getOrganizations()).toEqual([]);
+      expect(await storage.getUser()).toBeNull();
+      expect(await storage.getOrganizations()).toEqual([]);
     });
   });
 });
