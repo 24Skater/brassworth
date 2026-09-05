@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Organization, UserRole } from '@/types';
-import { storage } from '@/lib/storage';
+import { storage, getStorageProvider } from '@/lib/storage';
+import { ApiStorageProvider } from '@/lib/storage/providers/apiProvider';
 import { useAuth } from './AuthContext';
 import { createRoleProvider } from '@/lib/auth';
 
@@ -21,7 +22,22 @@ const OrganizationContext = createContext<OrganizationContextType | undefined>(u
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
+  const [currentOrg, setCurrentOrgState] = useState<Organization | null>(null);
+
+  /**
+   * Selecting a property also tells the storage provider which tenant it is
+   * acting for. The local providers do not care — organizationId is just a
+   * column they filter on — but the API provider puts it in the URL, and a
+   * provider that was never told would read nothing at all.
+   */
+  const setCurrentOrg = useCallback((org: Organization | null) => {
+    setCurrentOrgState(org);
+
+    const provider = getStorageProvider();
+    if (provider instanceof ApiStorageProvider) {
+      provider.setOrganization(org?.id ?? null);
+    }
+  }, []);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
 
   useEffect(() => {

@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import type { Database } from './db';
-import { items, memberships, organizations, sessions, users } from './db/schema';
+import { memberships, organizations, sessions, users } from './db/schema';
 import { hashPassword, verifyPassword } from './auth/password';
 import {
   buildClearedSessionCookie,
@@ -16,6 +16,7 @@ import {
   SESSION_TTL_HOURS,
 } from './auth/session';
 import { AccessError, isRole, requireOrgAccess, type Role } from './auth/access';
+import { COLLECTIONS, isCollection } from './routes/collections';
 
 export interface AppOptions {
   db: Database;
@@ -44,21 +45,6 @@ const orgInput = z.object({
   name: z.string().trim().min(1).max(200),
   type: z.enum(['home', 'church', 'small_business', 'other']).default('home'),
   address: z.string().trim().max(500).optional(),
-});
-
-const itemInput = z.object({
-  name: z.string().trim().min(1).max(300),
-  description: z.string().max(2000).optional(),
-  brand: z.string().max(200).optional(),
-  model: z.string().max(200).optional(),
-  serialNumber: z.string().max(200).optional(),
-  categoryId: z.string().optional(),
-  locationId: z.string().optional(),
-  purchaseDate: z.string().optional(),
-  purchasePrice: z.number().nonnegative().optional(),
-  condition: z.enum(['NEW', 'GOOD', 'FAIR', 'POOR', 'DAMAGED', 'DISPOSED']).default('GOOD'),
-  quantity: z.number().int().positive().default(1),
-  notes: z.string().max(2000).optional(),
 });
 
 const normaliseEmail = (email: string) => email.trim().toLowerCase();
@@ -238,49 +224,198 @@ export function createApp({ db, secureCookies = false }: AppOptions) {
     return c.json({ organization: { id, name: parsed.data.name, type: parsed.data.type } }, 201);
   });
 
-  // --- Items, scoped to an organisation ---
-
-  app.get('/api/orgs/:orgId/items', async (c) => {
-    const viewer = c.get('viewer');
+  app.patch('/api/orgs/:orgId', async (c) => {
     const orgId = c.req.param('orgId');
-    await requireOrgAccess(lookupRole, viewer?.id, orgId, 'canViewItems');
+    await requireOrgAccess(lookupRole, c.get('viewer')?.id, orgId, 'canManageOrganization');
 
-    const rows = await db.select().from(items).where(eq(items.organizationId, orgId));
-    return c.json({ items: rows });
-  });
-
-  app.post('/api/orgs/:orgId/items', async (c) => {
-    const viewer = c.get('viewer');
-    const orgId = c.req.param('orgId');
-    await requireOrgAccess(lookupRole, viewer?.id, orgId, 'canAddItems');
-
-    const parsed = itemInput.safeParse(await c.req.json().catch(() => null));
-    if (!parsed.success) return c.json({ error: 'Give the item a name.' }, 400);
-
-    const id = randomUUID();
-    await db.insert(items).values({
-      id,
-      // Taken from the verified path parameter, never from the body — a body
-      // field would let a member write into somebody else's property.
-      organizationId: orgId,
-      ...parsed.data,
-      description: parsed.data.description ?? null,
-    });
-
-    const [created] = await db.select().from(items).where(eq(items.id, id)).limit(1);
-    return c.json({ item: created }, 201);
-  });
-
-  app.delete('/api/orgs/:orgId/items/:itemId', async (c) => {
-    const viewer = c.get('viewer');
-    const orgId = c.req.param('orgId');
-    await requireOrgAccess(lookupRole, viewer?.id, orgId, 'canDeleteItems');
+    const parsed = orgInput.partial().safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: 'That update is not valid.' }, 400);
 
     await db
-      .delete(items)
-      .where(and(eq(items.id, c.req.param('itemId')), eq(items.organizationId, orgId)));
+      .update(organizations)
+      .set({ ...parsed.data, updatedAt: new Date().toISOString() })
+      .where(eq(organizations.id, orgId));
+
+    const [organization] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, orgId))
+      .limit(1);
+
+    return c.json({ organization });
+  });
+
+  app.delete('/api/orgs/:orgId', async (c) => {
+    const orgId = c.req.param('orgId');
+    await requireOrgAccess(lookupRole, c.get('viewer')?.id, orgId, 'canManageOrganization');
+
+    // Cascades take the memberships, items, events and everything else with it.
+    await db.delete(organizations).where(eq(organizations.id, orgId));
+    return c.json({ ok: true });
+  });
+
+  // --- Memberships and users ---
+  //
+  // Both are scoped to organisations the caller belongs to. Returning every
+  // membership row would let anyone enumerate the whole install.
+
+  app.get('/api/memberships', async (c) => {
+    const viewer = c.get('viewer');
+    if (!viewer) return c.json({ error: 'Sign in to continue.' }, 401);
+
+    const mine = await db
+      .select({ organizationId: memberships.organizationId })
+      .from(memberships)
+      .where(eq(memberships.userId, viewer.id));
+
+    const orgIds = mine.map((row) => row.organizationId);
+    if (orgIds.length === 0) return c.json({ memberships: [] });
+
+    const rows = await db
+      .select()
+      .from(memberships)
+      .where(inArray(memberships.organizationId, orgIds));
+
+    return c.json({ memberships: rows });
+  });
+
+  app.get('/api/users', async (c) => {
+    const viewer = c.get('viewer');
+    if (!viewer) return c.json({ error: 'Sign in to continue.' }, 401);
+
+    const mine = await db
+      .select({ organizationId: memberships.organizationId })
+      .from(memberships)
+      .where(eq(memberships.userId, viewer.id));
+
+    const orgIds = mine.map((row) => row.organizationId);
+    if (orgIds.length === 0) return c.json({ users: [] });
+
+    const rows = await db
+      .selectDistinct({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .innerJoin(memberships, eq(memberships.userId, users.id))
+      .where(inArray(memberships.organizationId, orgIds));
+
+    // Password hashes never leave the server, not even to an admin.
+    return c.json({ users: rows });
+  });
+
+  // --- Tenant-scoped collections ---
+  //
+  // One router for every collection. The guard is applied here, once, rather
+  // than repeated across eleven near-identical route sets where it could be
+  // forgotten in exactly one of them.
+
+  const resolveCollection = (name: string) => {
+    if (!isCollection(name)) throw new AccessError(404, 'Unknown collection.');
+    return COLLECTIONS[name];
+  };
+
+  app.get('/api/orgs/:orgId/:collection', async (c) => {
+    const spec = resolveCollection(c.req.param('collection'));
+    const orgId = c.req.param('orgId');
+    await requireOrgAccess(lookupRole, c.get('viewer')?.id, orgId, spec.read);
+
+    const rows = await db.select().from(spec.table).where(eq(spec.table.organizationId, orgId));
+    return c.json({ rows });
+  });
+
+  app.post('/api/orgs/:orgId/:collection', async (c) => {
+    const spec = resolveCollection(c.req.param('collection'));
+    const orgId = c.req.param('orgId');
+    await requireOrgAccess(lookupRole, c.get('viewer')?.id, orgId, spec.write);
+
+    const parsed = spec.schema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: 'That record is not valid.' }, 400);
+
+    // Records created offline arrive with an id already; ones created through a
+    // plain POST do not.
+    const id = typeof parsed.data.id === 'string' ? parsed.data.id : randomUUID();
+
+    // organizationId comes from the verified path, never the body.
+    await db
+      .insert(spec.table)
+      .values({ ...parsed.data, id, organizationId: orgId } as never)
+      .onConflictDoNothing();
+
+    const [row] = await db
+      .select()
+      .from(spec.table)
+      .where(and(eq(spec.table.id, id), eq(spec.table.organizationId, orgId)))
+      .limit(1);
+
+    return c.json({ row }, 201);
+  });
+
+  app.patch('/api/orgs/:orgId/:collection/:id', async (c) => {
+    const spec = resolveCollection(c.req.param('collection'));
+    const orgId = c.req.param('orgId');
+    await requireOrgAccess(lookupRole, c.get('viewer')?.id, orgId, spec.write);
+
+    const body = await c.req.json().catch(() => null);
+    if (!body || typeof body !== 'object')
+      return c.json({ error: 'That update is not valid.' }, 400);
+
+    // id and organizationId are never taken from an update body: one would move
+    // a record, the other would move it into somebody else's property.
+    const { id: _id, organizationId: _org, ...changes } = body as Record<string, unknown>;
+
+    await db
+      .update(spec.table)
+      .set(changes as never)
+      .where(and(eq(spec.table.id, c.req.param('id')), eq(spec.table.organizationId, orgId)));
+
+    const [row] = await db
+      .select()
+      .from(spec.table)
+      .where(and(eq(spec.table.id, c.req.param('id')), eq(spec.table.organizationId, orgId)))
+      .limit(1);
+
+    if (!row) return c.json({ error: 'That record does not exist.' }, 404);
+    return c.json({ row });
+  });
+
+  app.delete('/api/orgs/:orgId/:collection/:id', async (c) => {
+    const spec = resolveCollection(c.req.param('collection'));
+    const orgId = c.req.param('orgId');
+    await requireOrgAccess(lookupRole, c.get('viewer')?.id, orgId, spec.write);
+
+    await db
+      .delete(spec.table)
+      .where(and(eq(spec.table.id, c.req.param('id')), eq(spec.table.organizationId, orgId)));
 
     return c.json({ ok: true });
+  });
+
+  /** Whole-collection replace, backing the provider's replaceCollection. */
+  app.put('/api/orgs/:orgId/:collection', async (c) => {
+    const spec = resolveCollection(c.req.param('collection'));
+    const orgId = c.req.param('orgId');
+    await requireOrgAccess(lookupRole, c.get('viewer')?.id, orgId, spec.write);
+
+    const body = await c.req.json().catch(() => null);
+    const parsed = z.array(spec.schema).safeParse((body as { rows?: unknown })?.rows);
+    if (!parsed.success) return c.json({ error: 'Those records are not valid.' }, 400);
+
+    // Scoped delete then insert: only this organisation's rows are touched.
+    await db.delete(spec.table).where(eq(spec.table.organizationId, orgId));
+    if (parsed.data.length > 0) {
+      await db.insert(spec.table).values(
+        parsed.data.map((row) => ({
+          ...row,
+          id: typeof row.id === 'string' ? row.id : randomUUID(),
+          organizationId: orgId,
+        })) as never
+      );
+    }
+
+    return c.json({ ok: true, count: parsed.data.length });
   });
 
   function cookieOptions() {

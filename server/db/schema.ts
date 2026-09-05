@@ -149,6 +149,126 @@ export const itemEvents = sqliteTable(
   })
 );
 
+/**
+ * The remaining tenant-owned collections.
+ *
+ * Photos carry `organizationId` even though the browser-side `Photo` type does
+ * not. Locally an item's photo is scoped by the item it hangs off; over the
+ * wire it needs its own tenant column, or the guard would have to join through
+ * items on every request just to decide whether the caller may see a row.
+ */
+export const locations = sqliteTable(
+  'locations',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    parentLocationId: text('parent_location_id'),
+    notes: text('notes'),
+  },
+  (table) => ({ byOrg: index('locations_org_idx').on(table.organizationId) })
+);
+
+export const categories = sqliteTable(
+  'categories',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    description: text('description'),
+  },
+  (table) => ({ byOrg: index('categories_org_idx').on(table.organizationId) })
+);
+
+export const tags = sqliteTable(
+  'tags',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+  },
+  (table) => ({ byOrg: index('tags_org_idx').on(table.organizationId) })
+);
+
+/** An item's tags. A join table rather than a JSON column, so tags are queryable. */
+export const itemTags = sqliteTable(
+  'item_tags',
+  {
+    itemId: text('item_id')
+      .notNull()
+      .references(() => items.id, { onDelete: 'cascade' }),
+    tagId: text('tag_id').notNull(),
+    organizationId: text('organization_id').notNull(),
+  },
+  (table) => ({
+    unique: uniqueIndex('item_tags_unique').on(table.itemId, table.tagId),
+    byOrg: index('item_tags_org_idx').on(table.organizationId),
+  })
+);
+
+export const photos = sqliteTable(
+  'photos',
+  {
+    id: text('id').primaryKey(),
+    itemId: text('item_id').notNull(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    fileUrl: text('file_url').notNull(),
+    caption: text('caption'),
+    takenAt: text('taken_at').notNull(),
+  },
+  (table) => ({
+    byItem: index('photos_item_idx').on(table.itemId),
+    byOrg: index('photos_org_idx').on(table.organizationId),
+  })
+);
+
+export const documents = sqliteTable(
+  'documents',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    itemId: text('item_id'),
+    type: text('type').notNull().default('OTHER'),
+    fileName: text('file_name').notNull(),
+    fileUrl: text('file_url').notNull(),
+    uploadedAt: text('uploaded_at').notNull(),
+  },
+  (table) => ({ byOrg: index('documents_org_idx').on(table.organizationId) })
+);
+
+/**
+ * Role assignments, mirroring the browser-side `UserRoleAssignment`.
+ *
+ * The authoritative role for authorisation is the one on `memberships`; this
+ * table exists so the client-side shape round-trips. They are kept in step when
+ * a role is written.
+ */
+export const userRoles = sqliteTable(
+  'user_roles',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    role: text('role').notNull(),
+  },
+  (table) => ({
+    unique: uniqueIndex('user_roles_unique').on(table.userId, table.organizationId),
+    byOrg: index('user_roles_org_idx').on(table.organizationId),
+  })
+);
+
 export const schema = {
   users,
   sessions,
@@ -156,4 +276,11 @@ export const schema = {
   memberships,
   items,
   itemEvents,
+  locations,
+  categories,
+  tags,
+  itemTags,
+  photos,
+  documents,
+  userRoles,
 };

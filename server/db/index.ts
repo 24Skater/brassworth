@@ -107,6 +107,62 @@ export async function migrate(client: Client): Promise<void> {
     )`,
     `CREATE INDEX IF NOT EXISTS item_events_item_idx ON item_events (item_id)`,
     `CREATE INDEX IF NOT EXISTS item_events_org_idx ON item_events (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS locations (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      parent_location_id TEXT,
+      notes TEXT
+    )`,
+    `CREATE INDEX IF NOT EXISTS locations_org_idx ON locations (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS categories (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      description TEXT
+    )`,
+    `CREATE INDEX IF NOT EXISTS categories_org_idx ON categories (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS tags (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      name TEXT NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS tags_org_idx ON tags (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS item_tags (
+      item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+      tag_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS item_tags_unique ON item_tags (item_id, tag_id)`,
+    `CREATE INDEX IF NOT EXISTS item_tags_org_idx ON item_tags (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS photos (
+      id TEXT PRIMARY KEY,
+      item_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      file_url TEXT NOT NULL,
+      caption TEXT,
+      taken_at TEXT NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS photos_item_idx ON photos (item_id)`,
+    `CREATE INDEX IF NOT EXISTS photos_org_idx ON photos (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS documents (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      item_id TEXT,
+      type TEXT NOT NULL DEFAULT 'OTHER',
+      file_name TEXT NOT NULL,
+      file_url TEXT NOT NULL,
+      uploaded_at TEXT NOT NULL
+    )`,
+    `CREATE INDEX IF NOT EXISTS documents_org_idx ON documents (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS user_roles (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      role TEXT NOT NULL
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS user_roles_unique ON user_roles (user_id, organization_id)`,
+    `CREATE INDEX IF NOT EXISTS user_roles_org_idx ON user_roles (organization_id)`,
   ];
 
   // Foreign keys are off by default in SQLite; the cascades above depend on it.

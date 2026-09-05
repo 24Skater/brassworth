@@ -15,6 +15,7 @@ import type {
 } from '@/types';
 import { LocalStorageProvider } from './providers/localStorageProvider';
 import { IndexedDBProvider } from './providers/indexedDBProvider';
+import { ApiStorageProvider } from './providers/apiProvider';
 import { autoMigrateIfNeeded } from './migration';
 
 let storageProviderInstance: StorageProvider | null = null;
@@ -42,12 +43,10 @@ export function createStorageProvider(): StorageProvider {
       });
       break;
     case 'api':
-      // Fail loudly. Silently falling back to localStorage would mean an
-      // operator who configured a server watched their data quietly go into the
-      // browser instead, and only discover it when the browser was cleared.
-      throw new Error(
-        'VITE_STORAGE_PROVIDER=api is not implemented yet. Use "localStorage" or "indexeddb".'
-      );
+      storageProviderInstance = new ApiStorageProvider({
+        baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+      });
+      break;
     default:
       console.warn(`Unknown storage provider type: ${providerType}, using localStorage`);
       storageProviderInstance = new LocalStorageProvider();

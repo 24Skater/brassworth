@@ -219,7 +219,7 @@ describe('tenant isolation', () => {
 
     const res = await app.request(`/api/orgs/${orgId}/items`, { headers: { cookie } });
     expect(res.status).toBe(200);
-    expect((await json(res)).items).toHaveLength(1);
+    expect((await json(res)).rows).toHaveLength(1);
   });
 
   it('hides another account items behind a 404', async () => {
@@ -252,7 +252,7 @@ describe('tenant isolation', () => {
     expect(res.status).toBe(404);
 
     const check = await app.request(`/api/orgs/${aliceOrg}/items`, { headers: { cookie: alice } });
-    expect((await json(check)).items).toHaveLength(0);
+    expect((await json(check)).rows).toHaveLength(0);
   });
 
   it('ignores an organizationId smuggled in the request body', async () => {
@@ -271,10 +271,10 @@ describe('tenant isolation', () => {
     const aliceItems = await app.request(`/api/orgs/${aliceOrg}/items`, {
       headers: { cookie: alice },
     });
-    expect((await json(aliceItems)).items).toHaveLength(0);
+    expect((await json(aliceItems)).rows).toHaveLength(0);
 
     const bobItems = await app.request(`/api/orgs/${bobOrg}/items`, { headers: { cookie: bob } });
-    expect((await json(bobItems)).items).toHaveLength(1);
+    expect((await json(bobItems)).rows).toHaveLength(1);
   });
 
   it('refuses an anonymous read', async () => {
