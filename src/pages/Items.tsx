@@ -57,6 +57,21 @@ import { ParsedReceipt } from '@/lib/receipt';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * The "leave it as it is" choice in the bulk edit dialog.
+ *
+ * Radix rejects an empty string as a SelectItem value — it reserves that for
+ * clearing the selection — and throws as the dialog opens, so this option
+ * needs a value of its own that cannot collide with a real category or
+ * location id.
+ */
+const KEEP_EXISTING = '__keep_existing__';
+
+/** True when the person actually picked a new value rather than keeping what is there. */
+function isRealChoice(value: string): boolean {
+  return value !== '' && value !== KEEP_EXISTING;
+}
+
 export default function Items() {
   const { currentOrg } = useOrganization();
   const navigate = useNavigate();
@@ -457,8 +472,8 @@ export default function Items() {
       if (selectedItems.has(item.id)) {
         return {
           ...item,
-          categoryId: bulkCategory || item.categoryId,
-          locationId: bulkLocation || item.locationId,
+          categoryId: isRealChoice(bulkCategory) ? bulkCategory : item.categoryId,
+          locationId: isRealChoice(bulkLocation) ? bulkLocation : item.locationId,
           updatedAt: new Date().toISOString(),
         };
       }
@@ -469,8 +484,8 @@ export default function Items() {
     await loadData();
 
     const updates = [];
-    if (bulkCategory) updates.push('category');
-    if (bulkLocation) updates.push('location');
+    if (isRealChoice(bulkCategory)) updates.push('category');
+    if (isRealChoice(bulkLocation)) updates.push('location');
 
     toast({
       title: 'Bulk update successful',
@@ -605,16 +620,16 @@ export default function Items() {
             <div className="flex gap-2">
               <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
                 <TabsList>
-                  <TabsTrigger value="grid" className="px-3">
+                  <TabsTrigger value="grid" className="px-3" aria-label="Grid view">
                     <LayoutGrid className="h-4 w-4" />
                   </TabsTrigger>
-                  <TabsTrigger value="list" className="px-3">
+                  <TabsTrigger value="list" className="px-3" aria-label="List view">
                     <List className="h-4 w-4" />
                   </TabsTrigger>
-                  <TabsTrigger value="gallery" className="px-3">
+                  <TabsTrigger value="gallery" className="px-3" aria-label="Gallery view">
                     <ImageIcon className="h-4 w-4" />
                   </TabsTrigger>
-                  <TabsTrigger value="table" className="px-3">
+                  <TabsTrigger value="table" className="px-3" aria-label="Table view">
                     <TableIcon className="h-4 w-4" />
                   </TabsTrigger>
                 </TabsList>
@@ -871,7 +886,7 @@ export default function Items() {
                   <SelectValue placeholder="Select new category (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Keep existing category</SelectItem>
+                  <SelectItem value={KEEP_EXISTING}>Keep existing category</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
@@ -887,7 +902,7 @@ export default function Items() {
                   <SelectValue placeholder="Select new location (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Keep existing location</SelectItem>
+                  <SelectItem value={KEEP_EXISTING}>Keep existing location</SelectItem>
                   {locations.map((loc) => (
                     <SelectItem key={loc.id} value={loc.id}>
                       {loc.name}
@@ -901,7 +916,10 @@ export default function Items() {
             <Button variant="outline" onClick={() => setBulkEditOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleBulkEdit} disabled={!bulkCategory && !bulkLocation}>
+            <Button
+              onClick={handleBulkEdit}
+              disabled={!isRealChoice(bulkCategory) && !isRealChoice(bulkLocation)}
+            >
               Update Items
             </Button>
           </div>

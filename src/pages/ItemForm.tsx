@@ -320,7 +320,7 @@ export default function ItemForm() {
                     value={formData.categoryId}
                     onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="category">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -339,7 +339,7 @@ export default function ItemForm() {
                     value={formData.locationId}
                     onValueChange={(value) => setFormData({ ...formData, locationId: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="location">
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent>
@@ -391,7 +391,7 @@ export default function ItemForm() {
                       setFormData({ ...formData, condition: value as ItemCondition })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="condition">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -474,7 +474,7 @@ export default function ItemForm() {
                       setFormData({ ...formData, purchaseLocation: value as PurchaseSource })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="purchaseLocation">
                       <SelectValue placeholder="Select source" />
                     </SelectTrigger>
                     <SelectContent>

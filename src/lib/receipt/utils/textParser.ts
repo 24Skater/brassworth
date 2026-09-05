@@ -89,7 +89,8 @@ function extractLineItems(lines: string[]): ParsedReceiptItem[] {
   // "Thing $19.99"
   // "Item x3 $29.97"
   const pricePattern = /\$?\s*(\d+[,.]?\d*\.?\d{2})\s*$/;
-  const qtyPattern = /(?:x|qty:?\s*)(\d+)/i;
+  // Receipts write quantities both ways: "2x Drill Bits" and "Drill Bits x2".
+  const qtyPattern = /(?:(\d+)\s*x|(?:x|qty:?\s*)(\d+))/i;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -116,7 +117,7 @@ function extractLineItems(lines: string[]): ParsedReceiptItem[] {
       let quantity = 1;
       const qtyMatch = description.match(qtyPattern);
       if (qtyMatch) {
-        quantity = parseInt(qtyMatch[1] ?? '1', 10);
+        quantity = parseInt(qtyMatch[1] ?? qtyMatch[2] ?? '1', 10);
         description = description.replace(qtyMatch[0], '').trim();
       }
 
