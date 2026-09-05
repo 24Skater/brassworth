@@ -9,6 +9,7 @@ import type {
   ItemEvent,
   WishlistEntry,
   SavingsContribution,
+  PriceObservation,
   Photo,
   Document,
   UserWithAuth,
@@ -145,6 +146,15 @@ export const storage = {
     getStorageProvider().createSavingsContribution(c),
   setSavingsContributions: async (rows: SavingsContribution[]) =>
     getStorageProvider().replaceCollection('savingsContributions', rows),
+
+  // Price observations
+  getPriceObservations: async () => getStorageProvider().getPriceObservations(),
+  getPriceObservationsByEntry: async (entryId: string) =>
+    getStorageProvider().getPriceObservationsByEntry(entryId),
+  createPriceObservation: async (o: Omit<PriceObservation, 'id' | 'createdAt'>) =>
+    getStorageProvider().createPriceObservation(o),
+  setPriceObservations: async (rows: PriceObservation[]) =>
+    getStorageProvider().replaceCollection('priceObservations', rows),
 
   // Photos
   getPhotos: async () => getStorageProvider().getPhotos(),

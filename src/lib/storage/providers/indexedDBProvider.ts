@@ -15,6 +15,7 @@ import {
   ItemEvent,
   WishlistEntry,
   SavingsContribution,
+  PriceObservation,
 } from '@/types';
 
 /**
@@ -30,6 +31,7 @@ class HomeAssetKeeperDB extends Dexie {
   itemEvents!: Table<ItemEvent, string>;
   wishlistEntries!: Table<WishlistEntry, string>;
   savingsContributions!: Table<SavingsContribution, string>;
+  priceObservations!: Table<PriceObservation, string>;
   photos!: Table<Photo, string>;
   documents!: Table<Document, string>;
   users!: Table<UserWithAuth, string>;
@@ -61,6 +63,11 @@ class HomeAssetKeeperDB extends Dexie {
     this.version(3).stores({
       wishlistEntries: 'id, organizationId, priority, createdAt',
       savingsContributions: 'id, wishlistEntryId, organizationId, occurredAt',
+    });
+
+    // v4 adds the price history behind a wishlist entry.
+    this.version(4).stores({
+      priceObservations: 'id, wishlistEntryId, organizationId, observedAt',
     });
   }
 }
@@ -517,6 +524,7 @@ export class IndexedDBProvider implements StorageProvider {
     await this.db.wishlistEntries.delete(id);
     // The savings log belongs to the entry; leaving it behind orphans it.
     await this.deleteSavingsContributionsByEntry(id);
+    await this.deletePriceObservationsByEntry(id);
   }
 
   // --- Savings ---
@@ -545,6 +553,32 @@ export class IndexedDBProvider implements StorageProvider {
     await this.db.savingsContributions.where('wishlistEntryId').equals(entryId).delete();
   }
 
+  // --- Price observations ---
+
+  async getPriceObservations(): Promise<PriceObservation[]> {
+    return this.db.priceObservations.toArray();
+  }
+
+  async getPriceObservationsByEntry(entryId: string): Promise<PriceObservation[]> {
+    return this.db.priceObservations.where('wishlistEntryId').equals(entryId).toArray();
+  }
+
+  async createPriceObservation(
+    observation: Omit<PriceObservation, 'id' | 'createdAt'>
+  ): Promise<PriceObservation> {
+    const created: PriceObservation = {
+      ...observation,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    await this.db.priceObservations.add(created);
+    return created;
+  }
+
+  async deletePriceObservationsByEntry(entryId: string): Promise<void> {
+    await this.db.priceObservations.where('wishlistEntryId').equals(entryId).delete();
+  }
+
   async replaceCollection<K extends CollectionName>(
     collection: K,
     rows: CollectionRow<K>[]
@@ -570,6 +604,7 @@ export class IndexedDBProvider implements StorageProvider {
       this.db.itemEvents.clear(),
       this.db.wishlistEntries.clear(),
       this.db.savingsContributions.clear(),
+      this.db.priceObservations.clear(),
       this.db.photos.clear(),
       this.db.documents.clear(),
       this.db.users.clear(),
@@ -591,6 +626,7 @@ export class IndexedDBProvider implements StorageProvider {
       itemEvents: await this.getItemEvents(),
       wishlistEntries: await this.getWishlistEntries(),
       savingsContributions: await this.getSavingsContributions(),
+      priceObservations: await this.getPriceObservations(),
       photos: await this.getPhotos(),
       documents: await this.getDocuments(),
       users: await this.getUsers(),
@@ -629,6 +665,9 @@ export class IndexedDBProvider implements StorageProvider {
     }
     if (parsed.savingsContributions) {
       await this.db.savingsContributions.bulkPut(parsed.savingsContributions);
+    }
+    if (parsed.priceObservations) {
+      await this.db.priceObservations.bulkPut(parsed.priceObservations);
     }
     if (parsed.photos) {
       await this.db.photos.bulkPut(parsed.photos);

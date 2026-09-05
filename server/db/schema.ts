@@ -340,6 +340,33 @@ export const savingsContributions = sqliteTable(
   })
 );
 
+/** A price seen for a wishlist entry, manually or from structured data. */
+export const priceObservations = sqliteTable(
+  'price_observations',
+  {
+    id: text('id').primaryKey(),
+    wishlistEntryId: text('wishlist_entry_id')
+      .notNull()
+      .references(() => wishlistEntries.id, { onDelete: 'cascade' }),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    amount: real('amount').notNull(),
+    currency: text('currency'),
+    observedAt: text('observed_at').notNull(),
+    source: text('source').notNull().default('MANUAL'),
+    url: text('url'),
+    note: text('note'),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`(current_timestamp)`),
+  },
+  (table) => ({
+    byEntry: index('price_observations_entry_idx').on(table.wishlistEntryId),
+    byOrg: index('price_observations_org_idx').on(table.organizationId),
+  })
+);
+
 export const schema = {
   users,
   sessions,
@@ -357,4 +384,5 @@ export const schema = {
   userRoles,
   wishlistEntries,
   savingsContributions,
+  priceObservations,
 };

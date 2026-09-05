@@ -14,6 +14,7 @@ import {
   ItemEvent,
   WishlistEntry,
   SavingsContribution,
+  PriceObservation,
 } from '@/types';
 
 const STORAGE_KEYS = {
@@ -29,6 +30,7 @@ const STORAGE_KEYS = {
   ITEM_EVENTS: 'inventory_item_events',
   WISHLIST: 'inventory_wishlist',
   SAVINGS: 'inventory_savings',
+  PRICES: 'inventory_price_observations',
   PHOTOS: 'inventory_photos',
   DOCUMENTS: 'inventory_documents',
 };
@@ -544,6 +546,7 @@ export class LocalStorageProvider implements StorageProvider {
     localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(entries.filter((e) => e.id !== id)));
     // The savings log belongs to the entry; leaving it behind orphans it.
     await this.deleteSavingsContributionsByEntry(id);
+    await this.deletePriceObservationsByEntry(id);
   }
 
   // --- Savings ---
@@ -579,6 +582,39 @@ export class LocalStorageProvider implements StorageProvider {
     );
   }
 
+  // --- Price observations ---
+
+  async getPriceObservations(): Promise<PriceObservation[]> {
+    const data = localStorage.getItem(STORAGE_KEYS.PRICES);
+    return data ? JSON.parse(data) : [];
+  }
+
+  async getPriceObservationsByEntry(entryId: string): Promise<PriceObservation[]> {
+    return (await this.getPriceObservations()).filter((o) => o.wishlistEntryId === entryId);
+  }
+
+  async createPriceObservation(
+    observation: Omit<PriceObservation, 'id' | 'createdAt'>
+  ): Promise<PriceObservation> {
+    const observations = await this.getPriceObservations();
+    const created: PriceObservation = {
+      ...observation,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    observations.push(created);
+    localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(observations));
+    return created;
+  }
+
+  async deletePriceObservationsByEntry(entryId: string): Promise<void> {
+    const observations = await this.getPriceObservations();
+    localStorage.setItem(
+      STORAGE_KEYS.PRICES,
+      JSON.stringify(observations.filter((o) => o.wishlistEntryId !== entryId))
+    );
+  }
+
   private static readonly COLLECTION_KEYS: Record<CollectionName, string> = {
     organizations: STORAGE_KEYS.ORGANIZATIONS,
     memberships: STORAGE_KEYS.MEMBERSHIPS,
@@ -589,6 +625,7 @@ export class LocalStorageProvider implements StorageProvider {
     itemEvents: STORAGE_KEYS.ITEM_EVENTS,
     wishlistEntries: STORAGE_KEYS.WISHLIST,
     savingsContributions: STORAGE_KEYS.SAVINGS,
+    priceObservations: STORAGE_KEYS.PRICES,
     photos: STORAGE_KEYS.PHOTOS,
     documents: STORAGE_KEYS.DOCUMENTS,
     users: STORAGE_KEYS.USERS,
@@ -651,6 +688,7 @@ export class LocalStorageProvider implements StorageProvider {
       itemEvents: await this.getItemEvents(),
       wishlistEntries: await this.getWishlistEntries(),
       savingsContributions: await this.getSavingsContributions(),
+      priceObservations: await this.getPriceObservations(),
       photos: await this.getPhotos(),
       documents: await this.getDocuments(),
       users: await this.getUsers(),
@@ -689,6 +727,9 @@ export class LocalStorageProvider implements StorageProvider {
     }
     if (parsed.savingsContributions) {
       localStorage.setItem(STORAGE_KEYS.SAVINGS, JSON.stringify(parsed.savingsContributions));
+    }
+    if (parsed.priceObservations) {
+      localStorage.setItem(STORAGE_KEYS.PRICES, JSON.stringify(parsed.priceObservations));
     }
     if (parsed.photos) {
       localStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(parsed.photos));

@@ -13,6 +13,7 @@ import {
   ItemEvent,
   WishlistEntry,
   SavingsContribution,
+  PriceObservation,
 } from '@/types';
 
 /**
@@ -97,6 +98,14 @@ export interface StorageProvider {
   ): Promise<SavingsContribution>;
   deleteSavingsContributionsByEntry(entryId: string): Promise<void>;
 
+  // Price observations (append-only)
+  getPriceObservations(): Promise<PriceObservation[]>;
+  getPriceObservationsByEntry(entryId: string): Promise<PriceObservation[]>;
+  createPriceObservation(
+    observation: Omit<PriceObservation, 'id' | 'createdAt'>
+  ): Promise<PriceObservation>;
+  deletePriceObservationsByEntry(entryId: string): Promise<void>;
+
   // Photo operations
   getPhotos(): Promise<Photo[]>;
   getPhotosByItem(itemId: string): Promise<Photo[]>;
@@ -165,6 +174,7 @@ export type CollectionMap = {
   itemEvents: ItemEvent;
   wishlistEntries: WishlistEntry;
   savingsContributions: SavingsContribution;
+  priceObservations: PriceObservation;
   photos: Photo;
   documents: Document;
   users: UserWithAuth;

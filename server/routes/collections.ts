@@ -6,6 +6,7 @@ import {
   items,
   locations,
   photos,
+  priceObservations,
   savingsContributions,
   tags,
   userRoles,
@@ -138,6 +139,18 @@ const savingsSchema = z.object({
   createdAt: z.string().optional(),
 });
 
+const priceSchema = z.object({
+  id: z.string().min(1).optional(),
+  wishlistEntryId: z.string().min(1),
+  amount: z.number().nonnegative(),
+  currency: optionalString,
+  observedAt: z.string().min(1),
+  source: z.enum(['MANUAL', 'FEED']).default('MANUAL'),
+  url: optionalString,
+  note: optionalString,
+  createdAt: z.string().optional(),
+});
+
 const userRoleSchema = z.object({
   id: z.string().min(1).optional(),
   userId: z.string().min(1),
@@ -155,7 +168,8 @@ export interface CollectionSpec {
     | typeof documents
     | typeof userRoles
     | typeof wishlistEntries
-    | typeof savingsContributions;
+    | typeof savingsContributions
+    | typeof priceObservations;
   schema: z.ZodType<Record<string, unknown>>;
   /** Permission needed to read. */
   read: Permission;
@@ -200,6 +214,12 @@ export const COLLECTIONS = {
   savings: {
     table: savingsContributions,
     schema: savingsSchema,
+    read: 'canViewItems',
+    write: 'canAddItems',
+  },
+  prices: {
+    table: priceObservations,
+    schema: priceSchema,
     read: 'canViewItems',
     write: 'canAddItems',
   },

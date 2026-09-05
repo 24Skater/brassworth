@@ -209,6 +209,30 @@ export interface SavingsContribution {
   createdAt: string;
 }
 
+/** Where a price came from. */
+export type PriceSource = 'MANUAL' | 'FEED';
+
+/**
+ * A price seen at a point in time.
+ *
+ * Append-only, like every other history in this app. Prices move, and the
+ * useful questions — is it cheaper than last month, is it below what I am
+ * willing to pay, what is the lowest it has ever been — need the series, not
+ * the latest value overwritten in place.
+ */
+export interface PriceObservation {
+  id: string;
+  wishlistEntryId: string;
+  organizationId: string;
+  amount: number;
+  currency?: string;
+  observedAt: string;
+  source: PriceSource;
+  url?: string;
+  note?: string;
+  createdAt: string;
+}
+
 export interface Photo {
   id: string;
   itemId: string;

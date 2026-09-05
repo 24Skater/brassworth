@@ -135,3 +135,77 @@ test.describe('Wishlist', () => {
     await expect(page.getByTestId('wishlist')).toContainText('200.00 saved');
   });
 });
+
+test.describe('Price watching', () => {
+  test.beforeEach(async ({ page }) => {
+    await signUpWithProperty(page);
+    await page.goto('/wishlist');
+  });
+
+  test('records a price and shows it on the card', async ({ page }) => {
+    await addWish(page, 'Table Saw', { target: '900' });
+
+    await page.getByTestId('price-Table Saw').click();
+    const dialog = page.getByRole('dialog');
+    await dialog.locator('#price-amount').fill('1100');
+    await dialog.getByRole('button', { name: /^record$/i }).click();
+    await expect(dialog).toBeHidden();
+
+    await expect(page.getByTestId('wishlist')).toContainText('Seen at 1,100.00');
+    // Above the target, so no alert.
+    await expect(page.getByTestId('price-alerts')).toBeHidden();
+  });
+
+  test('alerts once the price drops to the target', async ({ page }) => {
+    await addWish(page, 'Table Saw', { target: '900' });
+
+    for (const amount of ['1100', '850']) {
+      await page.getByTestId('price-Table Saw').click();
+      const dialog = page.getByRole('dialog');
+      await dialog.locator('#price-amount').fill(amount);
+      await dialog.getByRole('button', { name: /^record$/i }).click();
+      await expect(dialog).toBeHidden();
+    }
+
+    const alerts = page.getByTestId('price-alerts');
+    await expect(alerts).toBeVisible();
+    await expect(alerts).toContainText('Table Saw');
+    await expect(alerts).toContainText('850.00');
+    await expect(alerts).toContainText('50.00 under your target');
+  });
+
+  test('keeps the history, so the lowest ever is still visible', async ({ page }) => {
+    await addWish(page, 'Table Saw', { target: '2000' });
+
+    for (const amount of ['700', '900']) {
+      await page.getByTestId('price-Table Saw').click();
+      const dialog = page.getByRole('dialog');
+      await dialog.locator('#price-amount').fill(amount);
+      await dialog.getByRole('button', { name: /^record$/i }).click();
+      await expect(dialog).toBeHidden();
+    }
+
+    const list = page.getByTestId('wishlist');
+    await expect(list).toContainText('Seen at 900.00');
+    await expect(list).toContainText('lowest 700.00');
+  });
+
+  test('does not alert on something already bought', async ({ page }) => {
+    await addWish(page, 'Table Saw', { target: '900' });
+
+    await page.getByTestId('price-Table Saw').click();
+    let dialog = page.getByRole('dialog');
+    await dialog.locator('#price-amount').fill('500');
+    await dialog.getByRole('button', { name: /^record$/i }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByTestId('price-alerts')).toBeVisible();
+
+    await page.getByTestId('buy-Table Saw').click();
+    dialog = page.getByRole('dialog');
+    await dialog.locator('#paid-amount').fill('500');
+    await dialog.getByRole('button', { name: /add to my items/i }).click();
+    await expect(dialog).toBeHidden();
+
+    await expect(page.getByTestId('price-alerts')).toBeHidden();
+  });
+});

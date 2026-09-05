@@ -33,9 +33,15 @@ import {
   sortEntries,
   wishlistTotals,
 } from '@/lib/wishlist';
-import type { SavingsContribution, WishlistEntry, WishlistPriority } from '@/types';
+import { alertsFor, groupObservations, priceStats, trend } from '@/lib/prices';
+import type {
+  PriceObservation,
+  SavingsContribution,
+  WishlistEntry,
+  WishlistPriority,
+} from '@/types';
 import { toast } from 'sonner';
-import { ArrowLeft, Check, Plus, PiggyBank, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, Plus, PiggyBank, Tag, Trash2, TrendingDown } from 'lucide-react';
 
 const money = (value: number) =>
   value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -71,19 +77,25 @@ export default function Wishlist() {
   const [savingAmount, setSavingAmount] = useState('');
   const [savingNote, setSavingNote] = useState('');
 
+  const [observations, setObservations] = useState<PriceObservation[]>([]);
+  const [pricingFor, setPricingFor] = useState<WishlistEntry | null>(null);
+  const [priceAmount, setPriceAmount] = useState('');
+
   const [buying, setBuying] = useState<WishlistEntry | null>(null);
   const [pricePaid, setPricePaid] = useState('');
 
   const load = useCallback(async () => {
     if (!currentOrg) return;
 
-    const [allEntries, allContributions] = await Promise.all([
+    const [allEntries, allContributions, allObservations] = await Promise.all([
       storage.getWishlistEntries(),
       storage.getSavingsContributions(),
+      storage.getPriceObservations(),
     ]);
 
     setEntries(allEntries.filter((e) => e.organizationId === currentOrg.id));
     setContributions(allContributions.filter((c) => c.organizationId === currentOrg.id));
+    setObservations(allObservations.filter((o) => o.organizationId === currentOrg.id));
   }, [currentOrg]);
 
   useEffect(() => {
@@ -94,6 +106,8 @@ export default function Wishlist() {
   const sorted = useMemo(() => sortEntries(entries, byEntry), [entries, byEntry]);
   const totals = useMemo(() => wishlistTotals(entries, byEntry), [entries, byEntry]);
   const ready = useMemo(() => readyToBuy(entries, byEntry), [entries, byEntry]);
+  const pricesByEntry = useMemo(() => groupObservations(observations), [observations]);
+  const priceAlerts = useMemo(() => alertsFor(entries, pricesByEntry), [entries, pricesByEntry]);
 
   if (!currentOrg) {
     return (
@@ -191,6 +205,30 @@ export default function Wishlist() {
     toast.success(`${created.name} added to your items`);
   };
 
+  const handleRecordPrice = async () => {
+    if (!pricingFor) return;
+
+    const amount = Number(priceAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      toast.error('Enter the price you saw.');
+      return;
+    }
+
+    await storage.createPriceObservation({
+      wishlistEntryId: pricingFor.id,
+      organizationId: currentOrg.id,
+      amount,
+      observedAt: new Date().toISOString(),
+      source: 'MANUAL',
+      url: pricingFor.url,
+    });
+
+    setPricingFor(null);
+    setPriceAmount('');
+    await load();
+    toast.success('Price recorded');
+  };
+
   const handleDelete = async (entry: WishlistEntry) => {
     await storage.deleteWishlistEntry(entry.id);
     await load();
@@ -236,6 +274,32 @@ export default function Wishlist() {
                   <p className="text-2xl font-bold tabular-nums">{money(totals.remainingTotal)}</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {priceAlerts.length > 0 && (
+          <Card className="mb-6 border-primary" data-testid="price-alerts">
+            <CardHeader>
+              <CardTitle className="text-primary flex items-center gap-2">
+                <TrendingDown className="h-5 w-5" />
+                {priceAlerts.length === 1 ? 'One thing is' : `${priceAlerts.length} things are`} at
+                or below your price
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-1 text-sm">
+                {priceAlerts.map(({ entry, alert }) => (
+                  <li key={entry.id} className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="font-medium">{entry.name}</span>
+                    <span className="tabular-nums">{money(alert.amount)}</span>
+                    <span className="text-muted-foreground tabular-nums">
+                      ({money(alert.saving)} under your target
+                      {alert.isLowestEver ? ', lowest yet' : ''})
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         )}
@@ -308,6 +372,23 @@ export default function Wishlist() {
                       )}
                     </div>
 
+                    {(() => {
+                      const stats = priceStats(pricesByEntry.get(entry.id) ?? []);
+                      if (!stats.latest) return null;
+                      const direction = trend(pricesByEntry.get(entry.id) ?? []);
+
+                      return (
+                        <p className="text-sm text-muted-foreground tabular-nums">
+                          Seen at {money(stats.latest.amount)}
+                          {direction === 'DOWN' && ' ▼'}
+                          {direction === 'UP' && ' ▲'}
+                          {stats.lowest && stats.lowest.amount < stats.latest.amount && (
+                            <> · lowest {money(stats.lowest.amount)}</>
+                          )}
+                        </p>
+                      );
+                    })()}
+
                     {!bought && (
                       <div className="flex flex-wrap gap-2">
                         <Button
@@ -328,6 +409,15 @@ export default function Wishlist() {
                           data-testid={`buy-${entry.name}`}
                         >
                           <Check className="h-4 w-4 mr-1" />I bought it
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setPricingFor(entry)}
+                          data-testid={`price-${entry.name}`}
+                        >
+                          <Tag className="h-4 w-4 mr-1" />
+                          Record a price
                         </Button>
                         <Button
                           size="sm"
@@ -492,6 +582,38 @@ export default function Wishlist() {
               Cancel
             </Button>
             <Button onClick={handleContribute}>Add to savings</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Record a price */}
+      <Dialog open={pricingFor !== null} onOpenChange={(open) => !open && setPricingFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record a price</DialogTitle>
+            <DialogDescription>
+              What {pricingFor?.name} is going for today. Each one is kept, so you can see whether a
+              sale is really a sale.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="price-amount">Price</Label>
+            <Input
+              id="price-amount"
+              type="number"
+              step="0.01"
+              min="0"
+              value={priceAmount}
+              onChange={(e) => setPriceAmount(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPricingFor(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRecordPrice}>Record</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

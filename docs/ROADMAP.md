@@ -240,13 +240,13 @@ a scheduled server-side job, which now exists. But a price watch watches a _wish
 and wishlist entries are Phase 5 — building a watcher with nothing to watch is infrastructure
 for a feature that does not exist yet. It belongs with the thing it operates on.
 
-### Phase 5 — Wishlist and acquisition 🚧 in progress
+### Phase 5 — Wishlist and acquisition ✅ done
 
 - [x] Wishlist entries with target price, priority and where you saw it
 - [x] Savings tracked as an **append-only log**, not a running total — the same choice as
       `ItemEvent`, so a correction is another row rather than an edit
 - [x] Convert a wishlist entry to an owned item on purchase, preserving what was saved
-- [ ] Price observations and alerts
+- [x] Price observations, history and alerts against a target
 
 **Savings are a log, and the total is derived.** A `savedAmount` field would have been
 smaller, but it makes "where did this number come from" unanswerable and turns every
@@ -254,11 +254,23 @@ correction into a destructive edit. A negative amount is a withdrawal.
 
 **A bought entry stays on the list, marked bought.** Deleting it would erase the record of
 what the saving was for, so it sinks to the bottom instead. Its savings stop counting
-towards the outstanding totals, because that money has been spent.
+towards outstanding totals, because that money has been spent.
 
 **Buying records an `ACQUIRED` event, not just a purchase date.** The new item therefore
-starts life with the same history every other item has, and its age of ownership dates from
-the purchase rather than from when the row was written.
+starts life with the same history every other item has.
+
+**Prices are a series, not a latest value.** A single current price cannot answer "is this
+actually a good deal or just what it always costs", which is what a price alert is really
+being asked. Alerts fire only against an explicit target — alerting on "it moved a bit"
+trains people to ignore the alert, which is worse than not alerting.
+
+**Automated price checking reads structured data only, never the rendered page.** It parses
+`schema.org/Product` offers from `application/ld+json`, which retailers publish deliberately
+for machines. Scraping a layout would be fragile, generally against terms of service, and
+rude at any scale. It also fetches and obeys `robots.txt` per host, refuses when robots.txt
+cannot be read rather than assuming permission, keeps a minimum gap between requests to one
+host and honours any `Crawl-delay`, accepts only `https`, and is **off unless a self-hoster
+sets `PRICE_WATCH_ENABLED=true`**. Manual price entry needs none of that and always works.
 
 ### Phase 6 — Gear profiles
 
@@ -277,7 +289,7 @@ the purchase rather than from when the row was written.
 | **v0.4** | ✅ Phase 2 done. Lifecycle and custody — the first genuinely differentiated release |
 | **v0.6** | Phase 3 done. Valuation and dashboards                                              |
 | **v0.8** | ✅ Phase 4 done. Real auth, real multi-user, self-hostable with a server            |
-| **v1.0** | Phase 5 done, coverage at 80%, hosted tier live at `app.brassworth.com`             |
+| **v1.0** | Phase 5 done ✅, coverage at 80%, hosted tier live at `app.brassworth.com`          |
 
 Phase 6 is deliberately after v1.0. It is the most fun and the least load-bearing.
 

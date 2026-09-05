@@ -14,6 +14,7 @@ import type {
   UserWithAuth,
   WishlistEntry,
   SavingsContribution,
+  PriceObservation,
 } from '@/types';
 
 /**
@@ -40,6 +41,7 @@ const COLLECTION_PATHS: Record<CollectionName, string> = {
   userRoles: 'user-roles',
   wishlistEntries: 'wishlist',
   savingsContributions: 'savings',
+  priceObservations: 'prices',
   // Organisations and memberships are not tenant-scoped collections; they are
   // how a caller discovers which tenants exist for them at all.
   organizations: 'organizations',
@@ -337,6 +339,7 @@ export class ApiStorageProvider implements StorageProvider {
   }
   async deleteWishlistEntry(id: string): Promise<void> {
     await this.deleteSavingsContributionsByEntry(id);
+    await this.deletePriceObservationsByEntry(id);
     return this.deleteScoped('wishlistEntries', id);
   }
 
@@ -356,6 +359,24 @@ export class ApiStorageProvider implements StorageProvider {
   async deleteSavingsContributionsByEntry(entryId: string): Promise<void> {
     const rows = await this.getSavingsContributionsByEntry(entryId);
     await Promise.all(rows.map((row) => this.deleteScoped('savingsContributions', row.id)));
+  }
+
+  // --- Price observations ---
+
+  async getPriceObservations(): Promise<PriceObservation[]> {
+    return this.listScoped<PriceObservation>('priceObservations');
+  }
+  async getPriceObservationsByEntry(entryId: string): Promise<PriceObservation[]> {
+    return (await this.getPriceObservations()).filter((o) => o.wishlistEntryId === entryId);
+  }
+  async createPriceObservation(
+    observation: Omit<PriceObservation, 'id' | 'createdAt'>
+  ): Promise<PriceObservation> {
+    return this.createScoped<PriceObservation>('priceObservations', observation);
+  }
+  async deletePriceObservationsByEntry(entryId: string): Promise<void> {
+    const rows = await this.getPriceObservationsByEntry(entryId);
+    await Promise.all(rows.map((row) => this.deleteScoped('priceObservations', row.id)));
   }
 
   // --- Photos ---
@@ -497,6 +518,7 @@ export class ApiStorageProvider implements StorageProvider {
       itemEvents,
       wishlistEntries,
       savingsContributions,
+      priceObservations,
       photos,
       documents,
     ] = await Promise.all([
@@ -508,6 +530,7 @@ export class ApiStorageProvider implements StorageProvider {
       this.getItemEvents(),
       this.getWishlistEntries(),
       this.getSavingsContributions(),
+      this.getPriceObservations(),
       this.getPhotos(),
       this.getDocuments(),
     ]);
@@ -522,6 +545,7 @@ export class ApiStorageProvider implements StorageProvider {
         itemEvents,
         wishlistEntries,
         savingsContributions,
+        priceObservations,
         photos,
         documents,
       },
@@ -542,6 +566,7 @@ export class ApiStorageProvider implements StorageProvider {
       'itemEvents',
       'wishlistEntries',
       'savingsContributions',
+      'priceObservations',
       'photos',
       'documents',
     ];

@@ -25,10 +25,10 @@ export default defineConfig({
       // measured coverage so it cannot regress; raise them as suites land.
       // Target is 80% per the project testing standard.
       thresholds: {
-        statements: 30.5,
-        branches: 79,
-        functions: 58.5,
-        lines: 30.5,
+        statements: 32.5,
+        branches: 80,
+        functions: 59,
+        lines: 32.5,
       },
     },
     include: ['tests/**/*.{test,spec}.{ts,tsx}', 'src/**/*.{test,spec}.{ts,tsx}'],

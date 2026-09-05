@@ -199,6 +199,20 @@ export async function migrate(client: Client): Promise<void> {
     )`,
     `CREATE INDEX IF NOT EXISTS savings_entry_idx ON savings_contributions (wishlist_entry_id)`,
     `CREATE INDEX IF NOT EXISTS savings_org_idx ON savings_contributions (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS price_observations (
+      id TEXT PRIMARY KEY,
+      wishlist_entry_id TEXT NOT NULL REFERENCES wishlist_entries(id) ON DELETE CASCADE,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      amount REAL NOT NULL,
+      currency TEXT,
+      observed_at TEXT NOT NULL,
+      source TEXT NOT NULL DEFAULT 'MANUAL',
+      url TEXT,
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT (current_timestamp)
+    )`,
+    `CREATE INDEX IF NOT EXISTS price_observations_entry_idx ON price_observations (wishlist_entry_id)`,
+    `CREATE INDEX IF NOT EXISTS price_observations_org_idx ON price_observations (organization_id)`,
   ];
 
   // Foreign keys are off by default in SQLite; the cascades above depend on it.
