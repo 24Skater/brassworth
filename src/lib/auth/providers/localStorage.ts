@@ -126,9 +126,14 @@ export class LocalStorageAuthProvider implements AuthProviderInterface {
     const userWithAuth = users.find((u) => u.email === email);
 
     if (!userWithAuth) {
-      // Record failed attempt
-      await recordFailedAttempt(email);
-      return { user: null, error: 'Invalid email or password' };
+      // The message must match the wrong-password branch exactly, including the
+      // attempts counter. A caller that sees a counter for one address and not
+      // another can enumerate which accounts exist.
+      const attemptResult = await recordFailedAttempt(email);
+      return {
+        user: null,
+        error: `Invalid email or password. ${attemptResult.remainingAttempts} attempt(s) remaining.`,
+      };
     }
 
     let isValid = false;

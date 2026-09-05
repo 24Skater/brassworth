@@ -55,7 +55,11 @@ export function ItemCard({
     >
       {onToggleSelect && (
         <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
-          <Checkbox checked={selected} onCheckedChange={onToggleSelect} />
+          <Checkbox
+            checked={selected}
+            onCheckedChange={onToggleSelect}
+            aria-label={`Select ${item.name}`}
+          />
         </div>
       )}
       <div onClick={onView} className={onToggleSelect ? 'pl-6' : ''}>
