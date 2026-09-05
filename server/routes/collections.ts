@@ -6,8 +6,10 @@ import {
   items,
   locations,
   photos,
+  savingsContributions,
   tags,
   userRoles,
+  wishlistEntries,
 } from '../db/schema';
 import type { Permission } from '../auth/access';
 
@@ -110,6 +112,32 @@ const documentSchema = z.object({
   uploadedAt: z.string().min(1),
 });
 
+const wishlistSchema = z.object({
+  id: z.string().min(1).optional(),
+  name: z.string().trim().min(1).max(300),
+  brand: optionalString,
+  model: optionalString,
+  categoryId: optionalString,
+  targetPrice: z.number().nonnegative().optional().nullable(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
+  notes: optionalString,
+  url: optionalString,
+  purchasedItemId: optionalString,
+  purchasedAt: optionalString,
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+const savingsSchema = z.object({
+  id: z.string().min(1).optional(),
+  wishlistEntryId: z.string().min(1),
+  // Negative is a withdrawal, so this is deliberately not nonnegative.
+  amount: z.number().finite(),
+  occurredAt: z.string().min(1),
+  note: optionalString,
+  createdAt: z.string().optional(),
+});
+
 const userRoleSchema = z.object({
   id: z.string().min(1).optional(),
   userId: z.string().min(1),
@@ -125,7 +153,9 @@ export interface CollectionSpec {
     | typeof tags
     | typeof photos
     | typeof documents
-    | typeof userRoles;
+    | typeof userRoles
+    | typeof wishlistEntries
+    | typeof savingsContributions;
   schema: z.ZodType<Record<string, unknown>>;
   /** Permission needed to read. */
   read: Permission;
@@ -160,6 +190,18 @@ export const COLLECTIONS = {
     schema: documentSchema,
     read: 'canViewItems',
     write: 'canEditItems',
+  },
+  wishlist: {
+    table: wishlistEntries,
+    schema: wishlistSchema,
+    read: 'canViewItems',
+    write: 'canAddItems',
+  },
+  savings: {
+    table: savingsContributions,
+    schema: savingsSchema,
+    read: 'canViewItems',
+    write: 'canAddItems',
   },
   'user-roles': {
     table: userRoles,

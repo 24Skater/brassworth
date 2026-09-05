@@ -171,6 +171,34 @@ export async function migrate(client: Client): Promise<void> {
     )`,
     `CREATE UNIQUE INDEX IF NOT EXISTS user_roles_unique ON user_roles (user_id, organization_id)`,
     `CREATE INDEX IF NOT EXISTS user_roles_org_idx ON user_roles (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS wishlist_entries (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      brand TEXT,
+      model TEXT,
+      category_id TEXT,
+      target_price REAL,
+      priority TEXT NOT NULL DEFAULT 'MEDIUM',
+      notes TEXT,
+      url TEXT,
+      purchased_item_id TEXT,
+      purchased_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (current_timestamp),
+      updated_at TEXT NOT NULL DEFAULT (current_timestamp)
+    )`,
+    `CREATE INDEX IF NOT EXISTS wishlist_entries_org_idx ON wishlist_entries (organization_id)`,
+    `CREATE TABLE IF NOT EXISTS savings_contributions (
+      id TEXT PRIMARY KEY,
+      wishlist_entry_id TEXT NOT NULL REFERENCES wishlist_entries(id) ON DELETE CASCADE,
+      organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      amount REAL NOT NULL,
+      occurred_at TEXT NOT NULL,
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT (current_timestamp)
+    )`,
+    `CREATE INDEX IF NOT EXISTS savings_entry_idx ON savings_contributions (wishlist_entry_id)`,
+    `CREATE INDEX IF NOT EXISTS savings_org_idx ON savings_contributions (organization_id)`,
   ];
 
   // Foreign keys are off by default in SQLite; the cascades above depend on it.

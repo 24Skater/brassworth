@@ -15,6 +15,7 @@ import {
   Settings as SettingsIcon,
   Menu,
   LucideIcon,
+  Heart,
 } from 'lucide-react';
 import { NavLink } from './NavLink';
 import { cn } from '@/lib/utils';
@@ -95,6 +96,9 @@ export function Navigation() {
                   <MobileNavLink to="/categories" icon={FolderOpen} onClick={closeMobileMenu}>
                     Categories
                   </MobileNavLink>
+                  <MobileNavLink to="/wishlist" icon={Heart} onClick={closeMobileMenu}>
+                    Wishlist
+                  </MobileNavLink>
                   <MobileNavLink to="/locations" icon={MapPin} onClick={closeMobileMenu}>
                     Locations
                   </MobileNavLink>
@@ -165,6 +169,9 @@ export function Navigation() {
           </NavLink>
           <NavLink to="/categories" icon={FolderOpen}>
             Categories
+          </NavLink>
+          <NavLink to="/wishlist" icon={Heart}>
+            Wishlist
           </NavLink>
           <NavLink to="/locations" icon={MapPin}>
             Locations

@@ -20,6 +20,7 @@ const Locations = lazy(() => import('./pages/Locations'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Users = lazy(() => import('./pages/Users'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Loading component
@@ -53,6 +54,7 @@ const App = () => (
                     <Route path="/locations" element={<Locations />} />
                     <Route path="/categories" element={<Categories />} />
                     <Route path="/users" element={<Users />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/settings" element={<Settings />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />

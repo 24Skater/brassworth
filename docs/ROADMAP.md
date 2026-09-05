@@ -240,11 +240,25 @@ a scheduled server-side job, which now exists. But a price watch watches a _wish
 and wishlist entries are Phase 5 — building a watcher with nothing to watch is infrastructure
 for a feature that does not exist yet. It belongs with the thing it operates on.
 
-### Phase 5 — Wishlist and acquisition
+### Phase 5 — Wishlist and acquisition 🚧 in progress
 
-- Wishlist entries with target price, savings progress, and priority
-- Price watches with alert thresholds
-- Convert a wishlist entry to an owned item on purchase, preserving what was saved
+- [x] Wishlist entries with target price, priority and where you saw it
+- [x] Savings tracked as an **append-only log**, not a running total — the same choice as
+      `ItemEvent`, so a correction is another row rather than an edit
+- [x] Convert a wishlist entry to an owned item on purchase, preserving what was saved
+- [ ] Price observations and alerts
+
+**Savings are a log, and the total is derived.** A `savedAmount` field would have been
+smaller, but it makes "where did this number come from" unanswerable and turns every
+correction into a destructive edit. A negative amount is a withdrawal.
+
+**A bought entry stays on the list, marked bought.** Deleting it would erase the record of
+what the saving was for, so it sinks to the bottom instead. Its savings stop counting
+towards the outstanding totals, because that money has been spent.
+
+**Buying records an `ACQUIRED` event, not just a purchase date.** The new item therefore
+starts life with the same history every other item has, and its age of ownership dates from
+the purchase rather than from when the row was written.
 
 ### Phase 6 — Gear profiles
 

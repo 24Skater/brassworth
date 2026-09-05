@@ -161,6 +161,54 @@ export interface ItemEvent {
   createdAt: string;
 }
 
+export type WishlistPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+
+/**
+ * Something you want but do not own yet.
+ *
+ * A separate entity rather than an `Item` in a special state. A wishlist entry
+ * has no serial number, no condition and no location; modelling it as an item
+ * would mean every exhaustive check over owned gear carrying a case that is not
+ * gear. On purchase it converts into a real item and keeps a pointer back.
+ */
+export interface WishlistEntry {
+  id: string;
+  organizationId: string;
+  name: string;
+  brand?: string;
+  model?: string;
+  categoryId?: string;
+  /** What you are willing to pay. Also the alert threshold for price watches. */
+  targetPrice?: number;
+  priority: WishlistPriority;
+  notes?: string;
+  /** Where you saw it. */
+  url?: string;
+  /** Set once the entry has become an owned item. */
+  purchasedItemId?: string;
+  purchasedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Money put aside towards a wishlist entry.
+ *
+ * An append-only log, like `ItemEvent`, rather than a running `savedAmount`
+ * field. The total is derived. That keeps one source of truth, makes "where did
+ * this number come from" answerable, and means a correction is another row
+ * rather than an edit. A negative amount is a withdrawal.
+ */
+export interface SavingsContribution {
+  id: string;
+  wishlistEntryId: string;
+  organizationId: string;
+  amount: number;
+  occurredAt: string;
+  note?: string;
+  createdAt: string;
+}
+
 export interface Photo {
   id: string;
   itemId: string;

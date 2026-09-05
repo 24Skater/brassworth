@@ -7,6 +7,8 @@ import type {
   Tag,
   Item,
   ItemEvent,
+  WishlistEntry,
+  SavingsContribution,
   Photo,
   Document,
   UserWithAuth,
@@ -107,6 +109,15 @@ export const storage = {
   getItems: async () => getStorageProvider().getItems(),
   setItems: async (items: Item[]) => getStorageProvider().replaceCollection('items', items),
 
+  // Single-item writes, for callers that create one thing rather than saving a
+  // whole collection.
+  getItem: async (id: string) => getStorageProvider().getItem(id),
+  createItem: async (item: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>) =>
+    getStorageProvider().createItem(item),
+  updateItem: async (id: string, updates: Partial<Item>) =>
+    getStorageProvider().updateItem(id, updates),
+  deleteItem: async (id: string) => getStorageProvider().deleteItem(id),
+
   // Item events (append-only lifecycle log)
   getItemEvents: async () => getStorageProvider().getItemEvents(),
   getItemEventsByItem: async (itemId: string) => getStorageProvider().getItemEventsByItem(itemId),
@@ -114,6 +125,26 @@ export const storage = {
     getStorageProvider().createItemEvent(event),
   setItemEvents: async (events: ItemEvent[]) =>
     getStorageProvider().replaceCollection('itemEvents', events),
+
+  // Wishlist
+  getWishlistEntries: async () => getStorageProvider().getWishlistEntries(),
+  getWishlistEntry: async (id: string) => getStorageProvider().getWishlistEntry(id),
+  createWishlistEntry: async (entry: Omit<WishlistEntry, 'id' | 'createdAt' | 'updatedAt'>) =>
+    getStorageProvider().createWishlistEntry(entry),
+  updateWishlistEntry: async (id: string, updates: Partial<WishlistEntry>) =>
+    getStorageProvider().updateWishlistEntry(id, updates),
+  deleteWishlistEntry: async (id: string) => getStorageProvider().deleteWishlistEntry(id),
+  setWishlistEntries: async (entries: WishlistEntry[]) =>
+    getStorageProvider().replaceCollection('wishlistEntries', entries),
+
+  // Savings contributions
+  getSavingsContributions: async () => getStorageProvider().getSavingsContributions(),
+  getSavingsContributionsByEntry: async (entryId: string) =>
+    getStorageProvider().getSavingsContributionsByEntry(entryId),
+  createSavingsContribution: async (c: Omit<SavingsContribution, 'id' | 'createdAt'>) =>
+    getStorageProvider().createSavingsContribution(c),
+  setSavingsContributions: async (rows: SavingsContribution[]) =>
+    getStorageProvider().replaceCollection('savingsContributions', rows),
 
   // Photos
   getPhotos: async () => getStorageProvider().getPhotos(),

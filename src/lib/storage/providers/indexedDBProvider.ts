@@ -13,6 +13,8 @@ import {
   UserWithAuth,
   UserRoleAssignment,
   ItemEvent,
+  WishlistEntry,
+  SavingsContribution,
 } from '@/types';
 
 /**
@@ -26,6 +28,8 @@ class HomeAssetKeeperDB extends Dexie {
   tags!: Table<Tag, string>;
   items!: Table<Item, string>;
   itemEvents!: Table<ItemEvent, string>;
+  wishlistEntries!: Table<WishlistEntry, string>;
+  savingsContributions!: Table<SavingsContribution, string>;
   photos!: Table<Photo, string>;
   documents!: Table<Document, string>;
   users!: Table<UserWithAuth, string>;
@@ -50,6 +54,13 @@ class HomeAssetKeeperDB extends Dexie {
     // existing v1 database without touching the stores already there.
     this.version(2).stores({
       itemEvents: 'id, itemId, organizationId, occurredAt',
+    });
+
+    // v3 adds the pre-purchase half. Applied on top of an existing database
+    // without touching the stores already there.
+    this.version(3).stores({
+      wishlistEntries: 'id, organizationId, priority, createdAt',
+      savingsContributions: 'id, wishlistEntryId, organizationId, occurredAt',
     });
   }
 }
@@ -471,6 +482,69 @@ export class IndexedDBProvider implements StorageProvider {
     await this.db.itemEvents.where('itemId').equals(itemId).delete();
   }
 
+  // --- Wishlist ---
+
+  async getWishlistEntries(): Promise<WishlistEntry[]> {
+    return this.db.wishlistEntries.toArray();
+  }
+
+  async getWishlistEntry(id: string): Promise<WishlistEntry | null> {
+    return (await this.db.wishlistEntries.get(id)) ?? null;
+  }
+
+  async createWishlistEntry(
+    entry: Omit<WishlistEntry, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<WishlistEntry> {
+    const now = new Date().toISOString();
+    const created: WishlistEntry = {
+      ...entry,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    await this.db.wishlistEntries.add(created);
+    return created;
+  }
+
+  async updateWishlistEntry(id: string, updates: Partial<WishlistEntry>): Promise<WishlistEntry> {
+    await this.db.wishlistEntries.update(id, { ...updates, updatedAt: new Date().toISOString() });
+    const updated = await this.db.wishlistEntries.get(id);
+    if (!updated) throw new Error(`Wishlist entry with id ${id} not found`);
+    return updated;
+  }
+
+  async deleteWishlistEntry(id: string): Promise<void> {
+    await this.db.wishlistEntries.delete(id);
+    // The savings log belongs to the entry; leaving it behind orphans it.
+    await this.deleteSavingsContributionsByEntry(id);
+  }
+
+  // --- Savings ---
+
+  async getSavingsContributions(): Promise<SavingsContribution[]> {
+    return this.db.savingsContributions.toArray();
+  }
+
+  async getSavingsContributionsByEntry(entryId: string): Promise<SavingsContribution[]> {
+    return this.db.savingsContributions.where('wishlistEntryId').equals(entryId).toArray();
+  }
+
+  async createSavingsContribution(
+    contribution: Omit<SavingsContribution, 'id' | 'createdAt'>
+  ): Promise<SavingsContribution> {
+    const created: SavingsContribution = {
+      ...contribution,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    await this.db.savingsContributions.add(created);
+    return created;
+  }
+
+  async deleteSavingsContributionsByEntry(entryId: string): Promise<void> {
+    await this.db.savingsContributions.where('wishlistEntryId').equals(entryId).delete();
+  }
+
   async replaceCollection<K extends CollectionName>(
     collection: K,
     rows: CollectionRow<K>[]
@@ -494,6 +568,8 @@ export class IndexedDBProvider implements StorageProvider {
       this.db.tags.clear(),
       this.db.items.clear(),
       this.db.itemEvents.clear(),
+      this.db.wishlistEntries.clear(),
+      this.db.savingsContributions.clear(),
       this.db.photos.clear(),
       this.db.documents.clear(),
       this.db.users.clear(),
@@ -513,6 +589,8 @@ export class IndexedDBProvider implements StorageProvider {
       tags: await this.getTags(),
       items: await this.getItems(),
       itemEvents: await this.getItemEvents(),
+      wishlistEntries: await this.getWishlistEntries(),
+      savingsContributions: await this.getSavingsContributions(),
       photos: await this.getPhotos(),
       documents: await this.getDocuments(),
       users: await this.getUsers(),
@@ -545,6 +623,12 @@ export class IndexedDBProvider implements StorageProvider {
     }
     if (parsed.itemEvents) {
       await this.db.itemEvents.bulkPut(parsed.itemEvents);
+    }
+    if (parsed.wishlistEntries) {
+      await this.db.wishlistEntries.bulkPut(parsed.wishlistEntries);
+    }
+    if (parsed.savingsContributions) {
+      await this.db.savingsContributions.bulkPut(parsed.savingsContributions);
     }
     if (parsed.photos) {
       await this.db.photos.bulkPut(parsed.photos);

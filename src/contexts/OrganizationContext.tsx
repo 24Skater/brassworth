@@ -51,7 +51,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         setOrganizations(userOrgs);
 
         if (userOrgs.length > 0 && !currentOrg) {
-          setCurrentOrg(userOrgs[0]);
+          setCurrentOrg(userOrgs[0] ?? null);
         }
       } else {
         setOrganizations([]);

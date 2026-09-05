@@ -293,6 +293,53 @@ export const userRoles = sqliteTable(
   })
 );
 
+/** Something wanted but not owned yet. */
+export const wishlistEntries = sqliteTable(
+  'wishlist_entries',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    brand: text('brand'),
+    model: text('model'),
+    categoryId: text('category_id'),
+    targetPrice: real('target_price'),
+    priority: text('priority').notNull().default('MEDIUM'),
+    notes: text('notes'),
+    url: text('url'),
+    purchasedItemId: text('purchased_item_id'),
+    purchasedAt: text('purchased_at'),
+    ...timestamps,
+  },
+  (table) => ({ byOrg: index('wishlist_entries_org_idx').on(table.organizationId) })
+);
+
+/** Append-only savings log. The total is derived, never stored. */
+export const savingsContributions = sqliteTable(
+  'savings_contributions',
+  {
+    id: text('id').primaryKey(),
+    wishlistEntryId: text('wishlist_entry_id')
+      .notNull()
+      .references(() => wishlistEntries.id, { onDelete: 'cascade' }),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    amount: real('amount').notNull(),
+    occurredAt: text('occurred_at').notNull(),
+    note: text('note'),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`(current_timestamp)`),
+  },
+  (table) => ({
+    byEntry: index('savings_entry_idx').on(table.wishlistEntryId),
+    byOrg: index('savings_org_idx').on(table.organizationId),
+  })
+);
+
 export const schema = {
   users,
   sessions,
@@ -308,4 +355,6 @@ export const schema = {
   photos,
   documents,
   userRoles,
+  wishlistEntries,
+  savingsContributions,
 };

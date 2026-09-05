@@ -12,6 +12,8 @@ import type {
   User,
   UserRoleAssignment,
   UserWithAuth,
+  WishlistEntry,
+  SavingsContribution,
 } from '@/types';
 
 /**
@@ -36,6 +38,8 @@ const COLLECTION_PATHS: Record<CollectionName, string> = {
   photos: 'photos',
   documents: 'documents',
   userRoles: 'user-roles',
+  wishlistEntries: 'wishlist',
+  savingsContributions: 'savings',
   // Organisations and memberships are not tenant-scoped collections; they are
   // how a caller discovers which tenants exist for them at all.
   organizations: 'organizations',
@@ -315,6 +319,45 @@ export class ApiStorageProvider implements StorageProvider {
     await Promise.all(events.map((event) => this.deleteScoped('itemEvents', event.id)));
   }
 
+  // --- Wishlist ---
+
+  async getWishlistEntries(): Promise<WishlistEntry[]> {
+    return this.listScoped<WishlistEntry>('wishlistEntries');
+  }
+  async getWishlistEntry(id: string): Promise<WishlistEntry | null> {
+    return (await this.getWishlistEntries()).find((e) => e.id === id) ?? null;
+  }
+  async createWishlistEntry(
+    entry: Omit<WishlistEntry, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<WishlistEntry> {
+    return this.createScoped<WishlistEntry>('wishlistEntries', entry);
+  }
+  async updateWishlistEntry(id: string, updates: Partial<WishlistEntry>): Promise<WishlistEntry> {
+    return this.updateScoped<WishlistEntry>('wishlistEntries', id, updates);
+  }
+  async deleteWishlistEntry(id: string): Promise<void> {
+    await this.deleteSavingsContributionsByEntry(id);
+    return this.deleteScoped('wishlistEntries', id);
+  }
+
+  // --- Savings ---
+
+  async getSavingsContributions(): Promise<SavingsContribution[]> {
+    return this.listScoped<SavingsContribution>('savingsContributions');
+  }
+  async getSavingsContributionsByEntry(entryId: string): Promise<SavingsContribution[]> {
+    return (await this.getSavingsContributions()).filter((c) => c.wishlistEntryId === entryId);
+  }
+  async createSavingsContribution(
+    contribution: Omit<SavingsContribution, 'id' | 'createdAt'>
+  ): Promise<SavingsContribution> {
+    return this.createScoped<SavingsContribution>('savingsContributions', contribution);
+  }
+  async deleteSavingsContributionsByEntry(entryId: string): Promise<void> {
+    const rows = await this.getSavingsContributionsByEntry(entryId);
+    await Promise.all(rows.map((row) => this.deleteScoped('savingsContributions', row.id)));
+  }
+
   // --- Photos ---
 
   async getPhotos(): Promise<Photo[]> {
@@ -445,17 +488,29 @@ export class ApiStorageProvider implements StorageProvider {
 
   async exportData(): Promise<string> {
     const org = this.requireOrg();
-    const [organizations, locations, categories, tags, items, itemEvents, photos, documents] =
-      await Promise.all([
-        this.getOrganizations(),
-        this.getLocations(),
-        this.getCategories(),
-        this.getTags(),
-        this.getItems(),
-        this.getItemEvents(),
-        this.getPhotos(),
-        this.getDocuments(),
-      ]);
+    const [
+      organizations,
+      locations,
+      categories,
+      tags,
+      items,
+      itemEvents,
+      wishlistEntries,
+      savingsContributions,
+      photos,
+      documents,
+    ] = await Promise.all([
+      this.getOrganizations(),
+      this.getLocations(),
+      this.getCategories(),
+      this.getTags(),
+      this.getItems(),
+      this.getItemEvents(),
+      this.getWishlistEntries(),
+      this.getSavingsContributions(),
+      this.getPhotos(),
+      this.getDocuments(),
+    ]);
 
     return JSON.stringify(
       {
@@ -465,6 +520,8 @@ export class ApiStorageProvider implements StorageProvider {
         tags,
         items,
         itemEvents,
+        wishlistEntries,
+        savingsContributions,
         photos,
         documents,
       },
@@ -483,6 +540,8 @@ export class ApiStorageProvider implements StorageProvider {
       'tags',
       'items',
       'itemEvents',
+      'wishlistEntries',
+      'savingsContributions',
       'photos',
       'documents',
     ];

@@ -96,7 +96,7 @@ Thresholds live in `vitest.config.ts` and fail the build when coverage drops bel
 
 They are a **ratchet, not a target**. They currently sit just under measured coverage so it cannot regress. The project standard is 80%; raise the numbers as suites land, and never lower them to make a build pass.
 
-Current baseline: **29.14% statements**. That figure is low because the suite had never actually run until recently — not because the code is untestable. The largest gaps are `src/pages`, `src/components` and `src/lib/receipt`.
+Current baseline: **30.82% statements**. That figure is low because the suite had never actually run until recently — not because the code is untestable. The largest gaps are `src/pages`, `src/components` and `src/lib/receipt`.
 
 ## Before you open a pull request
 

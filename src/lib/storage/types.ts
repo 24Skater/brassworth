@@ -11,6 +11,8 @@ import {
   UserWithAuth,
   UserRoleAssignment,
   ItemEvent,
+  WishlistEntry,
+  SavingsContribution,
 } from '@/types';
 
 /**
@@ -78,6 +80,23 @@ export interface StorageProvider {
   createItemEvent(event: Omit<ItemEvent, 'id' | 'createdAt'>): Promise<ItemEvent>;
   deleteItemEventsByItem(itemId: string): Promise<void>;
 
+  // Wishlist operations
+  getWishlistEntries(): Promise<WishlistEntry[]>;
+  getWishlistEntry(id: string): Promise<WishlistEntry | null>;
+  createWishlistEntry(
+    entry: Omit<WishlistEntry, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<WishlistEntry>;
+  updateWishlistEntry(id: string, updates: Partial<WishlistEntry>): Promise<WishlistEntry>;
+  deleteWishlistEntry(id: string): Promise<void>;
+
+  // Savings contributions (append-only)
+  getSavingsContributions(): Promise<SavingsContribution[]>;
+  getSavingsContributionsByEntry(entryId: string): Promise<SavingsContribution[]>;
+  createSavingsContribution(
+    contribution: Omit<SavingsContribution, 'id' | 'createdAt'>
+  ): Promise<SavingsContribution>;
+  deleteSavingsContributionsByEntry(entryId: string): Promise<void>;
+
   // Photo operations
   getPhotos(): Promise<Photo[]>;
   getPhotosByItem(itemId: string): Promise<Photo[]>;
@@ -144,6 +163,8 @@ export type CollectionMap = {
   tags: Tag;
   items: Item;
   itemEvents: ItemEvent;
+  wishlistEntries: WishlistEntry;
+  savingsContributions: SavingsContribution;
   photos: Photo;
   documents: Document;
   users: UserWithAuth;

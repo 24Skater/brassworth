@@ -12,6 +12,8 @@ import {
   UserWithAuth,
   UserRoleAssignment,
   ItemEvent,
+  WishlistEntry,
+  SavingsContribution,
 } from '@/types';
 
 const STORAGE_KEYS = {
@@ -25,6 +27,8 @@ const STORAGE_KEYS = {
   TAGS: 'inventory_tags',
   ITEMS: 'inventory_items',
   ITEM_EVENTS: 'inventory_item_events',
+  WISHLIST: 'inventory_wishlist',
+  SAVINGS: 'inventory_savings',
   PHOTOS: 'inventory_photos',
   DOCUMENTS: 'inventory_documents',
 };
@@ -480,6 +484,83 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   // Utility operations
+  // --- Wishlist ---
+
+  async getWishlistEntries(): Promise<WishlistEntry[]> {
+    const data = localStorage.getItem(STORAGE_KEYS.WISHLIST);
+    return data ? JSON.parse(data) : [];
+  }
+
+  async getWishlistEntry(id: string): Promise<WishlistEntry | null> {
+    return (await this.getWishlistEntries()).find((e) => e.id === id) ?? null;
+  }
+
+  async createWishlistEntry(
+    entry: Omit<WishlistEntry, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<WishlistEntry> {
+    const entries = await this.getWishlistEntries();
+    const now = new Date().toISOString();
+    const created: WishlistEntry = {
+      ...entry,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    entries.push(created);
+    localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(entries));
+    return created;
+  }
+
+  async updateWishlistEntry(id: string, updates: Partial<WishlistEntry>): Promise<WishlistEntry> {
+    const entries = await this.getWishlistEntries();
+    const index = entries.findIndex((e) => e.id === id);
+    if (index === -1) throw new Error(`Wishlist entry with id ${id} not found`);
+
+    entries[index] = { ...entries[index], ...updates, updatedAt: new Date().toISOString() };
+    localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(entries));
+    return entries[index];
+  }
+
+  async deleteWishlistEntry(id: string): Promise<void> {
+    const entries = await this.getWishlistEntries();
+    localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(entries.filter((e) => e.id !== id)));
+    // The savings log belongs to the entry; leaving it behind orphans it.
+    await this.deleteSavingsContributionsByEntry(id);
+  }
+
+  // --- Savings ---
+
+  async getSavingsContributions(): Promise<SavingsContribution[]> {
+    const data = localStorage.getItem(STORAGE_KEYS.SAVINGS);
+    return data ? JSON.parse(data) : [];
+  }
+
+  async getSavingsContributionsByEntry(entryId: string): Promise<SavingsContribution[]> {
+    return (await this.getSavingsContributions()).filter((c) => c.wishlistEntryId === entryId);
+  }
+
+  async createSavingsContribution(
+    contribution: Omit<SavingsContribution, 'id' | 'createdAt'>
+  ): Promise<SavingsContribution> {
+    const contributions = await this.getSavingsContributions();
+    const created: SavingsContribution = {
+      ...contribution,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    contributions.push(created);
+    localStorage.setItem(STORAGE_KEYS.SAVINGS, JSON.stringify(contributions));
+    return created;
+  }
+
+  async deleteSavingsContributionsByEntry(entryId: string): Promise<void> {
+    const contributions = await this.getSavingsContributions();
+    localStorage.setItem(
+      STORAGE_KEYS.SAVINGS,
+      JSON.stringify(contributions.filter((c) => c.wishlistEntryId !== entryId))
+    );
+  }
+
   private static readonly COLLECTION_KEYS: Record<CollectionName, string> = {
     organizations: STORAGE_KEYS.ORGANIZATIONS,
     memberships: STORAGE_KEYS.MEMBERSHIPS,
@@ -488,6 +569,8 @@ export class LocalStorageProvider implements StorageProvider {
     tags: STORAGE_KEYS.TAGS,
     items: STORAGE_KEYS.ITEMS,
     itemEvents: STORAGE_KEYS.ITEM_EVENTS,
+    wishlistEntries: STORAGE_KEYS.WISHLIST,
+    savingsContributions: STORAGE_KEYS.SAVINGS,
     photos: STORAGE_KEYS.PHOTOS,
     documents: STORAGE_KEYS.DOCUMENTS,
     users: STORAGE_KEYS.USERS,
@@ -548,6 +631,8 @@ export class LocalStorageProvider implements StorageProvider {
       tags: await this.getTags(),
       items: await this.getItems(),
       itemEvents: await this.getItemEvents(),
+      wishlistEntries: await this.getWishlistEntries(),
+      savingsContributions: await this.getSavingsContributions(),
       photos: await this.getPhotos(),
       documents: await this.getDocuments(),
       users: await this.getUsers(),
@@ -580,6 +665,12 @@ export class LocalStorageProvider implements StorageProvider {
     }
     if (parsed.itemEvents) {
       localStorage.setItem(STORAGE_KEYS.ITEM_EVENTS, JSON.stringify(parsed.itemEvents));
+    }
+    if (parsed.wishlistEntries) {
+      localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(parsed.wishlistEntries));
+    }
+    if (parsed.savingsContributions) {
+      localStorage.setItem(STORAGE_KEYS.SAVINGS, JSON.stringify(parsed.savingsContributions));
     }
     if (parsed.photos) {
       localStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(parsed.photos));
