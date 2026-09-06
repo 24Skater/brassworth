@@ -157,7 +157,7 @@ A wishlist entry converts to a real `Item` on purchase, carrying its saved histo
 
 Ordered by dependency, not by appeal. Each phase assumes the one above it.
 
-### Phase 1 — Unblock the data layer ✅ done
+### Phase 1 — Unblock the data layer — done
 
 - [x] Migrate all 8 pages and contexts off the synchronous `src/lib/storage.ts`
 - [x] Delete the wrapper; every import now resolves to the async provider facade
@@ -165,7 +165,7 @@ Ordered by dependency, not by appeal. Each phase assumes the one above it.
       collection, which is both the backup story and the migration path when the backend arrives
 - [x] Raise the coverage ratchet
 
-### Phase 2 — Lifecycle ✅ done
+### Phase 2 — Lifecycle — done
 
 _The differentiator. Buildable entirely client-side._
 
@@ -189,7 +189,7 @@ item's events. Cache it when a profile says to, not before.
 owned item in a special state; putting it in the status union would have made every
 exhaustive switch carry a case that cannot occur.
 
-### Phase 3 — Value and insight ✅ done
+### Phase 3 — Value and insight — done
 
 - [x] Straight-line and declining-balance depreciation, with a salvage floor
 - [x] Age of ownership, cost of ownership, total repair spend per item
@@ -207,7 +207,7 @@ second write path. They live on `Item` as optional fields.
 `MARKET_COMPARABLE` is also dropped from the method list. With no price data source behind
 it, it would produce a number that looks authoritative and is invented.
 
-### Phase 4 — Backend, auth, hosted tier ✅ done
+### Phase 4 — Backend, auth, hosted tier — done
 
 _See [ARCHITECTURE.md](./ARCHITECTURE.md). Three deployment tiers from one codebase._
 
@@ -240,7 +240,7 @@ a scheduled server-side job, which now exists. But a price watch watches a _wish
 and wishlist entries are Phase 5 — building a watcher with nothing to watch is infrastructure
 for a feature that does not exist yet. It belongs with the thing it operates on.
 
-### Phase 5 — Wishlist and acquisition ✅ done
+### Phase 5 — Wishlist and acquisition — done
 
 - [x] Wishlist entries with target price, priority and where you saw it
 - [x] Savings tracked as an **append-only log**, not a running total — the same choice as
@@ -278,7 +278,7 @@ cannot be read rather than assuming permission, keeps a minimum gap between requ
 host and honours any `Crawl-delay`, accepts only `https`, and is **off unless a self-hoster
 sets `PRICE_WATCH_ENABLED=true`**. Manual price entry needs none of that and always works.
 
-### Phase 6 — Gear profiles ✅ done
+### Phase 6 — Gear profiles — done
 
 _See [CATALOGUE.md](./CATALOGUE.md)._
 
@@ -338,14 +338,14 @@ roadmap warns against, and it works today with any vendor that publishes JSON.
 
 ## Release milestones
 
-| Version  | Gate                                                                                |
-| -------- | ----------------------------------------------------------------------------------- |
-| **v0.2** | Phase 1 done. Async storage, export/import working, repo public                     |
-| **v0.4** | ✅ Phase 2 done. Lifecycle and custody — the first genuinely differentiated release |
-| **v0.6** | Phase 3 done. Valuation and dashboards                                              |
-| **v0.8** | ✅ Phase 4 done. Real auth, real multi-user, self-hostable with a server            |
-| **v1.0** | ✅ Phase 5 done and coverage past 80%. Hosted tier at `app.brassworth.com` to come  |
-| **v1.1** | ✅ Phase 6 done. Gear profiles, the community catalogue, and data plate scanning    |
+| Version  | Gate                                                                              |
+| -------- | --------------------------------------------------------------------------------- |
+| **v0.2** | Done. Phase 1. Async storage, export and import working                           |
+| **v0.4** | Done. Phase 2. Lifecycle and custody, the first genuinely differentiated release  |
+| **v0.6** | Done. Phase 3. Valuation and dashboards                                           |
+| **v0.8** | Done. Phase 4. Real server-side auth, self-hostable with a server                 |
+| **v1.0** | Done. Phase 5, and coverage past 80%. Hosted tier at `app.brassworth.com` to come |
+| **v1.1** | Done. Phase 6. Gear profiles, the community catalogue, and data plate scanning    |
 
 Phase 6 was deliberately scheduled after v1.0 — the most fun and the least load-bearing — and
 shipped there.

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <title>Brassworth</title>
+  <path d="M10 4h24l10 10v24a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6V10a6 6 0 0 1 6-6z" stroke="#1A1A1A" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M18 13h9a5 5 0 0 1 0 10h-9z" fill="#D6301F"/>
+  <path d="M18 24.5h10a5.25 5.25 0 0 1 0 10.5H18" stroke="#1A1A1A" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M18 13v22" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
