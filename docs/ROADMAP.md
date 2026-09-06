@@ -35,12 +35,14 @@ Verified, not aspirational. Run the checks yourself with the commands in [TESTIN
 | Storage  | localStorage, IndexedDB and API providers, all three real               |
 | Auth     | Server-enforced in the API tier; still localStorage in the local tier   |
 | Tests    | 1001 unit and server, 60 E2E, all green                                 |
-| Coverage | 87.9% statements, 87.6% branches, 80.1% functions; ratcheted            |
-| CI       | Five jobs green on `main`                                               |
+| Coverage | 88.2% statements, 87.7% branches, 80.2% functions; ratcheted            |
+| CI       | Six jobs green on `main`, including a documentation check               |
 
 ### What already works
 
-Item CRUD with brand, model and serial number. Categories, hierarchical locations, tags. Multiple properties. Receipt OCR via Tesseract.js and PDF parsing. Excel import and export. Four view modes. Light and dark.
+Item CRUD with brand, model and serial number. Categories and hierarchical locations. Multiple properties. Receipt OCR via Tesseract.js. Excel import and export. Four view modes, with search, filters and bulk edit. Light and dark.
+
+Tags are in the data model but have **no user interface** — there is no way to create or assign one. Treat them as unbuilt, not as a feature.
 
 ### The seam that used to block everything
 
