@@ -42,7 +42,7 @@ test.describe('Item lifecycle', () => {
     await signUpWithProperty(page);
     await createItem(page, 'Cordless Drill');
 
-    await expect(page.getByText('In possession').first()).toBeVisible();
+    await expect(page.getByTestId('item-header').getByText('In possession')).toBeVisible();
     await expect(page.getByTestId('no-history')).toBeVisible();
   });
 
@@ -58,7 +58,7 @@ test.describe('Item lifecycle', () => {
 
     await recordEvent(page, /^returned$/i);
 
-    await expect(page.getByText('In possession').first()).toBeVisible();
+    await expect(page.getByTestId('item-header').getByText('In possession')).toBeVisible();
     await expect(page.getByTestId('custody-line')).toBeHidden();
   });
 
@@ -92,7 +92,7 @@ test.describe('Item lifecycle', () => {
 
     await recordEvent(page, /^repair completed$/i, { amount: '40' });
 
-    await expect(page.getByText('In possession').first()).toBeVisible();
+    await expect(page.getByTestId('item-header').getByText('In possession')).toBeVisible();
     await expect(page.getByTestId('timeline')).toContainText('Repair completed');
     await expect(page.getByText(/repairs: 40\.00/i)).toBeVisible();
   });
