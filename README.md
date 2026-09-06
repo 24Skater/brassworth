@@ -9,11 +9,11 @@
 
 **Wanted, bought, lent, broken, repaired, sold.<br>The whole life of everything you own.**
 
-[![license](https://img.shields.io/badge/license-MIT-57534E?style=flat-square&labelColor=1A1A1A)](./LICENSE) [![build](https://img.shields.io/github/actions/workflow/status/24Skater/brassworth/ci.yml?style=flat-square&label=build&labelColor=1A1A1A&color=57534E)](https://github.com/24Skater/brassworth/actions) ![tests](https://img.shields.io/badge/tests-1061-57534E?style=flat-square&labelColor=1A1A1A) ![coverage](https://img.shields.io/badge/coverage-88%25-57534E?style=flat-square&labelColor=1A1A1A) [![status](https://img.shields.io/badge/status-pre--release-D6301F?style=flat-square&labelColor=1A1A1A)](#before-you-rely-on-it)
+[![license](https://img.shields.io/badge/license-MIT-57534E?style=flat-square&labelColor=1A1A1A)](./LICENSE) [![build](https://img.shields.io/github/actions/workflow/status/24Skater/brassworth/ci.yml?style=flat-square&label=build&labelColor=1A1A1A&color=57534E)](https://github.com/24Skater/brassworth/actions) ![tests](https://img.shields.io/badge/tests-1061-57534E?style=flat-square&labelColor=1A1A1A) ![coverage](https://img.shields.io/badge/coverage-88%25-57534E?style=flat-square&labelColor=1A1A1A) [![release](https://img.shields.io/github/v/release/24Skater/brassworth?style=flat-square&label=release&labelColor=1A1A1A&color=57534E&sort=semver)](https://github.com/24Skater/brassworth/releases)
 
 [![data](https://img.shields.io/badge/data-local--first-D6301F?style=flat-square&labelColor=1A1A1A)](./docs/ARCHITECTURE.md) [![self-host](https://img.shields.io/badge/self--host-docker-57534E?style=flat-square&labelColor=1A1A1A)](./docs/SELF_HOSTING.md) ![typescript](https://img.shields.io/badge/typescript-5.8-57534E?style=flat-square&labelColor=1A1A1A) ![react](https://img.shields.io/badge/react-18.3-57534E?style=flat-square&labelColor=1A1A1A)
 
-[Try it](#try-it-in-about-a-minute) · [What it does](#what-it-does) · [Host it](./docs/SELF_HOSTING.md) · [Docs](./docs/INDEX.md) · [Contribute](./CONTRIBUTING.md)
+[Try it](#try-it-in-about-a-minute) · [What it does](#what-it-does) · [Host it](./docs/SELF_HOSTING.md) · [Docs](./docs/INDEX.md) · [Caveats](#before-you-rely-on-it) · [Contribute](./CONTRIBUTING.md)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/demo-dark.gif">
