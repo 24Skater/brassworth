@@ -50,6 +50,23 @@ export default defineConfig(({ mode }) => ({
         // install does not pull megabytes nobody has asked for yet.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            // Server mode only. Reads come back from cache when the network is
+            // gone; writes are never cached, because a queued write is v2.2 and
+            // pretending one succeeded is worse than refusing it.
+            urlPattern: ({ url, request }) =>
+              request.method === 'GET' &&
+              url.pathname.startsWith('/api/') &&
+              !url.pathname.startsWith('/api/auth/'),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'brassworth-api',
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
       },
     }),
   ].filter(Boolean),
