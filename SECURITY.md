@@ -9,10 +9,15 @@ visible only to the maintainers.
 Please do not open a public issue for a security problem, and please do not post one
 in a discussion thread.
 
-<!-- TODO: maintainer to supply a monitored contact address for reporters who cannot
-     use GitHub. Leaving this blank is better than publishing an address nobody reads
-     — the previous version of this file listed security@example.com, which was a
-     placeholder that would have silently dropped every report. -->
+There is deliberately no email address here. Private vulnerability reporting is
+enabled on this repository, it notifies the maintainer directly, and it keeps the
+report and the fix in one thread. A published address on a small project tends to
+become an unmonitored inbox, which is worse than no address at all: it looks like a
+channel and behaves like a bin.
+
+If you genuinely cannot use GitHub, open a normal issue saying only that you have a
+security report and no way to send it privately — no details — and you will be given
+a way to make contact.
 
 **What helps:** what you found, how to reproduce it, which mode you were running
 (local-first or server), and what an attacker gains. A proof of concept is welcome but

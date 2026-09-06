@@ -60,14 +60,14 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement by opening a
-private report through the repository's **Security** tab, or by contacting a
-maintainer directly.
-All complaints will be reviewed and investigated promptly and fairly.
+reported by contacting the maintainer, [@24Skater](https://github.com/24Skater),
+through GitHub. All complaints will be reviewed and investigated promptly and
+fairly.
 
-<!-- TODO: maintainer to supply a monitored contact address for conduct reports.
-     This previously read conduct@example.com, a placeholder that would have
-     silently dropped every report sent to it. -->
+This project currently has a single maintainer, so it is worth saying plainly:
+if your report concerns that maintainer, you will not get an impartial hearing
+here. Report it to [GitHub Support](https://support.github.com/contact/report-abuse)
+instead, which can act on this repository independently of anyone who runs it.
 
 All community leaders are obligated to respect the privacy and security of the
 reporter of any incident.

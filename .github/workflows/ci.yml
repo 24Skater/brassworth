@@ -41,6 +41,45 @@ jobs:
       - name: TypeScript
         run: npm run type-check
 
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Get Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install system deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      # Resolves every relative link, renders every Mermaid block through the
+      # real library, and fails on emoji. Most of the documentation defects this
+      # project has had were exactly this shape: a link to a file that had been
+      # deleted, or a code sample importing a module that no longer existed.
+      - name: Check documentation
+        run: node scripts/screenshots/checkDocs.mjs
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
