@@ -16,6 +16,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Organizations = lazy(() => import('./pages/Organizations'));
 const Items = lazy(() => import('./pages/Items'));
 const ItemForm = lazy(() => import('./pages/ItemForm'));
+const ItemView = lazy(() => import('./pages/ItemView'));
 const Locations = lazy(() => import('./pages/Locations'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Users = lazy(() => import('./pages/Users'));
@@ -50,7 +51,8 @@ const App = () => (
                     <Route path="/organizations" element={<Organizations />} />
                     <Route path="/items" element={<Items />} />
                     <Route path="/items/new" element={<ItemForm />} />
-                    <Route path="/items/:id" element={<ItemForm />} />
+                    <Route path="/items/:id" element={<ItemView />} />
+                    <Route path="/items/:id/edit" element={<ItemForm />} />
                     <Route path="/locations" element={<Locations />} />
                     <Route path="/categories" element={<Categories />} />
                     <Route path="/users" element={<Users />} />

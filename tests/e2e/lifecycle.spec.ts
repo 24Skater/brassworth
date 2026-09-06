@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { signUpWithProperty } from './helpers';
 
-/** Create an item and land on its edit page, where the history lives. */
+/** Create an item and land on its view page, where the history lives. */
 async function createItem(page: Page, name: string): Promise<void> {
   await page.goto('/items/new');
   await page.locator('#name').fill(name);
@@ -9,7 +9,7 @@ async function createItem(page: Page, name: string): Promise<void> {
   await expect(page).toHaveURL(/\/items$/, { timeout: 15000 });
 
   await page.getByText(name).first().click();
-  await expect(page.getByRole('heading', { name: /edit item/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name })).toBeVisible();
 }
 
 async function recordEvent(
@@ -42,7 +42,7 @@ test.describe('Item lifecycle', () => {
     await signUpWithProperty(page);
     await createItem(page, 'Cordless Drill');
 
-    await expect(page.getByText('In possession')).toBeVisible();
+    await expect(page.getByText('In possession').first()).toBeVisible();
     await expect(page.getByTestId('no-history')).toBeVisible();
   });
 
@@ -58,7 +58,7 @@ test.describe('Item lifecycle', () => {
 
     await recordEvent(page, /^returned$/i);
 
-    await expect(page.getByText('In possession')).toBeVisible();
+    await expect(page.getByText('In possession').first()).toBeVisible();
     await expect(page.getByTestId('custody-line')).toBeHidden();
   });
 
@@ -92,7 +92,7 @@ test.describe('Item lifecycle', () => {
 
     await recordEvent(page, /^repair completed$/i, { amount: '40' });
 
-    await expect(page.getByText('In possession')).toBeVisible();
+    await expect(page.getByText('In possession').first()).toBeVisible();
     await expect(page.getByTestId('timeline')).toContainText('Repair completed');
     await expect(page.getByText(/repairs: 40\.00/i)).toBeVisible();
   });

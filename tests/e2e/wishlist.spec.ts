@@ -109,7 +109,7 @@ test.describe('Wishlist', () => {
     await expect(page.getByText('Table Saw').first()).toBeVisible();
 
     await page.getByText('Table Saw').first().click();
-    await expect(page.getByRole('heading', { name: /edit item/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Table Saw' })).toBeVisible();
 
     // It starts life with an acquisition, not just a purchase date.
     await expect(page.getByTestId('timeline')).toContainText('Acquired');
