@@ -60,9 +60,14 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-[conduct@example.com](mailto:conduct@example.com).
+reported to the community leaders responsible for enforcement by opening a
+private report through the repository's **Security** tab, or by contacting a
+maintainer directly.
 All complaints will be reviewed and investigated promptly and fairly.
+
+<!-- TODO: maintainer to supply a monitored contact address for conduct reports.
+     This previously read conduct@example.com, a placeholder that would have
+     silently dropped every report sent to it. -->
 
 All community leaders are obligated to respect the privacy and security of the
 reporter of any incident.

@@ -29,6 +29,10 @@ export default defineConfig({
         // Type-only modules compile to nothing meaningful to execute.
         'src/types/**',
         'src/vite-env.d.ts',
+        // Build and documentation tooling. These are developer scripts run by
+        // hand, never imported by the app, and never shipped in a bundle;
+        // counting them would measure the toolbox rather than the product.
+        'scripts/**',
       ],
       // Ratchet floor, not the goal. Set just under the measured coverage so
       // it cannot regress; raise them as suites land. All four now clear the

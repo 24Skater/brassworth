@@ -44,3 +44,6 @@ Thumbs.db
 
 # Server
 data/
+
+# Raw screen recordings; only the built GIF is committed.
+docs/assets/screenshots/.video/

@@ -1,213 +1,254 @@
-# Frequently Asked Questions (FAQ)
+# Frequently asked questions
+
+Short answers. Where a question deserves a long one, it links to the document that owns
+the topic.
 
 ## General
 
 ### What is Brassworth?
 
-Brassworth is an open-source, self-hostable application for tracking and managing assets. It's designed for homeowners, churches, small businesses, and organizations.
+An open-source tracker for tools, IT gear and AV equipment that follows the whole life
+of a thing you own — wanted, bought, lent, broken, repaired, sold — rather than only
+what you have right now. See the [README](../README.md).
+
+### How is it different from an inventory app?
+
+Inventory apps answer _what do I have_. Brassworth answers _what happened to this, and
+what is it worth now_. Every item carries an append-only history, and its status is
+derived from that history rather than stored in a field somebody has to remember to
+update. See [Lifecycle](./LIFECYCLE.md).
 
 ### Is it free?
 
-Yes! Brassworth is open-source and free to use. You can self-host it on your own server.
+Yes. MIT licensed. The bundled gear catalogue is separately licensed under ODbL 1.0 and
+DbCL 1.0 — see [Catalogue](./CATALOGUE.md).
+
+### Is there a hosted version I can sign up for?
+
+Not yet. `app.brassworth.com` is the next milestone. Today there is the code in this
+repository, which you run yourself.
 
 ### Do I need a server?
 
-For single-user use, you can run it locally in your browser. For multi-user or production use, you'll need a server to host the application.
+No. The default mode runs entirely in your browser with no server, no account and
+nothing uploaded. A server is optional and only worth running when you want a real
+security boundary. See [Getting started](./GETTING_STARTED.md).
+
+## Modes and data
+
+### What is the difference between local-first and server mode?
+
+|                                | Local-first (default)           | Server                          |
+| ------------------------------ | ------------------------------- | ------------------------------- |
+| Data lives                     | In your browser, on one machine | In SQLite on your server        |
+| Setup                          | `npm run dev`                   | `docker compose up -d`          |
+| Sign-in is a security boundary | **No**                          | Yes                             |
+| Works offline                  | Yes                             | Only if the server is reachable |
 
 ### Is my data secure?
 
-Yes! When self-hosted, all your data stays on your server. The application includes security features like:
+That depends entirely on the mode, and the honest answer matters here.
 
-- Password strength requirements
-- Input sanitization
-- Rate limiting
-- Role-based access control
+**In local-first mode, the sign-in screen is not a security boundary.** Accounts and
+roles are records in your browser's storage that the page itself writes. Anyone who can
+open devtools on that browser can change them. It is designed for privacy — nothing is
+uploaded anywhere — not for keeping other people out. Treat it as a single-user
+application on a machine you control.
 
-## Installation & Setup
+**In server mode** passwords are hashed with scrypt, sessions are opaque tokens in
+httpOnly cookies, and roles are checked on the server on every request.
 
-### How do I install Brassworth?
+Full detail, including the known gaps, is in [SECURITY.md](../SECURITY.md).
 
-See the [Quick Start Guide](./QUICK_START_GUIDE.md) for detailed installation instructions.
+### Where exactly is my data?
 
-### What are the system requirements?
-
-- **Development**: Node.js 18+, npm/yarn/pnpm
-- **Production**: Docker (recommended) or any web server
-- **Browser**: Modern browser (Chrome, Firefox, Safari, Edge)
-
-### Can I use it without Docker?
-
-Yes! You can:
-
-1. Build the application: `npm run build`
-2. Serve the `dist` folder with any web server
-3. Or use static hosting (Netlify, Vercel, etc.)
-
-## Features
-
-### Can I use it offline?
-
-Currently, the application requires an internet connection to load. However, once loaded, you can use it offline if using localStorage or IndexedDB storage.
-
-### How many items can I track?
-
-- **localStorage**: ~5-10MB (thousands of items)
-- **IndexedDB**: Much larger (millions of items)
-- **API**: Unlimited (depends on backend)
-
-### Can I import data from other systems?
-
-Yes! You can import data from Excel files. See the [User Guide](./USER_GUIDE.md) for details.
-
-### Can I export my data?
-
-Yes! You can export all data to Excel format from Settings → Data tab.
-
-## Multi-User
-
-### Can multiple people use it?
-
-Yes! The application supports multiple users with role-based access control:
-
-- **Admin**: Full control
-- **Manager**: Edit access
-- **Contributor**: Add items only
-- **Viewer**: Read-only
-
-### How do I add users?
-
-1. Go to Settings → Users tab
-2. Click "Invite User"
-3. Enter user details and role
-4. User will receive invitation (when using backend)
-
-### Can I restrict what users can see?
-
-Yes! Users can only see items from organizations they're members of. Role-based permissions control what actions they can perform.
-
-## Storage & Data
-
-### Where is my data stored?
-
-- **localStorage**: Browser localStorage (default)
-- **IndexedDB**: Browser IndexedDB (better for large datasets)
-- **API**: Backend database (when using backend)
-
-### Can I backup my data?
-
-Yes! Export your data regularly from Settings → Data tab. The export includes all items, locations, and categories.
+Local-first mode: your browser's `localStorage`, under keys prefixed `inventory_`, or
+IndexedDB if you have opted into that. Server mode: a SQLite file on a Docker volume at
+`/app/data/brassworth.db`.
 
 ### What happens if I clear my browser data?
 
-If using localStorage or IndexedDB, clearing browser data will delete your inventory. Always export backups regularly!
+In local-first mode, everything is deleted and there is no copy anywhere else. Export a
+backup first. See [Backup](./BACKUP.md).
 
-### Can I migrate between storage types?
+### Can I move from local-first to a server later?
 
-Yes! The application can automatically migrate from localStorage to IndexedDB. See [Storage Providers Guide](./STORAGE_PROVIDERS.md).
+Yes, and it is the expected path. Export a backup, stand up the server, create an
+account, restore the backup. Your items and their whole history come across. See
+[Backup](./BACKUP.md).
+
+### Can I switch to IndexedDB for more room?
+
+Yes. Set `VITE_STORAGE_PROVIDER=indexeddb`. Your existing localStorage data is migrated
+across on first use. This is worth doing if you attach a lot of photos — localStorage
+is capped around 5 MB per origin and photos are stored inline. See
+[Extending](./EXTENDING.md).
+
+### How many items can I track?
+
+In localStorage, the practical limit is the ~5 MB quota, and photos dominate it. A few
+hundred items with no photos is comfortable. With photos, switch to `indexeddb` or run
+the server.
+
+## Features
+
+### Can I track who borrowed something?
+
+Yes — that is the point of the product. Check something out with a name and a date it
+is due back, and overdue loans appear on the dashboard. See [Lifecycle](./LIFECYCLE.md).
+
+### How is depreciation calculated?
+
+Straight line or declining balance, both with a salvage floor, or a value you set by
+hand. Worked examples in [Value](./VALUE.md).
+
+### Does it look up market prices automatically?
+
+No, deliberately. There is no automatic market valuation, because with no price data
+source behind it, the number would look authoritative and be invented. You record what
+you observe.
+
+### Does price watching scrape retailer websites?
+
+It does not scrape, and today it does not run at all. Prices are recorded by hand. An
+automatic checker exists in the codebase but is wired to no route, so
+`PRICE_WATCH_ENABLED` currently has no effect. When it is connected it will read only
+the structured product data retailers publish for machines, obey `robots.txt`, throttle
+per host, and stay off unless explicitly enabled. See
+[Wishlist and prices](./WISHLIST_AND_PRICES.md).
+
+### What is the community catalogue?
+
+A small bundled set of make and model profiles with specs and manual links, so you
+describe a model once rather than on every item that is one. It ships with the app and
+is never copied into your data. See [Catalogue](./CATALOGUE.md).
+
+### Can I use it offline?
+
+Local-first mode works offline entirely. Receipt OCR runs in your browser. PDF receipt
+parsing loads a worker from a CDN, so that specific feature needs a connection.
+
+### Can I import data from a spreadsheet?
+
+Yes. Download the import template from the Items screen, fill it in, and import it.
+Excel export works the same way — but note that Excel export is **not** a backup, since
+it carries items only. See [Backup](./BACKUP.md).
+
+## Multiple people
+
+### Can several people use it?
+
+Not usefully yet, and this is worth being blunt about.
+
+Local-first mode has multiple accounts and four roles, but no security boundary — it
+decides what to draw, not what is permitted.
+
+Server mode has a real boundary, but **there is currently no route to add a second
+member to a property**, and the invite action reports itself unavailable. Until that
+lands, treat server mode as single-user with real security rather than a way to share
+gear with a crew.
+
+### What can each role do?
+
+Four roles — ADMIN, MANAGER, CONTRIBUTOR, VIEWER — across ten permissions. The full
+matrix is in [Data model](./DATA_MODEL.md).
+
+### Can I sign in with Google or my company login?
+
+Yes, in server mode, if you configure OIDC. It is off unless all four of the required
+variables are set. See [Self-hosting](./SELF_HOSTING.md).
 
 ## Security
 
-### Is my password secure?
+### How are passwords stored?
 
-The application enforces strong password requirements:
+Local-first mode: PBKDF2-SHA256, 100,000 iterations, with a 16-byte per-user salt.
+Server mode: scrypt at OWASP parameters. Neither is plain SHA-256, despite what older
+versions of this documentation said.
 
-- Minimum 12 characters
-- Uppercase, lowercase, numbers, special characters
-- Password strength validation
+### Is there rate limiting on sign-in?
 
-**Note**: In prototype mode (localStorage), passwords are hashed client-side. For production, use a backend with server-side hashing.
+In local-first mode, yes — five attempts, then escalating lockouts. **On the server, no.**
+If you expose an instance to the internet, add rate limiting at your reverse proxy. It
+is listed as a known gap in [SECURITY.md](../SECURITY.md).
 
-### Can I use two-factor authentication?
+### How do I reset a forgotten password?
 
-Not yet, but it's planned for future releases.
+There is no password reset. In local-first mode you would clear browser data and start
+again, which loses everything not backed up. In server mode it needs database access.
+This is a real gap, not an oversight in the documentation.
 
-### How do I reset my password?
+### Is there two-factor authentication?
 
-In prototype mode, you'll need to clear browser data and create a new account. With a backend, password reset will be available.
+No. Configuring OIDC and letting your identity provider handle it is the practical
+route today.
 
-## Troubleshooting
+## Running it
 
-### The app won't load
+### What do I need installed?
 
-1. Check browser console for errors
-2. Clear browser cache
-3. Try a different browser
-4. Check network connection
+Node 20 or newer for local development, or Docker for the server. Nothing else.
 
-### I can't see my items
+### Which port?
 
-1. Check you're in the correct organization
-2. Verify filters aren't hiding items
-3. Check your user role permissions
-4. Try refreshing the page
+`npm run dev` serves on **8080**. The container serves on **3000**.
 
-### Receipt scanning isn't working
+### Can I deploy it to Netlify or Vercel?
 
-1. Ensure good lighting
-2. Check image quality
-3. Try a different receipt format
-4. Check browser permissions for camera/file access
+Only in local-first mode, where it is a static bundle. Server mode needs a running Node
+process, so it wants a container host. See [Self-hosting](./SELF_HOSTING.md).
 
-### Export isn't downloading
+### Do I need HTTPS?
 
-1. Check browser download settings
-2. Try a different browser
-3. Check available disk space
-4. Disable browser extensions that block downloads
+For anything reachable beyond your own machine, yes. Terminate TLS in a reverse proxy in
+front of the container and set `NODE_ENV=production`, which is what marks the session
+cookie `Secure`.
 
-## Development
+### How do I update?
 
-### Can I contribute?
+Pull the new image and recreate the container. Take a backup first. See
+[Self-hosting](./SELF_HOSTING.md) and [Backup](./BACKUP.md).
 
-Yes! See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+## Something is wrong
 
-### How do I report bugs?
+### The app will not load
 
-Open an issue on GitHub with:
+Check the browser console. In local-first mode, a corrupted storage record is the usual
+cause — export a backup if you can, then clear site data and restore.
 
-- Description of the bug
-- Steps to reproduce
-- Expected vs actual behavior
-- Browser and OS information
+### My items disappeared
 
-### Can I request features?
+Almost always the wrong property is selected. Check the property name under the
+Brassworth wordmark and use **Switch Property**. Failing that, you may be in a different
+browser or profile from the one holding the data.
 
-Yes! Open a feature request on GitHub. We welcome suggestions!
+### Receipt or data plate scanning is not working
 
-## Deployment
+OCR needs a reasonably sharp, well-lit, straight-on photo, and it takes a few seconds on
+a large image. It fills in the form and never saves on your behalf, so if nothing
+appears to have happened, check the fields.
 
-### Can I deploy to cloud services?
+### The container will not start
 
-Yes! You can deploy to:
+Check `docker compose logs -f brassworth`. The common causes are port 3000 already in
+use and a `DATABASE_URL` pointing somewhere the container cannot write. See the
+troubleshooting section of [Self-hosting](./SELF_HOSTING.md).
 
-- Railway
-- Render
-- DigitalOcean
-- Netlify/Vercel (static hosting)
-- Any Docker-compatible platform
+## Contributing
 
-### Do I need SSL/HTTPS?
+### Can I help?
 
-For production, yes! SSL is required for security. See [Deployment Guide](./DEPLOYMENT.md) for SSL setup.
+Yes. Start with [CONTRIBUTING.md](../CONTRIBUTING.md). The one hard rule is that no
+pull request lands without a passing test covering the change.
 
-### How do I update the application?
+### Where do I report a bug?
 
-1. Pull latest changes: `git pull`
-2. Rebuild: `docker-compose up -d --build`
-3. Or: `npm run build` and redeploy
+[GitHub issues](https://github.com/24Skater/home-asset-keeper/issues). Say what you did,
+what happened, what you expected, and which mode you were in.
 
-## Support
+Security vulnerabilities go through the repository's Security tab instead — see
+[SECURITY.md](../SECURITY.md).
 
-### Where can I get help?
+### What is being worked on next?
 
-- **Documentation**: Check the [docs](./) folder
-- **GitHub Issues**: For bugs and feature requests
-- **GitHub Discussions**: For questions and discussions
-
-### Is there a community?
-
-We're building one! Join us on GitHub Discussions.
-
----
-
-**Last Updated**: December 2024
+The hosted tier. See [Roadmap](./ROADMAP.md).
