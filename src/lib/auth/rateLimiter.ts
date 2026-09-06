@@ -10,9 +10,10 @@ interface LoginAttempt {
   lockedUntil?: number;
 }
 
-// Persistence identifier — deliberately NOT renamed to 'brassworth'.
-// Renaming it would orphan every existing local database.
-const DB_NAME = 'home-asset-keeper';
+// The database holding login attempt counts. Separate from the application
+// data store on purpose: a lockout must survive the user clearing their
+// inventory, and must not travel in a backup.
+const DB_NAME = 'brassworth';
 const DB_VERSION = 1;
 const STORE_NAME = 'login-attempts';
 const MAX_ATTEMPTS = 5;

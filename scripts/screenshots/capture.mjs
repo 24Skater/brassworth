@@ -36,7 +36,7 @@ const BASE_URL = process.env.SCREENSHOT_BASE_URL ?? 'http://localhost:8080';
 const VIEWPORT = { width: 1280, height: 860 };
 const SCALE = 2;
 
-const THEME_KEY = 'home-asset-keeper-theme';
+const THEME_KEY = 'brassworth-theme';
 
 /** Small helper: give the app a beat to settle after a route change. */
 async function settle(page, ms = 700) {
@@ -93,7 +93,7 @@ async function signUpAndSeed(page) {
   await page.waitForURL(/\/dashboard/, { timeout: 20000 });
 
   const userId = await page.evaluate(() => {
-    const raw = localStorage.getItem('inventory_user');
+    const raw = localStorage.getItem('brassworth_user');
     return raw ? JSON.parse(raw).id : null;
   });
   if (!userId) throw new Error('Signup did not leave a user in storage.');

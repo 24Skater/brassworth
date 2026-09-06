@@ -19,9 +19,7 @@ const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undef
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
-  // Persistence key — deliberately NOT renamed to 'brassworth'; renaming it
-  // would reset every user's saved theme choice.
-  storageKey = 'home-asset-keeper-theme',
+  storageKey = 'brassworth-theme',
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(

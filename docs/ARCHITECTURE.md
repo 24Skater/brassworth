@@ -193,11 +193,11 @@ Storage is an interface. Three classes implement it, and a factory in
 [`src/lib/storage/index.ts`](../src/lib/storage/index.ts) picks one from
 `VITE_STORAGE_PROVIDER`.
 
-| Provider               | Backing                                                             | Status                                          |
-| ---------------------- | ------------------------------------------------------------------- | ----------------------------------------------- |
-| `LocalStorageProvider` | `window.localStorage`                                               | The default                                     |
-| `IndexedDBProvider`    | Dexie over IndexedDB, database `HomeAssetKeeperDB`, schema v1 to v5 | Opt-in; migrates from localStorage on first use |
-| `ApiStorageProvider`   | The Hono API over `fetch`                                           | What the Docker image runs                      |
+| Provider               | Backing                                                        | Status                                          |
+| ---------------------- | -------------------------------------------------------------- | ----------------------------------------------- |
+| `LocalStorageProvider` | `window.localStorage`                                          | The default                                     |
+| `IndexedDBProvider`    | Dexie over IndexedDB, database `BrassworthDB`, schema v1 to v5 | Opt-in; migrates from localStorage on first use |
+| `ApiStorageProvider`   | The Hono API over `fetch`                                      | What the Docker image runs                      |
 
 Auth mirrors it, and **one variable switches both**. Setting `VITE_STORAGE_PROVIDER=api`
 selects `ApiAuthProvider` as well as `ApiStorageProvider`. That coupling is deliberate and

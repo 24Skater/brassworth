@@ -42,7 +42,7 @@ test.describe('Authentication', () => {
     const { email, password } = await signUp(page);
 
     await page.goto('/auth');
-    await page.evaluate(() => localStorage.removeItem('inventory_session'));
+    await page.evaluate(() => localStorage.removeItem('brassworth_session'));
 
     await logIn(page, email, password);
     await expect(page).toHaveURL(/\/dashboard/);

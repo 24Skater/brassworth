@@ -42,7 +42,7 @@ describe('LocalStorageAuthProvider', () => {
     it('never stores the password in the clear', async () => {
       await auth.signup('secret@example.com', PASSWORD, 'Secret');
 
-      const stored = localStorage.getItem('inventory_all_users') ?? '';
+      const stored = localStorage.getItem('brassworth_all_users') ?? '';
       expect(stored).not.toContain(PASSWORD);
       expect(stored).toContain('passwordHash');
       expect(stored).toContain('passwordSalt');
@@ -52,7 +52,7 @@ describe('LocalStorageAuthProvider', () => {
       await auth.signup('a@example.com', PASSWORD, 'A');
       await auth.signup('b@example.com', PASSWORD, 'B');
 
-      const users = JSON.parse(localStorage.getItem('inventory_all_users') ?? '[]');
+      const users = JSON.parse(localStorage.getItem('brassworth_all_users') ?? '[]');
       expect(users[0].passwordHash).not.toBe(users[1].passwordHash);
     });
   });
@@ -122,9 +122,9 @@ describe('LocalStorageAuthProvider', () => {
     it('is invalid once expired', async () => {
       await auth.signup('user@example.com', PASSWORD, 'User');
 
-      const session = JSON.parse(localStorage.getItem('inventory_session') ?? '{}');
+      const session = JSON.parse(localStorage.getItem('brassworth_session') ?? '{}');
       session.expiresAt = new Date(Date.now() - 1000).toISOString();
-      localStorage.setItem('inventory_session', JSON.stringify(session));
+      localStorage.setItem('brassworth_session', JSON.stringify(session));
 
       expect(await auth.validateSession()).toBe(false);
     });

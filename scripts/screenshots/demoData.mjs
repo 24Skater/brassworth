@@ -853,7 +853,7 @@ const gearProfiles = [
  */
 export function buildDemoData(userId) {
   return {
-    inventory_organizations: [
+    brassworth_organizations: [
       {
         id: ORG_ID,
         name: 'Whitfield Workshop',
@@ -863,19 +863,19 @@ export function buildDemoData(userId) {
         updatedAt: daysAgo(30),
       },
     ],
-    inventory_memberships: [{ id: 'mem-1', userId, organizationId: ORG_ID }],
-    inventory_user_roles: [
+    brassworth_memberships: [{ id: 'mem-1', userId, organizationId: ORG_ID }],
+    brassworth_user_roles: [
       { id: 'role-1', userId, organizationId: ORG_ID, role: 'ADMIN' },
     ],
-    inventory_locations: locations,
-    inventory_categories: categories,
-    inventory_tags: tags,
-    inventory_items: items,
-    inventory_item_events: itemEvents,
-    inventory_wishlist: wishlist,
-    inventory_savings: savings,
-    inventory_price_observations: priceObservations,
-    inventory_gear_profiles: gearProfiles,
+    brassworth_locations: locations,
+    brassworth_categories: categories,
+    brassworth_tags: tags,
+    brassworth_items: items,
+    brassworth_item_events: itemEvents,
+    brassworth_wishlist: wishlist,
+    brassworth_savings: savings,
+    brassworth_price_observations: priceObservations,
+    brassworth_gear_profiles: gearProfiles,
   };
 }
 

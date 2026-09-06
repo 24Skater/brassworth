@@ -22,7 +22,7 @@ import {
 /**
  * IndexedDB database schema
  */
-class HomeAssetKeeperDB extends Dexie {
+class BrassworthDB extends Dexie {
   organizations!: Table<Organization, string>;
   memberships!: Table<Membership, string>;
   locations!: Table<Location, string>;
@@ -40,7 +40,7 @@ class HomeAssetKeeperDB extends Dexie {
   userRoles!: Table<UserRoleAssignment, string>;
 
   constructor() {
-    super('HomeAssetKeeperDB');
+    super('BrassworthDB');
     this.version(1).stores({
       organizations: 'id, organizationId, createdAt',
       memberships: 'id, userId, organizationId',
@@ -91,11 +91,11 @@ class HomeAssetKeeperDB extends Dexie {
  * - Better for large datasets
  */
 export class IndexedDBProvider implements StorageProvider {
-  private db: HomeAssetKeeperDB;
+  private db: BrassworthDB;
   private userCache: User | null = null;
 
   constructor() {
-    this.db = new HomeAssetKeeperDB();
+    this.db = new BrassworthDB();
   }
 
   // User operations (stored in localStorage for compatibility)
@@ -103,7 +103,7 @@ export class IndexedDBProvider implements StorageProvider {
     if (this.userCache !== null) {
       return this.userCache;
     }
-    const data = localStorage.getItem('inventory_user');
+    const data = localStorage.getItem('brassworth_user');
     this.userCache = data ? JSON.parse(data) : null;
     return this.userCache;
   }
@@ -111,9 +111,9 @@ export class IndexedDBProvider implements StorageProvider {
   async setUser(user: User | null): Promise<void> {
     this.userCache = user;
     if (user) {
-      localStorage.setItem('inventory_user', JSON.stringify(user));
+      localStorage.setItem('brassworth_user', JSON.stringify(user));
     } else {
-      localStorage.removeItem('inventory_user');
+      localStorage.removeItem('brassworth_user');
     }
   }
 
@@ -635,7 +635,7 @@ export class IndexedDBProvider implements StorageProvider {
     collection: K,
     rows: CollectionRow<K>[]
   ): Promise<void> {
-    // Table names on HomeAssetKeeperDB match the collection names exactly.
+    // Table names on BrassworthDB match the collection names exactly.
     const table = this.db.table(collection);
     await this.db.transaction('rw', table, async () => {
       await table.clear();
@@ -663,7 +663,7 @@ export class IndexedDBProvider implements StorageProvider {
       this.db.users.clear(),
       this.db.userRoles.clear(),
     ]);
-    localStorage.removeItem('inventory_user');
+    localStorage.removeItem('brassworth_user');
     this.userCache = null;
   }
 

@@ -397,7 +397,7 @@ describe('Auth', () => {
 
     // No account is created.
     await waitFor(async () => {
-      const stored = localStorage.getItem('inventory_all_users');
+      const stored = localStorage.getItem('brassworth_all_users');
       expect(stored === null || JSON.parse(stored).length === 0).toBe(true);
     });
   });
