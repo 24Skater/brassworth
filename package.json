@@ -46,7 +46,8 @@
     "type-check:server": "tsc -p server/tsconfig.json --noEmit",
     "type-check:app": "tsc -p tsconfig.app.json --noEmit",
     "type-check:node": "tsc -p tsconfig.node.json --noEmit",
-    "screenshots": "node scripts/screenshots/capture.mjs && node scripts/screenshots/frame.mjs && bash scripts/screenshots/makeGif.sh"
+    "screenshots": "node scripts/screenshots/capture.mjs && node scripts/screenshots/frame.mjs && bash scripts/screenshots/makeGif.sh",
+    "social-preview": "node scripts/screenshots/socialPreview.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
