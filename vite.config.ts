@@ -55,8 +55,13 @@ export default defineConfig(({ mode }) => ({
             // Server mode only. Reads come back from cache when the network is
             // gone; writes are never cached, because a queued write is v2.2 and
             // pretending one succeeded is worse than refusing it.
-            urlPattern: ({ url, request }) =>
+            // Same origin only. A worker's fetch event also fires for the
+            // cross-origin requests a page makes, so matching on path alone
+            // would adopt any third-party host that happens to serve a path
+            // beginning /api/ into this app's cache.
+            urlPattern: ({ url, request, sameOrigin }) =>
               request.method === 'GET' &&
+              sameOrigin &&
               url.pathname.startsWith('/api/') &&
               !url.pathname.startsWith('/api/auth/'),
             handler: 'StaleWhileRevalidate',
