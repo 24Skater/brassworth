@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import { componentTagger } from 'lovable-tagger';
+import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -13,7 +14,45 @@ export default defineConfig(({ mode }) => ({
     host: '::',
     port: 8080,
   },
-  plugins: [react(), mode === 'development' && componentTagger()].filter(Boolean),
+  plugins: [
+    react(),
+    mode === 'development' && componentTagger(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      // The service worker is off in dev. It caches aggressively by design,
+      // which is exactly wrong while editing, and the E2E suite runs against
+      // the dev server locally.
+      devOptions: { enabled: false },
+      includeAssets: ['favicon.ico'],
+      manifest: {
+        name: 'Brassworth',
+        short_name: 'Brassworth',
+        description: 'Track what you own, for as long as you own it.',
+        theme_color: '#1a1a1a',
+        background_color: '#1a1a1a',
+        display: 'standalone',
+        start_url: '/',
+        scope: '/',
+        icons: [
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: '/icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        // Tesseract's language data and the WASM decoder are large and
+        // versioned; they are fetched on demand rather than precached, so an
+        // install does not pull megabytes nobody has asked for yet.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+      },
+    }),
+  ].filter(Boolean),
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
