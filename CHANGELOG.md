@@ -49,6 +49,13 @@ Notable changes to Brassworth. The format follows
 
 ### Fixed
 
+- **Added `.gitattributes` with `* text=auto eol=lf`.** The repository stores LF and
+  Prettier is configured for LF, but git's Windows default (`core.autocrlf=true`)
+  checks out CRLF. A contributor on Windows therefore failed `npm run format:check` on
+  all 197 files immediately after cloning, and could not pass the pull request gate
+  this project documents as mandatory. CI never caught it because CI runs on Linux.
+  Found by cloning the published repository fresh and running the gate.
+
 - `vitest.config.ts` now excludes `scripts/**` from coverage. Developer tooling was
   being measured as product code and would have failed the coverage gate.
 - Documentation stated that local-mode passwords were hashed with plain SHA-256 and
