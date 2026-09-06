@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { storage } from '@/lib/storage';
@@ -6,7 +7,7 @@ import { itemUrl } from '@/lib/labels/itemUrl';
 import { qrSvg } from '@/lib/labels/qr';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Item } from '@/types';
 import { Printer } from 'lucide-react';
 
@@ -20,6 +21,7 @@ import { Printer } from 'lucide-react';
  */
 export default function Labels() {
   const { currentOrg } = useOrganization();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([]);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [codes, setCodes] = useState<Record<string, string>>({});
@@ -64,6 +66,25 @@ export default function Labels() {
   };
 
   const selected = items.filter((item) => chosen.has(item.id));
+
+  // Without a property there is nothing to read, and the empty-list wording
+  // below would tell somebody to add an item when what they actually need is
+  // to pick a property. Same guard the other pages use.
+  if (!currentOrg) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card>
+          <CardHeader>
+            <CardTitle>No Property Selected</CardTitle>
+            <CardDescription>Please select or create a property first</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate('/organizations')}>Go to Properties</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

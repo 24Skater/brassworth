@@ -43,6 +43,17 @@ describe('Labels', () => {
     expect(sheet).toHaveTextContent('Cordless Drill');
   });
 
+  it('asks for a property before it asks for items', async () => {
+    await seed({ withoutOrg: true });
+
+    renderPage(<Labels />, { route: '/labels' });
+
+    expect(await screen.findByText(/no property selected/i)).toBeInTheDocument();
+    // The empty-list wording would send somebody to add an item, which is not
+    // what is missing.
+    expect(screen.queryByText(/nothing to label yet/i)).not.toBeInTheDocument();
+  });
+
   it('says what to do when there are no items yet', async () => {
     renderPage(<Labels />, { route: '/labels' });
 
