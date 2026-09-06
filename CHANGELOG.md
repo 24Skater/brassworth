@@ -44,6 +44,20 @@ Notable changes to Brassworth. The format follows
   iterations with a per-user salt, plus escalating login lockouts.
 - Deployment documentation pointed readers at port 80 and a `docker run` command that
   cannot work. The container listens on 3000.
+- **`docker-compose.prod.yml` and `nginx.prod.conf` repaired.** nginx proxied to
+  `frontend:80` while the image listens on 3000 and runs no nginx, so the documented
+  HTTPS path returned 502; the app service declared no volume or `DATABASE_URL`, so the
+  database died with the container; the health check hit `/health` rather than
+  `/api/health`; and the sign-in rate limit was applied to `/auth`, a client-side route,
+  rather than to `/api/auth/`. The stack is now verified end to end: redirect, TLS,
+  health, signup, and rate limiting returning 503 after the burst.
+- `ssl/` and `logs/` are gitignored. Following the previous instructions would have
+  committed a TLS private key.
+- `package.json` pointed `repository`, `bugs` and `homepage` at `24Skater/brassworth`,
+  which does not exist, and at an unregistered domain. Version set to `1.1.0` to match
+  the roadmap and this file.
+- Removed a stray test spreadsheet tracked at the repository root, and gitignored
+  `*.xlsx` so import/export testing cannot add another.
 
 ### Removed
 
@@ -178,12 +192,11 @@ The release that made Brassworth something other than an inventory app.
 
 ## Before the first public release
 
-Three loose ends this file cannot settle on its own:
+Loose ends this file cannot settle on its own:
 
-1. **Pick a version.** `package.json` reads `0.0.0`, the roadmap declares v1.1 shipped,
-   and no tags exist. Bump the package and cut tags, or renumber the milestones above.
-2. **`package.json` points at `24Skater/brassworth`**, a repository that does not
-   exist. The real one is `24Skater/home-asset-keeper`.
-3. **`docker-compose.prod.yml` is broken** — `nginx.prod.conf` proxies to `frontend:80`
-   while the image listens on 3000, and it defines no volume, so the database would die
-   with the container. Fix it or remove it; do not ship it documented as the HTTPS path.
+1. **Cut tags.** `package.json` now reads `1.1.0` to match the milestones above, but no
+   git tags exist yet.
+2. **Decide on the `brassworth` GitHub organisation and domain.** The project is named
+   Brassworth but lives at `24Skater/home-asset-keeper`.
+3. **Set a social preview image** in repository settings. Until one is set, every
+   share on Slack, X or Discord renders as a grey placeholder.

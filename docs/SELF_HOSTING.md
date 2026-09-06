@@ -200,13 +200,37 @@ changes.
 
 ## Putting it behind HTTPS
 
-**Do not use `docker-compose.prod.yml`.** It is left over from an older
-static-file deployment and is broken in three separate ways: `nginx.prod.conf`
-proxies to `frontend:80` while the image listens on 3000 and runs no nginx; the
-`frontend` service declares no volume, so the database dies with the container;
-and it sets no `DATABASE_URL`. Both files are on their way out.
+Two routes. Take the first unless you already run a proxy.
 
-Run the ordinary `docker-compose.yml` and point your own proxy at port 3000.
+### With the bundled nginx
+
+`docker-compose.prod.yml` runs the app and an nginx in front of it, terminating
+TLS and rate-limiting sign-in. The app container is not published to the host,
+so nginx is the only thing reachable.
+
+```bash
+mkdir -p ssl
+# Put your certificate and key in ./ssl as cert.pem and key.pem.
+# For a real certificate, use certbot; the ACME challenge path is already
+# routed. For a local trial, a self-signed pair is enough:
+openssl req -x509 -nodes -newkey rsa:2048 -days 365   -keyout ssl/key.pem -out ssl/cert.pem -subj "/CN=your.domain"
+
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+That gives you the HTTP-to-HTTPS redirect, HSTS, `X-Frame-Options`,
+`X-Content-Type-Options`, a `Referrer-Policy`, a content security policy, and
+**sign-in rate limiting at 5 requests a minute with a burst of 3**. That last one
+matters: the server does not rate-limit sign-in itself, so on a published
+instance this proxy is the only thing between you and credential stuffing.
+
+`ssl/` and `logs/` are gitignored. Never commit a private key.
+
+### With your own proxy
+
+Run the ordinary `docker-compose.yml` and point your proxy at port 3000. Copy the
+header and `limit_req` blocks out of `nginx.prod.conf` — particularly the
+sign-in rate limit, which you would otherwise be running without.
 
 First, stop publishing the port to the world. If the proxy runs on the same
 host, bind the container to loopback in `docker-compose.yml`:

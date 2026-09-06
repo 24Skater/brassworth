@@ -47,3 +47,10 @@ data/
 
 # Raw screen recordings; only the built GIF is committed.
 docs/assets/screenshots/.video/
+
+# TLS material and proxy logs for docker-compose.prod.yml. Never commit a private key.
+ssl/
+logs/
+
+# Stray spreadsheets from manual import/export testing.
+*.xlsx
