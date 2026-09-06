@@ -197,6 +197,6 @@ Loose ends this file cannot settle on its own:
 1. **Cut tags.** `package.json` now reads `1.1.0` to match the milestones above, but no
    git tags exist yet.
 2. **Decide on the `brassworth` GitHub organisation and domain.** The project is named
-   Brassworth but lives at `24Skater/home-asset-keeper`.
+   Brassworth but lives at `24Skater/brassworth`.
 3. **Set a social preview image** in repository settings. Until one is set, every
    share on Slack, X or Discord renders as a grey placeholder.

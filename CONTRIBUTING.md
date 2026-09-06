@@ -22,8 +22,8 @@ threshold.
 Node 20; Node 18 is untested.
 
 ```bash
-git clone https://github.com/24Skater/home-asset-keeper.git
-cd home-asset-keeper
+git clone https://github.com/24Skater/brassworth.git
+cd brassworth
 npm install
 cp .env.example .env
 npm run dev
@@ -206,7 +206,7 @@ no runtime behaviour. You do not need to preserve it, and removing it is a reaso
 
 ## Reporting things
 
-- **Bugs and features**: [GitHub issues](https://github.com/24Skater/home-asset-keeper/issues).
+- **Bugs and features**: [GitHub issues](https://github.com/24Skater/brassworth/issues).
   For a bug, say what you did, what happened, what you expected, and which mode you
   were in — local-first or server.
 - **Security vulnerabilities**: not the issue tracker. See [SECURITY.md](./SECURITY.md).

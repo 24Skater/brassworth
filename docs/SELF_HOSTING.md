@@ -36,8 +36,8 @@ This page owns the environment variables. Backup and restore live in
 ## Start it
 
 ```bash
-git clone https://github.com/24Skater/home-asset-keeper.git
-cd home-asset-keeper
+git clone https://github.com/24Skater/brassworth.git
+cd brassworth
 docker compose up -d
 ```
 
@@ -99,9 +99,10 @@ same is true of every other `VITE_`-prefixed variable, including
 | Database file                               | `/app/data/brassworth.db`          |
 | Owner inside the container                  | the image's `node` user (uid 1000) |
 
-Compose prefixes volume names with the project name, so the real volume is
-usually `home-asset-keeper_brassworth-data`. Find the exact name before you use
-it in a `docker run` command:
+Compose prefixes volume names with the project name, which defaults to the
+directory you cloned into, so the real volume is usually
+`brassworth_brassworth-data`. Find the exact name before you use it in a
+`docker run` command:
 
 ```bash
 docker volume ls --filter name=brassworth-data
@@ -423,7 +424,7 @@ else is wrong; watch the logs for the rest.
 ## Upgrading
 
 ```bash
-cd home-asset-keeper
+cd brassworth
 docker compose down
 git pull
 docker compose build --pull
