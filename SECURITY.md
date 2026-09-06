@@ -136,10 +136,11 @@ Stated plainly, because a security document that lists only strengths is marketi
   why CI blocks on `critical` rather than `high` — blocking on `high` would mean a
   permanently red pipeline that everyone learns to ignore, which is worse than a
   documented exception. Replacing the dependency is tracked work.
-- **`docker-compose.prod.yml` is broken and should not be used.** Its nginx
-  configuration proxies to a port nothing listens on, and it defines no volume, so the
-  database would not survive the container. Put your own reverse proxy in front of
-  `docker-compose.yml` instead. See [SELF_HOSTING.md](./docs/SELF_HOSTING.md).
+- **No server-side sign-in rate limiting** is the gap above, and
+  `docker-compose.prod.yml` is the supported way to close it: its nginx configuration
+  rate-limits `/api/auth/` to 5 requests a minute with a burst of 3. If you run the
+  plain `docker-compose.yml` behind your own proxy, add the equivalent yourself. See
+  [SELF_HOSTING.md](./docs/SELF_HOSTING.md).
 - **Photos are stored as data URLs.** In local-first mode they share the browser's
   storage quota, so a large catalogue can fail to save. That is a reliability problem
   rather than a security one, but losing data is losing data.
