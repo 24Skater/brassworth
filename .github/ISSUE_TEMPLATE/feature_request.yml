@@ -1,0 +1,45 @@
+name: Feature request
+description: Something Brassworth should be able to do and cannot.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Brassworth has a deliberately narrow thesis: it follows the whole life of a
+        thing you own, from wanting it to selling it. Requests that sharpen that tend
+        to land. Requests that widen it into general inventory management tend not to.
+        The [roadmap](https://github.com/24Skater/brassworth/blob/main/docs/ROADMAP.md)
+        explains what is already planned and why some things were deliberately left out.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the situation, not the solution. What is the gear, and what happened to it?
+      placeholder: |
+        I lend tools to three different neighbours and I cannot tell at a glance who
+        has the most of my stuff out at once.
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: What do you do about it today?
+      description: A spreadsheet, a group chat, nothing at all. This tells us how much it actually hurts.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like instead?
+      description: Optional. A rough idea is fine; so is leaving this blank.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: I checked the roadmap and existing issues.
+          required: true

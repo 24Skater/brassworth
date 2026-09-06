@@ -5,11 +5,13 @@ Notable changes to Brassworth. The format follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 > **On version numbers.** The milestones below match the release gates in
-> [docs/ROADMAP.md](./docs/ROADMAP.md). `package.json` still reads `0.0.0` and no git
-> tags have been cut, because nothing has been published yet. That is a loose end to
-> settle before the repository goes public — see the note at the end of this file.
+> [docs/ROADMAP.md](./docs/ROADMAP.md) and are tagged in git. Versions up to 1.1.0 were
+> tagged retrospectively at the commit that closed each phase; they were never
+> published to a registry.
 
-## Unreleased
+## [2.0.0] — 2026-09-06
+
+Published. The documentation now describes the product that exists.
 
 ### Added
 
@@ -209,13 +211,13 @@ The release that made Brassworth something other than an inventory app.
 
 ---
 
-## Before the first public release
+## Links
 
-Loose ends this file cannot settle on its own:
-
-1. **Cut tags.** `package.json` now reads `1.1.0` to match the milestones above, but no
-   git tags exist yet.
-2. **Decide on the `brassworth` GitHub organisation and domain.** The project is named
-   Brassworth but lives at `24Skater/brassworth`.
-3. **Set a social preview image** in repository settings. Until one is set, every
-   share on Slack, X or Discord renders as a grey placeholder.
+[2.0.0]: https://github.com/24Skater/brassworth/releases/tag/v2.0.0
+[1.1.0]: https://github.com/24Skater/brassworth/releases/tag/v1.1.0
+[1.0.0]: https://github.com/24Skater/brassworth/releases/tag/v1.0.0
+[0.9.0]: https://github.com/24Skater/brassworth/releases/tag/v0.9.0
+[0.8.0]: https://github.com/24Skater/brassworth/releases/tag/v0.8.0
+[0.6.0]: https://github.com/24Skater/brassworth/releases/tag/v0.6.0
+[0.4.0]: https://github.com/24Skater/brassworth/releases/tag/v0.4.0
+[0.2.0]: https://github.com/24Skater/brassworth/releases/tag/v0.2.0
