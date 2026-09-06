@@ -338,16 +338,16 @@ and no plugin SDK: a vendor source is a URL returning a document in the document
 Building an interface with no implementation behind it is the abstraction-from-one-case the
 roadmap warns against, and it works today with any vendor that publishes JSON.
 
-### Phase 7 — Gear in your hand — next
+### Phase 7 — Gear in your hand — in progress
 
 _Everything above shipped on a desktop. The usage moment this product describes does not
 happen at a desk._ See [the design record](./superpowers/specs/2026-09-06-phase-7-gear-in-your-hand-design.md).
 
-- [ ] An item **view** route. `/items/:id` becomes a read-and-act page and editing moves to
-      `/items/:id/edit`. Today that URL opens the edit form, with the timeline and the value
+- [x] An item **view** route. `/items/:id` is a read-and-act page and editing has moved to
+      `/items/:id/edit`. It used to open the edit form, with the timeline and the value
       summary mounted beneath 648 lines of inputs
-- [ ] Printable QR labels, and scanning one to open the item and check it in or out
-- [ ] Installable, with an app shell and offline reads
+- [x] Printable QR labels, and scanning one to open the item and check it in or out
+- [x] Installable, with an app shell and offline reads
 - [ ] An outbox that queues lifecycle events written with no signal, and replays them
 - [ ] IndexedDB as the **default** storage provider, with migration tests
 - [ ] Camera-first item entry, reaching the Phase 6 data plate reader from a phone

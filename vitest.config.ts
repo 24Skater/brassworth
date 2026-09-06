@@ -38,10 +38,10 @@ export default defineConfig({
       // it cannot regress; raise them as suites land. All four now clear the
       // project's 80% standard.
       thresholds: {
-        statements: 87,
-        branches: 86,
+        statements: 88,
+        branches: 87,
         functions: 80,
-        lines: 87,
+        lines: 88,
       },
     },
     include: ['tests/**/*.{test,spec}.{ts,tsx}', 'src/**/*.{test,spec}.{ts,tsx}'],

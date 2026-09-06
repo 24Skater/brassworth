@@ -216,6 +216,71 @@ your own profiles, which take precedence over any catalogue.
 Where profiles come from, how matching works, and how to add your own:
 [Gear catalogue](./CATALOGUE.md).
 
+## Labels and scanning
+
+Gear lives in a garage, a rack or a van, and the moment you want to check
+something out is the moment you are standing in front of it. Labels close that
+gap.
+
+### Printing labels
+
+Open **Labels** in the navigation, tick the gear you want to label, and press
+**Print**. The sheet prints through your browser's own print dialog — there is no
+export step and no file to manage. Each label carries a QR code, the item's name,
+and its serial number when it has one.
+
+Stick them on the gear. Anything you can stick a sticker to works; the codes are
+printed at a size that still scans after being scuffed.
+
+### Scanning one
+
+Two ways, and the first needs nothing installed:
+
+- **Your phone's camera app.** Point it at the label. A notification appears, you
+  tap it, and the item opens. This works because the label encodes a full web
+  address rather than a bare number.
+- **The Scan button** on the Items screen, which opens the camera inside
+  Brassworth and jumps straight to the item.
+
+Either way you land on the item's own page, where checking it in or out is the
+first thing on the screen rather than something below a form.
+
+### What a label does and does not give away
+
+A label carries a link to your own Brassworth, nothing more. It holds no password
+and no session. Somebody who photographs a label on your drill gets an address
+they cannot open: in server mode it asks them to sign in, and in local-first mode
+it points at a machine they cannot reach.
+
+Brassworth also refuses to follow a scanned code that points somewhere else. If
+you scan a QR code from a parcel, a poster or a website, it says the code is not a
+Brassworth label rather than opening it. That is deliberate — a printed code is
+something anybody can leave lying around.
+
+## Installing the app
+
+Brassworth can be installed like an app. In Chrome or Edge, look for the install
+control in the address bar; on an iPhone, use **Share** then **Add to Home
+Screen**. It gets its own icon, opens without browser chrome, and starts faster
+because it is already on the device.
+
+Installing changes nothing about where your data lives. Local-first stays local,
+and server mode still talks to your server.
+
+### What works without a signal
+
+**Local-first mode works entirely offline**, as it always has. Everything is in
+the browser, nothing needs a network, and there is no difference between working
+on the sofa and working in a basement.
+
+**In server mode, reading works offline and writing does not yet.** Screens you
+have already visited come back from the cache, so you can look something up with
+no signal. Anything that changes data needs the server, and Brassworth says so
+with a banner rather than letting a change appear to save and then vanish.
+
+Queuing changes made offline is the next release. Until then, if you check gear
+out with no signal in server mode, do it again when you have one.
+
 ## Excel import and export
 
 **Export** is on the Items page. It writes an `.xlsx` file of whatever the

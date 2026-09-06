@@ -78,6 +78,31 @@ test('does the thing', async ({ page }) => {
 
 Each spec creates its own account with a unique email, so specs stay independent and run in parallel.
 
+#### Service workers and E2E
+
+The app registers a service worker in production builds. CI runs the suite against
+a production build, so a worker is live and controlling the page there; locally the
+suite runs against the dev server, where `devOptions.enabled` is false and no worker
+exists at all. **A spec that passes locally and fails in CI is very often this
+difference.**
+
+Two consequences worth knowing before writing a spec:
+
+- `resetAppState` unregisters every worker and deletes every cache. A spec that
+  starts without calling it can be served a page an earlier spec cached.
+- Anything testing offline behaviour must wait for `navigator.serviceWorker.ready`
+  before cutting the network. A worker that has not taken control yet will not
+  serve the shell, and the spec fails for a reason unrelated to the change.
+
+Specs that need a worker must be run the way CI runs them:
+
+```bash
+CI=1 npm run test:e2e
+```
+
+Reach for a proper wait rather than a timeout. A `waitForTimeout` that makes a
+service-worker spec pass has not fixed the race, it has moved it.
+
 ## Writing good tests here
 
 **Test behaviour, not implementation.** Assert what a user or caller observes. A test that asserts a click promise rejects is testing React's event system; a test that asserts an error message appears is testing your app.
@@ -96,7 +121,15 @@ Thresholds live in `vitest.config.ts` and fail the build when coverage drops bel
 
 They are a **ratchet, not a target**. They currently sit just under measured coverage so it cannot regress. The project standard is 80%; raise the numbers as suites land, and never lower them to make a build pass.
 
-Current measured coverage: **88.2% statements, 87.7% branches, 80.2% functions, 88.2% lines**, against a floor of 87 / 86 / 80 / 87. It started at 32.78%, which was low because the suite had never actually run — not because the code was untestable.
+Current measured coverage: **88.1% statements, 87.6% branches, 80.2% functions, 88.1% lines**, against a floor of 88 / 87 / 80 / 88. It started at 32.78%, which was low because the suite had never actually run — not because the code was untestable.
+
+**Functions is deliberately still at 80** while the other three went up. Two things
+shipped in v2.1 that a unit test cannot reach honestly: the scanner's decode loop,
+which needs a real camera feeding real frames, and the service worker, which does
+not exist in the jsdom environment. Mocking either would assert against the mock.
+The security-relevant half of scanning — deciding whether a decoded string is one
+of our URLs — is `parseItemUrl`, and that has nine tests. Raise the functions floor
+when something testable raises the number, not by writing tests against fakes.
 
 Two exclusions are deliberate and documented in `vitest.config.ts`: `src/components/ui/**`, which is vendored shadcn copied from upstream, and `src/types/**`, which compiles to nothing to execute. `scripts/**` is excluded too — those are developer tools run by hand, never imported by the app.
 
