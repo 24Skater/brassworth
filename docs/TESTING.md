@@ -96,7 +96,9 @@ Thresholds live in `vitest.config.ts` and fail the build when coverage drops bel
 
 They are a **ratchet, not a target**. They currently sit just under measured coverage so it cannot regress. The project standard is 80%; raise the numbers as suites land, and never lower them to make a build pass.
 
-Current baseline: **32.78% statements**. That figure is low because the suite had never actually run until recently — not because the code is untestable. The largest gaps are `src/pages`, `src/components` and `src/lib/receipt`.
+Current measured coverage: **88.2% statements, 87.7% branches, 80.2% functions, 88.2% lines**, against a floor of 87 / 86 / 80 / 87. It started at 32.78%, which was low because the suite had never actually run — not because the code was untestable.
+
+Two exclusions are deliberate and documented in `vitest.config.ts`: `src/components/ui/**`, which is vendored shadcn copied from upstream, and `src/types/**`, which compiles to nothing to execute. `scripts/**` is excluded too — those are developer tools run by hand, never imported by the app.
 
 ## Before you open a pull request
 

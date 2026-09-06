@@ -1,353 +1,216 @@
 # Contributing to Brassworth
 
-First off, thank you for considering contributing to Brassworth! It's people like you that make this project better for everyone.
+Thanks for wanting to help. This document is the whole process: how to get set up,
+what a change has to pass, and the two rules that get pull requests rejected most
+often.
 
-## Table of Contents
+## The two rules
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [Making Changes](#making-changes)
-- [Pull Request Process](#pull-request-process)
-- [Style Guidelines](#style-guidelines)
-- [Reporting Bugs](#reporting-bugs)
-- [Suggesting Features](#suggesting-features)
+**No pull request without a passing test that covers the change.** Not "tests are nice
+to have", not "if applicable". If you fix a bug, the test should fail before your fix
+and pass after it. If you add a feature, the test should exercise it. This is the rule
+that keeps a project with 1,061 tests from becoming a project with 1,061 tests and a
+broken feature.
 
-## Code of Conduct
+**Coverage thresholds are a ratchet.** Raise them, never lower them. If your change
+drops coverage below the floor in `vitest.config.ts`, add tests — do not edit the
+threshold.
 
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+## Getting set up
 
-## Getting Started
+**Requires** Node 20 or newer. The container image builds on Node 22 and CI runs
+Node 20; Node 18 is untested.
 
-### Prerequisites
-
-- Node.js 18+ (LTS recommended)
-- npm or bun package manager
-- Git
-
-### Development Setup
-
-1. **Fork the repository** on GitHub
-
-2. **Clone your fork** locally:
-
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/brassworth.git
-   cd brassworth
-   ```
-
-3. **Add the upstream remote**:
-
-   ```bash
-   git remote add upstream https://github.com/ORIGINAL_OWNER/brassworth.git
-   ```
-
-4. **Install dependencies**:
-
-   ```bash
-   npm install
-   # or
-   bun install
-   ```
-
-5. **Create environment file**:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-6. **Start the development server**:
-
-   ```bash
-   npm run dev
-   ```
-
-7. **Open your browser** to `http://localhost:8080`
-
-## Making Changes
-
-### Branch Naming
-
-Use descriptive branch names:
-
-- `feature/add-barcode-scanning`
-- `fix/login-validation-error`
-- `docs/update-readme`
-- `refactor/auth-provider`
-
-### Commit Messages
-
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-type(scope): description
-
-[optional body]
-
-[optional footer]
+```bash
+git clone https://github.com/24Skater/home-asset-keeper.git
+cd home-asset-keeper
+npm install
+cp .env.example .env
+npm run dev
 ```
 
-**Types:**
+The app comes up on **http://localhost:8080**. No server or account needed — the
+default is local-first and everything lives in your browser.
 
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation only
-- `style`: Code style (formatting, semicolons, etc.)
-- `refactor`: Code refactoring
-- `perf`: Performance improvement
-- `test`: Adding or updating tests
-- `chore`: Build process, dependencies, etc.
+To work on the API instead:
 
-**Examples:**
-
-```
-feat(items): add barcode scanning support
-fix(auth): resolve session timeout issue
-docs(readme): add self-hosting instructions
-refactor(storage): extract provider interface
+```bash
+npm run dev:server          # tsx watch, on http://localhost:3000
 ```
 
-### Before Submitting
+Then set `VITE_STORAGE_PROVIDER=api` in `.env` and restart `npm run dev`. That one
+variable switches storage **and** authentication together — see
+[ARCHITECTURE.md](./docs/ARCHITECTURE.md) for why they are coupled.
 
-1. **Ensure your code builds**:
+## Before you open a pull request
 
-   ```bash
-   npm run build
-   ```
+Six checks. CI runs all of them, so running them locally saves a round trip.
 
-2. **Run linting**:
-
-   ```bash
-   npm run lint
-   ```
-
-3. **Run tests** (when available):
-
-   ```bash
-   npm run test
-   ```
-
-4. **Update documentation** if needed
-
-5. **Check Lovable.dev compatibility**:
-   - Don't remove the `lovable-tagger` dependency
-   - Keep standard React component patterns
-   - Ensure vite.config.ts remains compatible
-
-## Pull Request Process
-
-1. **Update your fork** with the latest upstream changes:
-
-   ```bash
-   git fetch upstream
-   git rebase upstream/main
-   ```
-
-2. **Push your branch** to your fork:
-
-   ```bash
-   git push origin feature/your-feature
-   ```
-
-3. **Create a Pull Request** on GitHub:
-   - Use a clear, descriptive title
-   - Reference any related issues (`Fixes #123`)
-   - Describe what changes you made and why
-   - Include screenshots for UI changes
-
-4. **Address review feedback**:
-   - Make requested changes
-   - Push additional commits
-   - Request re-review when ready
-
-5. **Celebrate** when merged! 🎉
-
-### PR Checklist
-
-- [ ] Code builds without errors
-- [ ] Linting passes
-- [ ] Tests pass (if applicable)
-- [ ] Documentation updated (if needed)
-- [ ] Lovable.dev compatibility maintained
-- [ ] No security vulnerabilities introduced
-- [ ] Follows code style guidelines
-
-## Style Guidelines
-
-### TypeScript
-
-- Use TypeScript strict mode
-- Prefer `interface` over `type` for object shapes
-- Use explicit return types for functions
-- Avoid `any` - use `unknown` if type is truly unknown
-
-```typescript
-// Good
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
-function getUser(id: string): User | null {
-  // ...
-}
-
-// Avoid
-type User = {
-  id: any;
-  name: any;
-};
+```bash
+npm run lint
+npm run format:check
+npm run type-check       # runs app, node and server configs
+npm run test:coverage
+npm run build
+npm run test:e2e         # chromium; Playwright starts the dev server itself
 ```
 
-### React Components
+`npm run type-check` fans out to `type-check:app`, `type-check:node` and
+`type-check:server`. **If you add a fourth `tsconfig`, add it to that script.** A
+project reference alone checks nothing — that mistake left this codebase entirely
+un-type-checked for its whole history until it was caught.
 
-- Use functional components with hooks
-- Use named exports for components
-- Keep components focused and small
-- Extract reusable logic into custom hooks
+Full detail on the test layers and how to debug a failure is in
+[docs/TESTING.md](./docs/TESTING.md).
 
-```typescript
-// Good
-export function ItemCard({ item, onEdit }: ItemCardProps) {
-  const { toast } = useToast();
+## Commit messages
 
-  const handleEdit = () => {
-    onEdit(item);
-    toast({ title: 'Editing item' });
-  };
+Commits are linted by `commitlint` on a git hook. A message outside the rules is
+rejected locally, before it ever reaches CI.
 
-  return (
-    <Card>
-      {/* ... */}
-    </Card>
-  );
-}
+```
+<type>(<scope>): <subject>
 
-// Avoid
-export default function(props) {
-  // Anonymous default export
-}
+<optional body>
 ```
 
-### File Organization
+**Type** is required and must be one of:
+
+`feat` · `fix` · `docs` · `style` · `refactor` · `perf` · `test` · `chore` ·
+`revert` · `build` · `ci`
+
+**Scope** is optional — but if you include one it must be from this list, or the hook
+rejects the commit:
+
+`auth` · `storage` · `items` · `organizations` · `users` · `ui` · `config` ·
+`deps` · `docs` · `security` · `docker` · `ci`
+
+> The list predates several subsystems. There is no scope for `lifecycle`, `wishlist`,
+> `prices`, `gear` or `reporting` yet, so use no scope at all for changes to those
+> rather than inventing one. Adding them to `commitlint.config.js` is a welcome
+> `chore(config)` pull request.
+
+**Subject**: lowercase type, no trailing full stop, and not written in Title Case,
+UPPER CASE or PascalCase. Body lines may run to 300 characters.
+
+```bash
+git commit -m "fix(storage): keep archived items out of the value total"
+git commit -m "feat: derive overdue loans from the event log"
+```
+
+## Branches and pull requests
+
+Work on a branch off `main` — there is no long-lived `develop` branch, despite what
+the CI trigger list suggests.
+
+```bash
+git checkout -b feat/short-description
+```
+
+Then:
+
+1. Make the change, with the test that covers it.
+2. Run the six checks above.
+3. Open a pull request against `main`, describing what changed and why. If it changes
+   behaviour a user would notice, say what a reviewer should click to see it.
+4. Keep the branch up to date with `main` and make sure CI is green before asking for
+   review.
+
+Small, focused pull requests get reviewed quickly. A branch that renames files, fixes
+a bug and adds a feature is three pull requests.
+
+## Where things live
 
 ```
 src/
-├── components/        # Reusable UI components
-│   ├── ui/           # shadcn/ui components
-│   └── items/        # Feature-specific components
-├── contexts/          # React contexts
-├── hooks/            # Custom React hooks
-├── lib/              # Utilities and providers
-│   ├── auth/         # Authentication logic
-│   └── receipt/      # Receipt parsing
-├── pages/            # Route page components
-└── types/            # TypeScript type definitions
+  pages/          route components, one per screen
+  components/     ui/ is vendored shadcn; the rest is ours
+                  items/ gear/ receipts/ auth/ users/ common/
+  contexts/       auth, organization and role context
+  hooks/          shared hooks
+  lib/
+    auth/         providers, password rules, rate limiting
+    storage/      the provider seam and its three implementations
+    lifecycle/    the event log, and status derived from it
+    valuation/    depreciation and cost of ownership
+    reporting/    value breakdowns and CSV
+    wishlist/     entries, savings, purchase conversion
+    prices/       price history and alerts
+    gear/         profile matching, catalogue, data plate OCR
+    receipt/      receipt OCR and parsing
+    backup/       the versioned backup format
+  catalogue/      the bundled gear catalogue and its ODbL licence
+  types/          shared types
+
+server/
+  app.ts          routes
+  routes/         the generic tenant-scoped collection router
+  auth/           scrypt, sessions, access control, OIDC
+  db/             schema and migrations
+  gear/           optional external catalogue source
+  prices/         the price checker (built, not yet wired to a route)
+
+tests/            unit and server tests, plus e2e/ for Playwright
+docs/             see docs/INDEX.md
+scripts/          developer tooling, including the screenshot pipeline
 ```
 
-### CSS/Tailwind
+## Style
 
-- Use Tailwind CSS utility classes
-- Extract repeated patterns to components
-- Use CSS variables for theming
-- Keep responsive design in mind
+Prettier and ESLint decide formatting and most style questions; run `npm run lint:fix`
+and `npm run format` rather than arguing with them. Beyond that:
 
-## Reporting Bugs
+- **Prefer immutable updates.** Return a new object rather than mutating one in place.
+- **Handle errors explicitly.** Never swallow one silently.
+- **Keep functions small and files focused.** Roughly 200 to 400 lines per file, 800 at
+  the outside; split before that.
+- **Validate at the boundary.** User input, API responses and file contents get checked
+  with zod before they are trusted.
+- **Name the reasoning in a comment when a choice is not obvious** — particularly when
+  you rejected the more obvious alternative. Most of the comments in this codebase
+  exist to stop someone helpfully "fixing" a deliberate decision.
 
-### Before Reporting
+## Documentation
 
-1. **Search existing issues** to avoid duplicates
-2. **Check if it's a configuration issue**
-3. **Try the latest version**
+If your change makes something in `docs/` wrong, fix it in the same pull request. Each
+fact has exactly one owning document — see [docs/INDEX.md](./docs/INDEX.md) — so update
+the owner and let the links do the rest.
 
-### Bug Report Template
+Before pushing documentation changes:
 
-```markdown
-## Description
-
-A clear description of the bug.
-
-## Steps to Reproduce
-
-1. Go to '...'
-2. Click on '...'
-3. See error
-
-## Expected Behavior
-
-What you expected to happen.
-
-## Actual Behavior
-
-What actually happened.
-
-## Environment
-
-- OS: [e.g., Windows 11, macOS 14]
-- Browser: [e.g., Chrome 120]
-- Version: [e.g., 0.5.0]
-
-## Screenshots
-
-If applicable, add screenshots.
-
-## Additional Context
-
-Any other relevant information.
+```bash
+node scripts/screenshots/checkDocs.mjs
 ```
 
-## Suggesting Features
+That checks every markdown file for broken relative links, renders every Mermaid
+diagram through the real library, and fails on emoji. **This project's documentation
+contains no emoji.** That is a deliberate house style, not an oversight.
 
-### Feature Request Template
+Screenshots in the README are generated, not hand-captured. If your change alters the
+interface enough to date them:
 
-```markdown
-## Summary
-
-Brief description of the feature.
-
-## Problem
-
-What problem does this solve?
-
-## Proposed Solution
-
-How should this work?
-
-## Alternatives Considered
-
-Other approaches you've thought about.
-
-## Additional Context
-
-Any mockups, examples, or references.
+```bash
+npm run dev                 # in one terminal
+npm run screenshots         # in another
 ```
 
-### Feature Discussion
+That reseeds a demo dataset, captures every screen in both themes, frames them, and
+rebuilds the demo GIF. The demo data lives in `scripts/screenshots/demoData.mjs`.
 
-- Start with an issue before making big changes
-- Discuss the approach before implementing
-- Consider backwards compatibility
-- Think about self-hosting implications
+## A note on lovable-tagger
 
-## Security Vulnerabilities
+`lovable-tagger` is a development-only Vite plugin left over from the project's
+origins, active only when `mode === 'development'`. It ships in no bundle and affects
+no runtime behaviour. You do not need to preserve it, and removing it is a reasonable
+`chore(deps)` pull request.
 
-**Do not** report security vulnerabilities through public issues.
+## Reporting things
 
-See [SECURITY.md](SECURITY.md) for responsible disclosure.
+- **Bugs and features**: [GitHub issues](https://github.com/24Skater/home-asset-keeper/issues).
+  For a bug, say what you did, what happened, what you expected, and which mode you
+  were in — local-first or server.
+- **Security vulnerabilities**: not the issue tracker. See [SECURITY.md](./SECURITY.md).
 
-## Questions?
+## Code of conduct
 
-- Open a [GitHub Discussion](https://github.com/OWNER/brassworth/discussions)
-- Check existing documentation
-- Review closed issues for similar questions
-
-## Recognition
-
-Contributors are recognized in:
-
-- The README.md contributors section
-- Release notes for significant contributions
-- The project's GitHub contributors page
-
-Thank you for helping make Brassworth better! 🏠📦
+By taking part you agree to the [Code of Conduct](./CODE_OF_CONDUCT.md).

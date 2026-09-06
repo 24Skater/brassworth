@@ -1,40 +1,72 @@
-version: '3.8'
-
-# Production docker-compose with nginx reverse proxy and SSL
-# Usage: docker-compose -f docker-compose.prod.yml up -d
+# Brassworth behind nginx, with TLS.
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Use this when you want HTTPS and request rate limiting without running your
+# own proxy. If you already have a reverse proxy, use the plain
+# docker-compose.yml instead and point your proxy at port 3000.
+#
+# Before first start:
+#   1. Put a certificate and key in ./ssl as cert.pem and key.pem.
+#   2. Set the variables below in a .env file beside this one.
+#
+# The app container is not published to the host. Only nginx is reachable, on
+# 80 and 443.
 
 services:
-  frontend:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: brassworth-frontend
+    image: brassworth:latest
+    container_name: brassworth
     restart: unless-stopped
+    environment:
+      # Marks the session cookie Secure. Without this you are serving cookies
+      # over HTTPS that are not flagged as HTTPS-only.
+      NODE_ENV: production
+      DATABASE_URL: file:/app/data/brassworth.db
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-168}
+
+      # --- Optional: sign in through an identity provider ---
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-}
+      OIDC_LABEL: ${OIDC_LABEL:-}
+      OIDC_PROVIDER: ${OIDC_PROVIDER:-}
+    volumes:
+      # Your data. Without this it dies with the container.
+      - brassworth-data:/app/data
     networks:
-      - brassworth-network
-    labels:
-      - "com.brassworth.description=Brassworth Frontend"
-      - "com.brassworth.version=0.0.0"
+      - brassworth
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/api/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   nginx:
     image: nginx:alpine
     container_name: brassworth-nginx
+    restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
       - ./logs/nginx:/var/log/nginx
-    restart: unless-stopped
     depends_on:
-      - frontend
+      app:
+        condition: service_healthy
     networks:
-      - brassworth-network
-    labels:
-      - "com.brassworth.description=Brassworth Nginx Reverse Proxy"
+      - brassworth
 
 networks:
-  brassworth-network:
+  brassworth:
     driver: bridge
 
+volumes:
+  brassworth-data:

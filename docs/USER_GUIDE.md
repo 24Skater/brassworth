@@ -1,298 +1,390 @@
-# User Guide
+# User guide
 
-Welcome to Brassworth! This guide will help you get started and make the most of the application.
+A reference for every screen in Brassworth. If you have not run it yet, start
+with [Getting started](./GETTING_STARTED.md) instead — this document assumes
+you are already looking at the app.
 
-## Table of Contents
+- [Concepts](#concepts)
+- [Items](#items)
+- [Views, search and filters](#views-search-and-filters)
+- [Selecting, bulk edit, archive and delete](#selecting-bulk-edit-archive-and-delete)
+- [Photos, receipts and documents](#photos-receipts-and-documents)
+- [Receipt scanning](#receipt-scanning)
+- [Data plates and gear profiles](#data-plates-and-gear-profiles)
+- [Excel import and export](#excel-import-and-export)
+- [Properties](#properties)
+- [Locations and categories](#locations-and-categories)
+- [People, roles and permissions](#people-roles-and-permissions)
+- [Settings](#settings)
+- [Themes](#themes)
+- [Accessibility](#accessibility)
+- [Things that are not there yet](#things-that-are-not-there-yet)
 
-1. [Getting Started](#getting-started)
-2. [Organizations](#organizations)
-3. [Items](#items)
-4. [Locations](#locations)
-5. [Categories](#categories)
-6. [Users & Roles](#users--roles)
-7. [Receipt Scanning](#receipt-scanning)
-8. [Import & Export](#import--export)
-9. [Settings](#settings)
-10. [Tips & Best Practices](#tips--best-practices)
+## Concepts
 
-## Getting Started
+**Property.** The top-level container — a house, a church, a workshop, a small
+business. Items, locations, categories and the wishlist all belong to exactly
+one property, and the app always has one property selected. Switching property
+switches everything you see.
 
-### First Time Setup
+**Item.** One physical thing you own. Not a model, not a product line: _your_
+drill, with _its_ serial number, in _its_ place.
 
-1. **Sign Up**: Create your account with a strong password
-2. **Create Organization**: Set up your first organization (home, church, business, etc.)
-3. **Add Locations**: Create locations where items are stored
-4. **Add Categories**: Organize items by categories
-5. **Add Items**: Start adding your assets!
+**Location.** Where an item physically is. "Garage shelf", "Rack 2", "Van".
 
-### Navigation
+**Category.** What kind of thing it is. "Power tools", "Network", "Audio".
+Categories drive filtering and the value breakdown on the dashboard.
 
-- **Dashboard**: Overview of your inventory
-- **Items**: View and manage all items
-- **Locations**: Manage storage locations
-- **Categories**: Organize items by category
-- **Users**: Manage team members (Admin only)
-- **Settings**: Configure your organization
+**Gear profile.** A make and model described once and shared by every item that
+is one. Specs live on the profile, not copied onto each item, so correcting a
+spec fixes every item that shares the model. See
+[Gear catalogue](./CATALOGUE.md).
 
-## Organizations
+### Status and condition are different things
 
-### Creating an Organization
+This trips people up, so it is worth being explicit.
 
-1. Go to **Organizations** from the main menu
-2. Click **Create Organization**
-3. Enter:
-   - Organization name
-   - Type (Home, Church, Small Business, Other)
-   - Address (optional)
-4. Click **Create**
+**Condition** is a physical judgement you set on the item: New, Good, Fair,
+Poor, Damaged or Disposed. You choose it, and you change it when the thing
+changes.
 
-### Switching Organizations
+**Status** is where the item is in its life: In possession, Loaned out, In
+repair, Broken, Sold or Lost. You never set it. It is _derived_ from the item's
+history — the append-only log of things that have happened to it.
 
-If you have multiple organizations:
+They are independent. A drill can be in Good condition and loaned out. A camera
+can be in Poor condition and still in your possession. Conflating them is why
+most inventory apps cannot express a loan at all.
 
-1. Click on the organization name in the navigation
-2. Select the organization you want to view
-3. All data is filtered by the selected organization
+Recording events, reading a timeline, overdue loans, repair costs, and what each
+event type means: [Lifecycle](./LIFECYCLE.md).
 
 ## Items
 
-### Adding an Item
+`/items` lists them. `/items/new` creates one. `/items/:id` opens one for
+editing, and is the only place the History card appears — you have to save an
+item before you can record anything against it.
 
-1. Go to **Items** → Click **Add Item**
-2. Fill in the details:
-   - **Name** (required)
-   - **Description**
-   - **Category** (select or create new)
-   - **Location** (select or create new)
-   - **Brand, Model, Serial Number**
-   - **Purchase Date & Price**
-   - **Current Estimated Value**
-   - **Condition** (New, Good, Fair, Poor)
-   - **Quantity**
-   - **Notes**
-3. Upload photos (optional)
-4. Click **Save**
+### Fields
 
-### Editing an Item
+Only **Name** and **Condition** are required.
 
-1. Go to **Items**
-2. Click on the item you want to edit
-3. Make your changes
-4. Click **Save**
+| Field                          | What it is for                                                                |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| Name                           | Required. What you would call it out loud.                                    |
+| Description                    | Free text.                                                                    |
+| How should value be estimated? | None, Straight line, Declining balance or Manual. See [Value](./VALUE.md).    |
+| Useful life (months)           | Straight line only: months from purchase until it reaches its salvage value.  |
+| Value lost per year (%)        | Declining balance only: the share of remaining value lost each year.          |
+| Value it never drops below     | The floor. Depreciation stops here.                                           |
+| Category                       | Pick from the categories on this property.                                    |
+| Location                       | Pick from the locations on this property.                                     |
+| Brand, Model                   | Also what matches the item to a gear profile.                                 |
+| Serial number                  | The one thing an insurer will ask for and you will not have.                  |
+| Condition                      | Required. New, Good, Fair, Poor, Damaged, Disposed.                           |
+| Quantity                       | For things you own several identical copies of. Defaults to 1.                |
+| Purchase date, Purchase price  | Feed every depreciation calculation and the cost-of-ownership figures.        |
+| Current estimated value        | What it is worth now. Calculated for you unless the method is Manual or None. |
+| Purchase source                | Store, Online, Donation or Other.                                             |
+| Source name                    | Which store, which site.                                                      |
+| Notes                          | Free text.                                                                    |
+| Photos                         | Any number, 5 MB each. See [Photos](#photos-receipts-and-documents).          |
 
-### Deleting an Item
+Fill in what you know. A record with a name and a photo is worth more than no
+record, and every field can be added later.
 
-1. Open the item
-2. Click **Delete** (Admin/Manager only)
-3. Confirm deletion
+## Views, search and filters
 
-### View Modes
+Four views of the same list, chosen with the buttons above the item grid:
 
-Switch between different views:
+| View        | Shows                                                                |
+| ----------- | -------------------------------------------------------------------- |
+| **Grid**    | Cards with the photo, status badge, location and value. The default. |
+| **List**    | One compact row per item. Good for scanning a long catalogue.        |
+| **Gallery** | Photo-led, minimal text. Good for identifying things visually.       |
+| **Table**   | Spreadsheet-shaped, most fields visible at once.                     |
 
-- **Grid View**: Visual card layout
-- **List View**: Compact list format
-- **Gallery View**: Image-focused display
-- **Table View**: Spreadsheet-like format
+Above them, an **Active** / **Archived** pair of tabs. Everything below —
+search, filters, selection, export — operates on the tab you are on.
 
-### Filtering & Search
+**Search** matches item name, brand, model and serial number.
 
-- Use the search bar to find items by name
-- Filter by category, location, or condition
-- Sort by name, date, or value
+**Filters**, each an independent dropdown that narrows the list further:
 
-## Locations
+- **Category** — any category on this property
+- **Location** — any location on this property
+- **Condition** — New, Good, Fair, Poor, Damaged
+- **Status** — In possession, Loaned out, In repair, Broken, Sold, Lost
 
-### Creating a Location
+The status filter is the fast answer to "what is out on loan right now" and
+"what is sitting at the repair shop".
 
-1. Go to **Locations**
-2. Click **Add Location**
-3. Enter:
-   - Location name (e.g., "Living Room", "Warehouse A")
-   - Parent location (optional, for hierarchical organization)
-   - Notes
-4. Click **Save**
+## Selecting, bulk edit, archive and delete
 
-### Hierarchical Locations
+**Selecting.** Tick items individually, or use **Select all** / **Deselect all**
+to take the whole filtered list. Selection follows the filters, so the usual
+move is to filter down to the set you want and then select all.
 
-Create nested locations:
+**Bulk edit** appears once something is selected. It changes **category** and
+**location**, and nothing else. Both default to "Keep existing", so you can
+change one without touching the other. This is the tool for the day you decide
+the shelf in the garage is really two shelves.
 
-- **Home** (parent)
-  - **Living Room** (child)
-  - **Kitchen** (child)
-  - **Bedroom** (child)
+**Archive** takes an item out of the active list without destroying it. Use it
+for things you no longer own but whose record you want to keep — the sold
+mower, the stolen bike, the drill you gave away. Archived items keep their full
+history and appear under the **Archived** tab.
 
-This helps organize items in large spaces.
+**Restore** moves an archived item back to Active.
 
-## Categories
+**Delete** is permanent, asks for confirmation, and does not keep the history.
+Archive is almost always the right choice; delete is for records created by
+mistake.
 
-### Creating a Category
+## Photos, receipts and documents
 
-1. Go to **Categories**
-2. Click **Add Category**
-3. Enter:
-   - Category name (e.g., "Electronics", "Furniture")
-   - Description (optional)
-4. Click **Save**
+**Photos** attach to items. Add them from the Photos section at the bottom of
+the item form. Each file is capped at **5 MB**, and photos are stored inline as
+data URLs rather than as separate files.
 
-### Using Categories
+That last detail matters in local-first mode. Browser `localStorage` gives an
+origin roughly **5 MB in total** — for everything, not per photo — so a
+photo-heavy catalogue will hit the quota and saves will start failing. If you
+intend to photograph things, switch storage before you build the catalogue:
 
-Categories help organize items:
+```bash
+VITE_STORAGE_PROVIDER=indexeddb
+```
 
-- Filter items by category
-- Generate reports by category
-- Track value by category
+IndexedDB has a far larger budget and migrates your existing localStorage data
+across on first use. Server mode has no such limit. Details and the full
+variable reference in [Self-hosting](./SELF_HOSTING.md).
 
-## Users & Roles
+**Documents** exist in the data model with types for receipts, warranties,
+appraisals and insurance policies, but the only one the interface currently
+creates is a **receipt**, saved automatically when you scan one. There is no
+general "attach a document" button yet. Warranty PDFs and appraisals have
+nowhere to go for now.
 
-### Inviting Users (Admin Only)
+## Receipt scanning
 
-1. Go to **Settings** → **Users** tab
-2. Click **Invite User**
-3. Enter:
-   - User email
-   - User name
-   - Role (see below)
-4. Click **Invite**
+Turns a receipt into items, without typing them.
 
-### Roles
+1. On `/items`, click **Scan Receipt**.
+2. Give it an image or PDF of the receipt — or paste the text of an emailed
+   receipt into the box instead, which is both faster and more accurate when
+   you have the text.
+3. Brassworth runs OCR locally in your browser (Tesseract.js — the image is not
+   uploaded anywhere) and shows the parsed line items in a review table.
+4. Tick the lines that are actually things you own. Receipts are full of
+   subtotals, discounts, deposits and coffee.
+5. Set the **store name** and **purchase date**, and optionally a **category**
+   and **location** to apply to everything you create.
+6. Click through to create the items.
 
-- **Admin**: Full control - manage users, delete items, edit all settings
-- **Manager**: Edit access - add/edit/archive items, manage locations & categories
-- **Contributor**: Add items only - create items and upload photos
-- **Viewer**: Read-only - view items and export data
+**Nothing is saved until you confirm.** OCR on a crumpled thermal receipt is
+approximate, and a parser that wrote directly to your catalogue would be worse
+than useless.
 
-## Receipt Scanning
+The receipt image itself is stored as a document against the property, so you
+have the original when an insurer asks.
 
-### Scanning a Receipt
+Tips: flatten the receipt, light it evenly, fill the frame. Long receipts scan
+better in two photographs than one.
 
-1. Go to **Items** → Click **Upload Receipt**
-2. Select or take a photo of your receipt
-3. The OCR will extract:
-   - Item names
-   - Prices
-   - Dates
-   - Store information
-4. Review and confirm the extracted data
-5. Items are automatically created
+## Data plates and gear profiles
 
-### Tips for Best Results
+Most tools, appliances and rack gear carry a rating plate with the make, model
+and serial number on it. Typing those in is where cataloguing stalls, so
+Brassworth reads them.
 
-- Use good lighting
-- Ensure receipt is flat and in focus
-- Clean, clear receipts work best
-- Review extracted data before confirming
+On the item form, above the Brand field, click **Scan data plate**. On a phone
+this opens the camera; on a desktop, a file picker. Brassworth runs OCR on the
+photograph, parses out brand, model and serial number, and fills the fields in.
 
-## Import & Export
+**It never saves.** The values are filled in for you to check. Plate text is
+ambiguous by nature — zeroes and letter O's, model numbers wrapped onto a second
+line, a part number sitting where you expected a model. Read it, fix it, then
+save.
 
-### Exporting Data
+If the brand and model match a **gear profile**, the item is linked to that
+profile and inherits the shared specification, manual link and parts link for
+that model. Brassworth ships with a small community catalogue of 18 make and
+model profiles across 13 brands, published under ODbL-1.0. You can also write
+your own profiles, which take precedence over any catalogue.
 
-1. Go to **Settings** → **Data** tab
-2. Click **Export to Excel**
-3. Download includes:
-   - All items
-   - Locations
-   - Categories
+Where profiles come from, how matching works, and how to add your own:
+[Gear catalogue](./CATALOGUE.md).
 
-### Importing Data
+## Excel import and export
 
-1. Prepare an Excel file with columns:
-   - Name, Description, Category, Location
-   - Brand, Model, Serial Number
-   - Purchase Date, Purchase Price
-   - Condition, Quantity, Notes
-2. Go to **Items** → Click **Import**
-3. Select your Excel file
-4. Review and confirm import
+**Export** is on the Items page. It writes an `.xlsx` file of whatever the
+current filters and the Active/Archived tab are showing — filter first, then
+export, if you want a subset.
+
+Fifteen columns, in this order:
+
+`Name`, `Description`, `Category`, `Location`, `Brand`, `Model`,
+`Serial Number`, `Condition`, `Quantity`, `Purchase Price`,
+`Current Estimated Value`, `Purchase Date`, `Purchase Source`,
+`Purchase Source Name`, `Notes`
+
+**Import** takes a spreadsheet with those same column headings. Click
+**Import** on the Items page and either choose a file or drop one on the
+dialog; `.xlsx` and `.xls` are both accepted. The dialog also offers
+**Download template**, which gives you a blank workbook with the fifteen
+columns and one example row. Use it — the importer matches on column _name_,
+so a renamed heading is a silently dropped field.
+
+`Category` and `Location` are matched by name against what already exists on
+the property.
+
+**Excel export is not a backup.** It carries items only — no history, no
+photos, no wishlist, no properties, no events. For a complete copy see
+[Backup and restore](./BACKUP.md).
+
+## Properties
+
+`/organizations`. Create, rename, switch between and delete properties.
+
+A property has a **name**, a **type** (Home, Church, Small Business, Other) and
+an optional **address**. The type is descriptive; it does not change how the app
+behaves.
+
+**Switching** is done from the property selector in the top navigation, and
+changes everything at once — items, locations, categories, wishlist, dashboard.
+If items you expect are missing, check which property you are in first. It is
+the most common cause.
+
+Deleting a property deletes its contents. Take a backup first.
+
+## Locations and categories
+
+**Locations** (`/locations`) are physical places. Each has a name and optional
+notes, and each card shows how many items are stored there. Start with fewer,
+broader locations than you think you need — splitting one later is easy,
+reconciling fifteen is not.
+
+**Categories** (`/categories`) are kinds of thing. Each has a name and an
+optional description. Categories drive the item filter and the per-category
+value breakdown on the dashboard.
+
+Both are per-property, and both are managed by Admins and Managers.
+
+## People, roles and permissions
+
+Brassworth has four roles. A role is held per person, per property — someone
+can be an Admin of the workshop and a Viewer of the church.
+
+| Role            | Can                                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Admin**       | Everything: manage people, edit property settings, and permanently delete items.                                  |
+| **Manager**     | Add, edit and archive items; manage locations and categories; export. Cannot delete permanently or manage people. |
+| **Contributor** | View items and add new ones. Nothing else.                                                                        |
+| **Viewer**      | View items and export. Changes nothing.                                                                           |
+
+Behind those four roles are ten permissions: view, add, edit, delete and
+archive items; manage locations; manage categories; manage users; manage the
+organisation; and export data. The exact role-to-permission matrix lives in
+[Data model](./DATA_MODEL.md) and is the single authority on it.
+
+`/users` lists the people on the current property and their roles, and is
+reachable only by someone with the manage-users permission.
+
+**Be aware of what roles mean in each mode.** In local-first mode there is no
+server, so roles decide what the interface offers and nothing more — anyone who
+can open the browser can change the stored records directly. In server mode
+membership and role are looked up server-side on every request and are a real
+control. [Security](../SECURITY.md) sets out both models properly.
+
+**Adding a second person does not work yet.** In server mode there is no route
+to add a member to a property, and the invite dialog reports itself as
+unavailable. Multi-person use is currently only possible in local-first mode,
+where it is a convenience rather than a boundary.
 
 ## Settings
 
-### Organization Settings
+`/settings`, reachable by Admins and Managers. Four tabs.
 
-- **Name**: Update organization name
-- **Type**: Change organization type
-- **Address**: Update address
+**Users** — the people on this property, and a summary of what each role can do.
 
-### Data Management
+**Organization** — the current property's name, type and address.
 
-- **Export**: Download all data as Excel
-- **Import**: Bulk import items
-- **Clear Data**: Delete all data (Admin only, irreversible)
+**Data** —
 
-### Security Settings
+- **Download backup**: everything, in one file. Every property, item, event,
+  photo and document.
+- **Restore from backup**: choose a backup file. You are shown what it contains
+  before anything is replaced.
+- **Export Data**: the Excel report, the same one as on the Items page.
+- **Import Data**: sends you to the Items page importer.
+- **Danger zone**: clear all data. Irreversible, Admin only, and worth taking a
+  backup before touching.
 
-- View authentication provider
-- Review role permissions
-- Check data storage location
+Backups, the file format, and moving data between modes:
+[Backup and restore](./BACKUP.md).
 
-### Theme
+**Security** — a read-only summary of which authentication provider and storage
+provider this installation is using.
 
-- Toggle between light and dark mode
-- Use system preference
-- Theme preference is saved
+## Themes
 
-## Tips & Best Practices
+The theme toggle in the top navigation offers **Light**, **Dark** and
+**System**. System follows your operating system's setting and changes with it.
+The choice is stored locally in the browser and does not travel with your
+account.
 
-### Organizing Your Inventory
+## Accessibility
 
-1. **Start Small**: Begin with high-value items
-2. **Be Consistent**: Use consistent naming conventions
-3. **Add Photos**: Photos help identify items
-4. **Update Regularly**: Keep information current
-5. **Use Tags**: Tags help with searching
+What is actually implemented, rather than what would be nice:
 
-### For Insurance
+- **Skip link.** A "Skip to main content" link is the first focusable element on
+  every page, visible once focused, and jumps past the navigation.
+- **Keyboard navigation.** The interface is built on Radix primitives, so
+  dialogs, dropdowns, tabs and menus have their standard keyboard behaviour:
+  Tab and Shift+Tab to move, arrow keys within a group, Enter to activate,
+  Escape to dismiss. Focus is trapped inside open dialogs and returned when they
+  close.
+- **Labelled controls.** Icon-only buttons — view switchers, edit and delete
+  actions, the property switcher — carry accessible labels.
+- **axe-core in development.** Running `npm run dev` loads `@axe-core/react`,
+  which reports accessibility violations to the browser console as you use the
+  app. It does not run in production builds.
 
-- Include purchase receipts
-- Take clear photos
-- Update values regularly
-- Export data for backup
+Notes on the accessibility seams and how they are tested: [Extending](./EXTENDING.md).
 
-### For Businesses
+There are no application keyboard shortcuts. Nothing is bound to Ctrl+K.
 
-- Assign items to locations
-- Track depreciation
-- Use categories for reporting
-- Set up proper user roles
+## Things that are not there yet
 
-### Data Backup
+Stated plainly, because finding out by looking for a button is worse.
 
-- Regularly export your data
-- Store backups securely
-- Test restore process
-- Keep multiple backup copies
+- **No password reset.** If you lose a local-first password, the account is
+  gone; the data is still in the browser, but nothing in the app will let you
+  back in. In server mode an administrator has no reset route either. Use a
+  password manager.
+- **No tags.** Tags exist in the data model but there is no way to create or
+  assign one. Use categories.
+- **Locations do not nest in the interface.** The data model has a parent
+  location field, but the Locations screen offers a flat list. Nesting is not
+  something you can set up today.
+- **No automatic price checking.** Prices on wishlist entries are recorded by
+  hand. See [Wishlist and prices](./WISHLIST_AND_PRICES.md).
+- **No document uploads** other than receipts captured by the receipt scanner.
+- **No keyboard shortcuts.**
 
-## Keyboard Shortcuts
+## Related
 
-- **Ctrl/Cmd + K**: Search (coming soon)
-- **Tab**: Navigate between fields
-- **Enter**: Submit forms
-- **Esc**: Close dialogs
-
-## Troubleshooting
-
-### Common Issues
-
-**Can't see my items?**
-
-- Check you're in the correct organization
-- Verify filters aren't hiding items
-- Check your user role permissions
-
-**Receipt scanning not working?**
-
-- Ensure good lighting
-- Check image quality
-- Try a different receipt format
-
-**Export not downloading?**
-
-- Check browser download settings
-- Try a different browser
-- Check available disk space
-
-For more help, see [Troubleshooting Guide](./TROUBLESHOOTING.md)
-
----
-
-**Last Updated**: December 2024
+| Document                                        | Covers                                                  |
+| ----------------------------------------------- | ------------------------------------------------------- |
+| [Getting started](./GETTING_STARTED.md)         | Choosing a mode and reaching your first tracked item.   |
+| [Lifecycle](./LIFECYCLE.md)                     | Events, status, loans, repairs, the timeline.           |
+| [Value](./VALUE.md)                             | Depreciation methods, current value, cost of ownership. |
+| [Wishlist and prices](./WISHLIST_AND_PRICES.md) | Saving towards things, target prices, price history.    |
+| [Gear catalogue](./CATALOGUE.md)                | Gear profiles, the bundled catalogue, adding your own.  |
+| [Backup and restore](./BACKUP.md)               | The backup format, restoring, moving between modes.     |
+| [Data model](./DATA_MODEL.md)                   | Every field and enum, and the permission matrix.        |
+| [Self-hosting](./SELF_HOSTING.md)               | Running the server, every environment variable.         |
+| [Security](../SECURITY.md)                      | What each mode protects, and what it does not.          |
+| [FAQ](./FAQ.md)                                 | When something is not working.                          |
+| [FAQ](./FAQ.md)                                 | The short answers.                                      |

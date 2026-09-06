@@ -1,6 +1,6 @@
 {
   "name": "brassworth",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "description": "Open-source asset tracking for tools, IT and AV gear — catalogue what you own, check it in and out, track where it lives, and follow its value from purchase through repair to resale.",
   "type": "module",
   "private": true,
@@ -19,9 +19,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/24Skater/brassworth.git"
+    "url": "https://github.com/24Skater/home-asset-keeper.git"
   },
-  "homepage": "https://brassworth.com",
+  "homepage": "https://github.com/24Skater/home-asset-keeper#readme",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -45,7 +45,8 @@
     "start:server": "tsx server/index.ts",
     "type-check:server": "tsc -p server/tsconfig.json --noEmit",
     "type-check:app": "tsc -p tsconfig.app.json --noEmit",
-    "type-check:node": "tsc -p tsconfig.node.json --noEmit"
+    "type-check:node": "tsc -p tsconfig.node.json --noEmit",
+    "screenshots": "node scripts/screenshots/capture.mjs && node scripts/screenshots/frame.mjs && bash scripts/screenshots/makeGif.sh"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
@@ -158,6 +159,6 @@
     ]
   },
   "bugs": {
-    "url": "https://github.com/24Skater/brassworth/issues"
+    "url": "https://github.com/24Skater/home-asset-keeper/issues"
   }
 }
