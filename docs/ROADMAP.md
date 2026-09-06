@@ -44,6 +44,8 @@ Item CRUD with brand, model and serial number. Categories and hierarchical locat
 
 Tags are in the data model but have **no user interface** — there is no way to create or assign one. Treat them as unbuilt, not as a feature.
 
+There is also **no service worker and no manifest**. The app is responsive, but it is not installable and it does nothing offline in server mode. Phase 7 is where that stops being true.
+
 ### The seam that used to block everything
 
 `src/lib/storage.ts` was a **synchronous** wrapper, localStorage-only by its own docstring,
@@ -336,21 +338,97 @@ and no plugin SDK: a vendor source is a URL returning a document in the document
 Building an interface with no implementation behind it is the abstraction-from-one-case the
 roadmap warns against, and it works today with any vendor that publishes JSON.
 
+### Phase 7 — Gear in your hand — next
+
+_Everything above shipped on a desktop. The usage moment this product describes does not
+happen at a desk._ See [the design record](./superpowers/specs/2026-09-06-phase-7-gear-in-your-hand-design.md).
+
+- [ ] An item **view** route. `/items/:id` becomes a read-and-act page and editing moves to
+      `/items/:id/edit`. Today that URL opens the edit form, with the timeline and the value
+      summary mounted beneath 648 lines of inputs
+- [ ] Printable QR labels, and scanning one to open the item and check it in or out
+- [ ] Installable, with an app shell and offline reads
+- [ ] An outbox that queues lifecycle events written with no signal, and replays them
+- [ ] IndexedDB as the **default** storage provider, with migration tests
+- [ ] Camera-first item entry, reaching the Phase 6 data plate reader from a phone
+- [ ] Condition photos attached to a lifecycle event
+- [ ] UPC and EAN scanning, resolved against the catalogue
+
+**A QR code encodes a URL, not an identifier.** A phone's own camera app opens a URL with
+nothing installed, on both platforms, so the in-app scanner only has to exist for what the
+native camera cannot serve — and it can use `BarcodeDetector` where the browser has one and
+lazily import a decoder only where it does not. Neither path costs anything in the default
+bundle. The identifier in a label is not an access grant either: server mode still requires a
+session, and local mode points at a host a stranger cannot reach.
+
+**The outbox queues appends, never mutable writes.** Item creates, edits and deletes are
+refused offline. Last-write-wins on a mutable row loses data; appending to a log cannot, which
+is the same reasoning that made `ItemEvent` and the savings log append-only. Three things make
+replay safe: the client generates the event id, so a queue flushed twice across a flaky
+reconnect cannot double-record a checkout; a 401 during replay pauses the queue rather than
+dropping it, because a session can expire while a phone is in a basement; and genuine conflicts
+cannot arise, because appends commute.
+
+Two people checking the same item out offline both succeed. Both events land in the timeline
+and the fold resolves status to the later one. That is what actually happened, and it beats one
+of them silently vanishing.
+
+**Condition photos are the one exception**, and deliberately so. A damage photo taken with no
+signal is the whole point of a `BROKE` event, so the outbox carries the blob as part of the
+append it belongs to rather than as an independent write — capped, and honest when it drops one.
+
+**UPC scanning works with no external data.** A scan resolves against the bundled catalogue
+first; a miss stores the code on the item, so scanning it again finds your own gear. An optional
+server-side lookup source can be configured on top, following the rule Phase 5 set and Phase 6
+reused: server-side because a browser cannot hold a key, off unless configured, never scraping.
+
+**IndexedDB becomes the default** because a PWA that stores photos and works offline cannot sit
+on a synchronous store of five to ten megabytes. `autoMigrateIfNeeded` is unproven against real
+data, so this lands with migration tests rather than a changed default alone.
+`VITE_STORAGE_PROVIDER=localStorage` stays as the escape hatch.
+
+### Phase 8 — The hosted tier
+
+`app.brassworth.com`: organisation provisioning, billing, custom domains, backups and the
+operational work of running it. The last gate named at v1.0 and still open. No checklist here
+until it is next — committing to details nobody has thought through is how a roadmap starts
+lying.
+
+### Phase 9 — Deepening the lifecycle
+
+Maintenance and service schedules, warranty expiry, an insurance claim packet, reminders to
+whoever is holding an overdue loan. All of it folds over `ItemEvent`, which is why it can wait
+without becoming harder. Same caveat as Phase 8.
+
 ---
 
 ## Release milestones
 
-| Version  | Gate                                                                              |
-| -------- | --------------------------------------------------------------------------------- |
-| **v0.2** | Done. Phase 1. Async storage, export and import working                           |
-| **v0.4** | Done. Phase 2. Lifecycle and custody, the first genuinely differentiated release  |
-| **v0.6** | Done. Phase 3. Valuation and dashboards                                           |
-| **v0.8** | Done. Phase 4. Real server-side auth, self-hostable with a server                 |
-| **v1.0** | Done. Phase 5, and coverage past 80%. Hosted tier at `app.brassworth.com` to come |
-| **v1.1** | Done. Phase 6. Gear profiles, the community catalogue, and data plate scanning    |
+| Version  | Gate                                                                                                           |
+| -------- | -------------------------------------------------------------------------------------------------------------- |
+| **v0.2** | Done. Phase 1. Async storage, export and import working                                                        |
+| **v0.4** | Done. Phase 2. Lifecycle and custody, the first genuinely differentiated release                               |
+| **v0.6** | Done. Phase 3. Valuation and dashboards                                                                        |
+| **v0.8** | Done. Phase 4. Real server-side auth, self-hostable with a server                                              |
+| **v1.0** | Done. Phase 5, and coverage past 80%                                                                           |
+| **v1.1** | Done. Phase 6. Gear profiles, the community catalogue, and data plate scanning                                 |
+| **v2.0** | Done. Not a feature release. Persistence renamed to Brassworth, which breaks stored data. First public release |
+| **v2.1** | Item view route, printable QR labels, scan to open, installable, offline reads                                 |
+| **v2.2** | The event outbox, so checkout and check-in work with no signal. IndexedDB as default                           |
+| **v2.3** | Camera-first entry, condition photos, UPC scanning. Phase 7 complete                                           |
 
 Phase 6 was deliberately scheduled after v1.0 — the most fun and the least load-bearing — and
 shipped there.
+
+**2.0.0 is major because of data, not scope.** Renaming every persistence identifier to
+Brassworth breaks stored data, and no migration was shipped — deliberately, because the repo
+was not yet in use by anyone. Nothing about the feature set changed at that version.
+
+Phase 7 is three releases rather than one. Each is a complete workflow that stands on its own:
+find it and open it, then make it work with no signal, then reach for the camera. Building the
+offline engine first would repeat the mistake this document already names, when price watching
+moved out of Phase 4 because a watcher with nothing to watch is infrastructure for a feature
+that does not exist yet.
 
 ---
 
@@ -361,8 +439,9 @@ Saying no here saves arguing later.
 - **No vendor-branded modules.** Trademark exposure, scraping against terms of service, and redistributing catalogue data are three separate risks stacked on one feature
 - **No plugin SDK before three real modules exist**
 - **Local-only mode never goes away.** It is the privacy claim, and the claim is the reason to open-source this at all
-- **No barcode hardware integrations** until someone asks twice
-- **No mobile apps** before the web app is genuinely good. A responsive PWA covers the phone-in-the-garage case
+- **No barcode hardware integrations** until someone asks twice. Phase 7 reads codes with the camera already in your pocket, which is not the same thing and is not a reversal of this
+- **No native mobile apps.** Phase 7 builds the installable, offline-capable web app this non-goal always pointed at. No app stores
+- **No offline writes to mutable records.** Only appends to the event log queue, because appends cannot conflict and a last-write-wins edit can lose somebody's work
 
 ---
 
