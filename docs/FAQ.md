@@ -243,7 +243,7 @@ pull request lands without a passing test covering the change.
 
 ### Where do I report a bug?
 
-[GitHub issues](https://github.com/24Skater/home-asset-keeper/issues). Say what you did,
+[GitHub issues](https://github.com/24Skater/brassworth/issues). Say what you did,
 what happened, what you expected, and which mode you were in.
 
 Security vulnerabilities go through the repository's Security tab instead — see

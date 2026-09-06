@@ -19,9 +19,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/24Skater/home-asset-keeper.git"
+    "url": "https://github.com/24Skater/brassworth.git"
   },
-  "homepage": "https://github.com/24Skater/home-asset-keeper#readme",
+  "homepage": "https://github.com/24Skater/brassworth#readme",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -159,6 +159,6 @@
     ]
   },
   "bugs": {
-    "url": "https://github.com/24Skater/home-asset-keeper/issues"
+    "url": "https://github.com/24Skater/brassworth/issues"
   }
 }

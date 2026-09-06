@@ -37,8 +37,8 @@ Requires Node.js 20 or newer. The container image builds on Node 22; CI runs
 Node 20.
 
 ```bash
-git clone https://github.com/24Skater/home-asset-keeper.git
-cd home-asset-keeper && npm install
+git clone https://github.com/24Skater/brassworth.git
+cd brassworth && npm install
 npm run dev
 ```
 

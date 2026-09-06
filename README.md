@@ -9,7 +9,7 @@
 
 **Wanted, bought, lent, broken, repaired, sold.<br>The whole life of everything you own.**
 
-[![license](https://img.shields.io/badge/license-MIT-57534E?style=flat-square&labelColor=1A1A1A)](./LICENSE) [![build](https://img.shields.io/github/actions/workflow/status/24Skater/home-asset-keeper/ci.yml?style=flat-square&label=build&labelColor=1A1A1A&color=57534E)](https://github.com/24Skater/home-asset-keeper/actions) ![tests](https://img.shields.io/badge/tests-1061-57534E?style=flat-square&labelColor=1A1A1A) ![coverage](https://img.shields.io/badge/coverage-88%25-57534E?style=flat-square&labelColor=1A1A1A) [![status](https://img.shields.io/badge/status-pre--release-D6301F?style=flat-square&labelColor=1A1A1A)](#before-you-rely-on-it)
+[![license](https://img.shields.io/badge/license-MIT-57534E?style=flat-square&labelColor=1A1A1A)](./LICENSE) [![build](https://img.shields.io/github/actions/workflow/status/24Skater/brassworth/ci.yml?style=flat-square&label=build&labelColor=1A1A1A&color=57534E)](https://github.com/24Skater/brassworth/actions) ![tests](https://img.shields.io/badge/tests-1061-57534E?style=flat-square&labelColor=1A1A1A) ![coverage](https://img.shields.io/badge/coverage-88%25-57534E?style=flat-square&labelColor=1A1A1A) [![status](https://img.shields.io/badge/status-pre--release-D6301F?style=flat-square&labelColor=1A1A1A)](#before-you-rely-on-it)
 
 [![data](https://img.shields.io/badge/data-local--first-D6301F?style=flat-square&labelColor=1A1A1A)](./docs/ARCHITECTURE.md) [![self-host](https://img.shields.io/badge/self--host-docker-57534E?style=flat-square&labelColor=1A1A1A)](./docs/SELF_HOSTING.md) ![typescript](https://img.shields.io/badge/typescript-5.8-57534E?style=flat-square&labelColor=1A1A1A) ![react](https://img.shields.io/badge/react-18.3-57534E?style=flat-square&labelColor=1A1A1A)
 
@@ -256,8 +256,8 @@ No account, no server, nothing uploaded.
 **Requires** Node.js 20 or newer. The container image builds on Node 22; CI runs Node 20.
 
 ```bash
-git clone https://github.com/24Skater/home-asset-keeper.git
-cd home-asset-keeper && npm install && npm run dev
+git clone https://github.com/24Skater/brassworth.git
+cd brassworth && npm install && npm run dev
 ```
 
 Open **http://localhost:8080** and add the first thing you own.
