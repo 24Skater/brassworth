@@ -19,22 +19,22 @@ import {
 } from '@/types';
 
 const STORAGE_KEYS = {
-  USER: 'inventory_user',
-  USERS: 'inventory_all_users',
-  USER_ROLES: 'inventory_user_roles',
-  ORGANIZATIONS: 'inventory_organizations',
-  MEMBERSHIPS: 'inventory_memberships',
-  LOCATIONS: 'inventory_locations',
-  CATEGORIES: 'inventory_categories',
-  TAGS: 'inventory_tags',
-  ITEMS: 'inventory_items',
-  ITEM_EVENTS: 'inventory_item_events',
-  WISHLIST: 'inventory_wishlist',
-  SAVINGS: 'inventory_savings',
-  PRICES: 'inventory_price_observations',
-  GEAR_PROFILES: 'inventory_gear_profiles',
-  PHOTOS: 'inventory_photos',
-  DOCUMENTS: 'inventory_documents',
+  USER: 'brassworth_user',
+  USERS: 'brassworth_all_users',
+  USER_ROLES: 'brassworth_user_roles',
+  ORGANIZATIONS: 'brassworth_organizations',
+  MEMBERSHIPS: 'brassworth_memberships',
+  LOCATIONS: 'brassworth_locations',
+  CATEGORIES: 'brassworth_categories',
+  TAGS: 'brassworth_tags',
+  ITEMS: 'brassworth_items',
+  ITEM_EVENTS: 'brassworth_item_events',
+  WISHLIST: 'brassworth_wishlist',
+  SAVINGS: 'brassworth_savings',
+  PRICES: 'brassworth_price_observations',
+  GEAR_PROFILES: 'brassworth_gear_profiles',
+  PHOTOS: 'brassworth_photos',
+  DOCUMENTS: 'brassworth_documents',
 };
 
 /**

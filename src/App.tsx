@@ -33,7 +33,7 @@ const PageLoader = () => (
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ThemeProvider defaultTheme="system" storageKey="home-asset-keeper-theme">
+  <ThemeProvider defaultTheme="system" storageKey="brassworth-theme">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />

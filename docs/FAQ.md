@@ -62,7 +62,7 @@ Full detail, including the known gaps, is in [SECURITY.md](../SECURITY.md).
 
 ### Where exactly is my data?
 
-Local-first mode: your browser's `localStorage`, under keys prefixed `inventory_`, or
+Local-first mode: your browser's `localStorage`, under keys prefixed `brassworth_`, or
 IndexedDB if you have opted into that. Server mode: a SQLite file on a Docker volume at
 `/app/data/brassworth.db`.
 

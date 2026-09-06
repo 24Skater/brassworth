@@ -24,6 +24,18 @@ Notable changes to Brassworth. The format follows
 
 ### Changed
 
+- **Breaking: every persistence identifier renamed to match the product.** Storage keys
+  went from `inventory_*` to `brassworth_*`, the Dexie database from
+  `HomeAssetKeeperDB` to `BrassworthDB`, the theme key from `home-asset-keeper-theme`
+  to `brassworth-theme`, and the rate limiter's database from `home-asset-keeper` to
+  `brassworth`. **Data saved by an earlier build is not read by this one, and no
+  migration is shipped.** These names were deliberately preserved through the rebrand
+  precisely to avoid this, on the grounds that renaming them would orphan existing
+  local data. That reasoning no longer applies: the project had no released version and
+  no users. Doing it now, before anyone can be affected, is the only moment it is free.
+  Anyone carrying data from a pre-1.1 build should export a backup first, then restore
+  it after upgrading.
+
 - The README, rewritten. It had described six shipped phases as "planned" and claimed
   the app had no tests, no Docker image and no backend.
 - The documentation set, restructured around one owning document per fact. New:

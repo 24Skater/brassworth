@@ -4,10 +4,10 @@ import { recordFailedAttempt, recordSuccessfulLogin, isLocked } from '../rateLim
 import { validatePasswordStrength } from '../passwordValidation';
 
 const STORAGE_KEYS = {
-  USERS: 'inventory_all_users',
-  CURRENT_USER: 'inventory_user',
-  USER_ROLES: 'inventory_user_roles',
-  SESSION: 'inventory_session',
+  USERS: 'brassworth_all_users',
+  CURRENT_USER: 'brassworth_user',
+  USER_ROLES: 'brassworth_user_roles',
+  SESSION: 'brassworth_session',
 };
 
 // Session configuration (in hours)

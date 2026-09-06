@@ -62,15 +62,17 @@ keys, but it still has to honour the method.
 
 ### The three implementations
 
-| Provider               | File                                                | When                                                                                                                                                    |
-| ---------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LocalStorageProvider` | `src/lib/storage/providers/localStorageProvider.ts` | **The default.** One JSON array per `inventory_*` key. Simple and inspectable; capped around 5 MB per origin, which a photo-heavy catalogue will reach. |
-| `IndexedDBProvider`    | `src/lib/storage/providers/indexedDBProvider.ts`    | Opt-in. Dexie over a database named `HomeAssetKeeperDB`, schema v1 to v5. Far more room. Migrates existing localStorage data across on first use.       |
-| `ApiStorageProvider`   | `src/lib/storage/providers/apiProvider.ts`          | Talks to the server. What the Docker image builds with.                                                                                                 |
+| Provider               | File                                                | When                                                                                                                                                     |
+| ---------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LocalStorageProvider` | `src/lib/storage/providers/localStorageProvider.ts` | **The default.** One JSON array per `brassworth_*` key. Simple and inspectable; capped around 5 MB per origin, which a photo-heavy catalogue will reach. |
+| `IndexedDBProvider`    | `src/lib/storage/providers/indexedDBProvider.ts`    | Opt-in. Dexie over a database named `BrassworthDB`, schema v1 to v5. Far more room. Migrates existing localStorage data across on first use.             |
+| `ApiStorageProvider`   | `src/lib/storage/providers/apiProvider.ts`          | Talks to the server. What the Docker image builds with.                                                                                                  |
 
-> The persistence identifiers deliberately keep pre-rebrand names — `inventory_*`,
-> `HomeAssetKeeperDB`, `home-asset-keeper-theme`. Renaming them would orphan the data
-> of everyone already using the app. Do not tidy them up.
+> Storage keys are namespaced `brassworth_*`, the Dexie database is `BrassworthDB`,
+> and the theme key is `brassworth-theme`. These are a public contract with data
+> already on disk: renaming one orphans it silently, with no error and no obvious
+> symptom beyond an app that looks freshly installed. If you ever change one, ship a
+> migration in the same pull request.
 
 ### The factory
 

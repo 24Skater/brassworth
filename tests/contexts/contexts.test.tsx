@@ -323,7 +323,7 @@ describe('storage migration', () => {
 
   it('moves existing data into IndexedDB and records that it did', async () => {
     localStorage.setItem(
-      'inventory_organizations',
+      'brassworth_organizations',
       JSON.stringify([
         {
           id: 'org-1',
@@ -341,7 +341,7 @@ describe('storage migration', () => {
   });
 
   it('leaves localStorage alone when the provider is not IndexedDB', async () => {
-    localStorage.setItem('inventory_organizations', JSON.stringify([]));
+    localStorage.setItem('brassworth_organizations', JSON.stringify([]));
 
     await autoMigrateIfNeeded('localstorage');
 
@@ -349,8 +349,8 @@ describe('storage migration', () => {
   });
 
   it('does not migrate twice', async () => {
-    localStorage.setItem('migrated_to_indexeddb', 'true');
-    localStorage.setItem('inventory_organizations', JSON.stringify([{ id: 'x' }]));
+    localStorage.setItem('brassworth_migrated_to_indexeddb', 'true');
+    localStorage.setItem('brassworth_organizations', JSON.stringify([{ id: 'x' }]));
 
     // A second run would re-import and could duplicate rows.
     await autoMigrateIfNeeded('indexeddb');

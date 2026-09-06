@@ -13,9 +13,9 @@ export async function migrateLocalStorageToIndexedDB(): Promise<void> {
 
     // Check if there's data to migrate
     const hasData =
-      localStorage.getItem('inventory_items') ||
-      localStorage.getItem('inventory_organizations') ||
-      localStorage.getItem('inventory_locations');
+      localStorage.getItem('brassworth_items') ||
+      localStorage.getItem('brassworth_organizations') ||
+      localStorage.getItem('brassworth_locations');
 
     if (!hasData) {
       console.log('No data to migrate');
@@ -29,7 +29,7 @@ export async function migrateLocalStorageToIndexedDB(): Promise<void> {
     await indexedDBProvider.importData(data);
 
     // Mark migration as complete
-    localStorage.setItem('migrated_to_indexeddb', 'true');
+    localStorage.setItem('brassworth_migrated_to_indexeddb', 'true');
 
     console.log('Migration completed successfully');
   } catch (error) {
@@ -42,7 +42,7 @@ export async function migrateLocalStorageToIndexedDB(): Promise<void> {
  * Check if migration has been completed
  */
 export function hasMigratedToIndexedDB(): boolean {
-  return localStorage.getItem('migrated_to_indexeddb') === 'true';
+  return localStorage.getItem('brassworth_migrated_to_indexeddb') === 'true';
 }
 
 /**

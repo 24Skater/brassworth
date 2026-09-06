@@ -51,13 +51,13 @@ export async function seed(options: SeedOptions = {}): Promise<void> {
 
   if (!options.signedOut) {
     // The local auth provider reads the session and user list directly.
-    localStorage.setItem('inventory_user', JSON.stringify(TEST_USER));
+    localStorage.setItem('brassworth_user', JSON.stringify(TEST_USER));
     localStorage.setItem(
-      'inventory_all_users',
+      'brassworth_all_users',
       JSON.stringify([{ ...TEST_USER, passwordHash: 'x', passwordSalt: 'y' }])
     );
     localStorage.setItem(
-      'inventory_session',
+      'brassworth_session',
       JSON.stringify({
         userId: TEST_USER.id,
         token: 'test-token',
@@ -74,7 +74,7 @@ export async function seed(options: SeedOptions = {}): Promise<void> {
       { id: 'membership-1', userId: TEST_USER.id, organizationId: TEST_ORG.id },
     ]);
     localStorage.setItem(
-      'inventory_user_roles',
+      'brassworth_user_roles',
       JSON.stringify([
         { id: 'role-1', userId: TEST_USER.id, organizationId: TEST_ORG.id, role: 'ADMIN' },
       ])
