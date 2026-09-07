@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import Labels from '@/pages/Labels';
@@ -38,8 +38,13 @@ describe('Labels', () => {
 
     await userEvent.click(await screen.findByLabelText('Cordless Drill'));
 
+    // The sheet container renders immediately and holds a placeholder until
+    // the encoder has been imported and has run, so waiting on the container
+    // is not waiting on the label. Wait for the code itself.
     const sheet = await screen.findByTestId('label-sheet');
-    expect(sheet.querySelector('svg')).not.toBeNull();
+    await waitFor(() => {
+      expect(sheet.querySelector('svg')).not.toBeNull();
+    });
     expect(sheet).toHaveTextContent('Cordless Drill');
   });
 
