@@ -341,7 +341,7 @@ roadmap warns against, and it works today with any vendor that publishes JSON.
 ### Phase 7 — Gear in your hand — in progress
 
 _Everything above shipped on a desktop. The usage moment this product describes does not
-happen at a desk._ See [the design record](./superpowers/specs/2026-09-06-phase-7-gear-in-your-hand-design.md).
+happen at a desk._ See [the design record](./design/specs/2026-09-06-phase-7-gear-in-your-hand-design.md).
 
 - [x] An item **view** route. `/items/:id` is a read-and-act page and editing has moved to
       `/items/:id/edit`. It used to open the edit form, with the timeline and the value
@@ -350,6 +350,8 @@ happen at a desk._ See [the design record](./superpowers/specs/2026-09-06-phase-
 - [x] Installable, with an app shell and offline reads
 - [ ] An outbox that queues lifecycle events written with no signal, and replays them
 - [ ] IndexedDB as the **default** storage provider, with migration tests
+- [ ] Replace `xlsx`, which v2.1 turned from a large dependency into a large dependency
+      every install downloads — see the note under the milestones
 - [ ] Camera-first item entry, reaching the Phase 6 data plate reader from a phone
 - [ ] Condition photos attached to a lifecycle event
 - [ ] UPC and EAN scanning, resolved against the catalogue
@@ -414,7 +416,7 @@ without becoming harder. Same caveat as Phase 8.
 | **v1.1** | Done. Phase 6. Gear profiles, the community catalogue, and data plate scanning                                 |
 | **v2.0** | Done. Not a feature release. Persistence renamed to Brassworth, which breaks stored data. First public release |
 | **v2.1** | Item view route, printable QR labels, scan to open, installable, offline reads                                 |
-| **v2.2** | The event outbox, so checkout and check-in work with no signal. IndexedDB as default                           |
+| **v2.2** | The event outbox, so checkout and check-in work with no signal. IndexedDB as default. `xlsx` replaced          |
 | **v2.3** | Camera-first entry, condition photos, UPC scanning. Phase 7 complete                                           |
 
 Phase 6 was deliberately scheduled after v1.0 — the most fun and the least load-bearing — and
@@ -423,6 +425,14 @@ shipped there.
 **2.0.0 is major because of data, not scope.** Renaming every persistence identifier to
 Brassworth breaks stored data, and no migration was shipped — deliberately, because the repo
 was not yet in use by anyone. Nothing about the feature set changed at that version.
+
+**`xlsx` moved up, and v2.1 is why.** It has carried two unfixed high advisories and 425 KB
+for a while, with no version to upgrade to — SheetJS no longer publishes it to npm. That was
+tolerable while it was one chunk among many, fetched by the few people who export a
+spreadsheet. Installing the app precaches it, so it is now downloaded onto every phone that
+adds Brassworth to a home screen, whether or not anybody ever exports anything. Replacing it
+closes a security gate and an install-size problem in one change, which is a stronger case
+than either made alone. It belongs in v2.2, ahead of the camera work.
 
 Phase 7 is three releases rather than one. Each is a complete workflow that stands on its own:
 find it and open it, then make it work with no signal, then reach for the camera. Building the
