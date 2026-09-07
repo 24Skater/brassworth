@@ -15,7 +15,7 @@ async function createItemWithPurchase(
   await expect(page).toHaveURL(/\/items$/, { timeout: 15000 });
 
   await page.getByText(name).first().click();
-  await expect(page.getByRole('heading', { name: /edit item/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name })).toBeVisible();
 }
 
 test.describe('Valuation', () => {
@@ -45,13 +45,16 @@ test.describe('Valuation', () => {
     await signUpWithProperty(page);
     await createItemWithPurchase(page, 'Site Laptop', '1200', '2022-01-01');
 
+    // The depreciation method lives on the edit form, not the view page.
+    await page.getByRole('link', { name: /edit/i }).click();
     await page.locator('#depreciationMethod').click();
     await page.getByRole('option', { name: /straight line/i }).click();
     await page.locator('#usefulLifeMonths').fill('48');
     await page.getByRole('button', { name: /save changes/i }).click();
-    await expect(page).toHaveURL(/\/items$/, { timeout: 15000 });
 
-    await page.getByText('Site Laptop').first().click();
+    // Saving an edit returns to the item's own view page, where the value
+    // summary lives.
+    await expect(page.getByRole('heading', { name: 'Site Laptop' })).toBeVisible();
 
     const summary = page.getByTestId('value-summary');
     await expect(summary).toContainText('Straight line');

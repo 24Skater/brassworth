@@ -5,6 +5,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { AuthProvider } from './contexts/AuthContext';
 import { OrganizationProvider } from './contexts/OrganizationContext';
 import { RolesProvider } from './contexts/RolesContext';
@@ -16,11 +17,13 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Organizations = lazy(() => import('./pages/Organizations'));
 const Items = lazy(() => import('./pages/Items'));
 const ItemForm = lazy(() => import('./pages/ItemForm'));
+const ItemView = lazy(() => import('./pages/ItemView'));
 const Locations = lazy(() => import('./pages/Locations'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Users = lazy(() => import('./pages/Users'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Wishlist = lazy(() => import('./pages/Wishlist'));
+const Labels = lazy(() => import('./pages/Labels'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Loading component
@@ -39,6 +42,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <OfflineBanner />
           <AuthProvider>
             <OrganizationProvider>
               <RolesProvider>
@@ -50,11 +54,13 @@ const App = () => (
                     <Route path="/organizations" element={<Organizations />} />
                     <Route path="/items" element={<Items />} />
                     <Route path="/items/new" element={<ItemForm />} />
-                    <Route path="/items/:id" element={<ItemForm />} />
+                    <Route path="/items/:id" element={<ItemView />} />
+                    <Route path="/items/:id/edit" element={<ItemForm />} />
                     <Route path="/locations" element={<Locations />} />
                     <Route path="/categories" element={<Categories />} />
                     <Route path="/users" element={<Users />} />
                     <Route path="/wishlist" element={<Wishlist />} />
+                    <Route path="/labels" element={<Labels />} />
                     <Route path="/settings" element={<Settings />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />

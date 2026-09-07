@@ -185,19 +185,17 @@ describe('ItemForm', () => {
     });
   });
 
-  it('loads an existing item for editing, with its history', async () => {
+  it('loads an existing item for editing', async () => {
     await storage.setItems([item('abc', { name: 'Existing Drill', purchasePrice: 249 })]);
 
-    renderPage(<ItemForm />, { route: '/items/abc', path: '/items/:id' });
+    // The edit form now lives at /items/:id/edit; /items/:id is ItemView. The
+    // route pattern below still needs a param named :id for useParams to work.
+    renderPage(<ItemForm />, { route: '/items/abc/edit', path: '/items/:id/edit' });
 
     expect(await screen.findByRole('heading', { name: /edit item/i })).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByLabelText(/^name/i)).toHaveValue('Existing Drill');
     });
-
-    // The lifecycle and value cards only exist once the item does.
-    expect(await screen.findByText(/history/i)).toBeInTheDocument();
-    expect(await screen.findByTestId('value-summary')).toBeInTheDocument();
   });
 
   it('reveals depreciation fields only for the method that needs them', async () => {
@@ -205,7 +203,10 @@ describe('ItemForm', () => {
     // Radix renders its listbox in a portal with pointer APIs jsdom lacks; the
     // interactive path is covered end to end in a real browser instead.
     await storage.setItems([item('none', { depreciationMethod: 'NONE' })]);
-    const { unmount } = renderPage(<ItemForm />, { route: '/items/none', path: '/items/:id' });
+    const { unmount } = renderPage(<ItemForm />, {
+      route: '/items/none/edit',
+      path: '/items/:id/edit',
+    });
 
     await screen.findByRole('heading', { name: /edit item/i });
     expect(screen.queryByLabelText(/useful life/i)).not.toBeInTheDocument();
@@ -215,7 +216,7 @@ describe('ItemForm', () => {
     await storage.setItems([
       item('sl', { depreciationMethod: 'STRAIGHT_LINE', usefulLifeMonths: 48 }),
     ]);
-    renderPage(<ItemForm />, { route: '/items/sl', path: '/items/:id' });
+    renderPage(<ItemForm />, { route: '/items/sl/edit', path: '/items/:id/edit' });
 
     expect(await screen.findByLabelText(/useful life/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/value it never drops below/i)).toBeInTheDocument();
@@ -226,7 +227,7 @@ describe('ItemForm', () => {
       item('db', { depreciationMethod: 'DECLINING_BALANCE', declineRatePerYear: 0.2 }),
     ]);
 
-    renderPage(<ItemForm />, { route: '/items/db', path: '/items/:id' });
+    renderPage(<ItemForm />, { route: '/items/db/edit', path: '/items/:id/edit' });
 
     // Stored as a fraction, shown as a percentage — nobody thinks in 0.2.
     const rate = await screen.findByLabelText(/value lost per year/i);

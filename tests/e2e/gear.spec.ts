@@ -75,6 +75,8 @@ test.describe('Gear profiles', () => {
     await expect(page).toHaveURL(/\/items$/, { timeout: 15000 });
 
     await page.getByText('Site drill').first().click();
+    // The gear profile panel lives on the edit form, not the view page.
+    await page.getByRole('link', { name: /edit/i }).click();
     await expect(page.getByRole('heading', { name: /edit item/i })).toBeVisible();
 
     // Specs come from the profile, not from fields copied onto the item.
@@ -113,6 +115,8 @@ test.describe('Gear profiles', () => {
     await expect(page).toHaveURL(/\/items$/, { timeout: 15000 });
 
     await page.getByText('Rack switch').first().click();
+    // The gear profile panel lives on the edit form, not the view page.
+    await page.getByRole('link', { name: /edit/i }).click();
     await page.reload();
 
     await expect(page.getByTestId('gear-profile-panel')).toContainText('Cisco SG350-28');

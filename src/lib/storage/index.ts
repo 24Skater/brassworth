@@ -25,6 +25,19 @@ import { autoMigrateIfNeeded } from './migration';
 let storageProviderInstance: StorageProvider | null = null;
 
 /**
+ * Whether writes go over the network rather than staying in the browser.
+ *
+ * Local-first (localStorage/indexeddb) is offline by construction — a write is
+ * just a browser API call, network or no network. Only `api` mode has a write
+ * path that can actually fail when the connection drops, so this is the one
+ * place callers should check before warning someone that being offline puts
+ * their changes at risk.
+ */
+export function isApiStorageTier(): boolean {
+  return import.meta.env.VITE_STORAGE_PROVIDER === 'api';
+}
+
+/**
  * Creates a storage provider based on environment configuration
  */
 export function createStorageProvider(): StorageProvider {

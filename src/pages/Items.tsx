@@ -43,6 +43,7 @@ import {
   List,
   Image as ImageIcon,
   Table as TableIcon,
+  ScanLine,
 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { ItemCard } from '@/components/items/ItemCard';
@@ -56,6 +57,8 @@ import { ReceiptReviewTable, ConfirmedReceiptData } from '@/components/receipts/
 import { ParsedReceipt } from '@/lib/receipt';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
+import { ScannerDialog } from '@/components/scan/ScannerDialog';
+import { parseItemUrl } from '@/lib/labels/itemUrl';
 
 /**
  * The "leave it as it is" choice in the bulk edit dialog.
@@ -95,6 +98,7 @@ export default function Items() {
   const [receiptUploadOpen, setReceiptUploadOpen] = useState(false);
   const [receiptReviewOpen, setReceiptReviewOpen] = useState(false);
   const [parsedReceipt, setParsedReceipt] = useState<ParsedReceipt | null>(null);
+  const [scanning, setScanning] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
   // State for async data
@@ -651,6 +655,10 @@ export default function Items() {
                   Edit {selectedItems.size} items
                 </Button>
               )}
+              <Button variant="outline" onClick={() => setScanning(true)}>
+                <ScanLine className="h-4 w-4 mr-2" />
+                Scan
+              </Button>
               <Button onClick={() => navigate('/items/new')}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Item
@@ -967,6 +975,24 @@ export default function Items() {
           locations={locations}
         />
       )}
+
+      <ScannerDialog
+        open={scanning}
+        onOpenChange={setScanning}
+        onDecoded={(text) => {
+          const id = parseItemUrl(text, window.location.origin);
+          setScanning(false);
+          if (!id) {
+            toast({
+              title: 'Not a Brassworth label',
+              description: 'That code did not match one of your items.',
+              variant: 'destructive',
+            });
+            return;
+          }
+          navigate(`/items/${encodeURIComponent(id)}`);
+        }}
+      />
     </div>
   );
 }

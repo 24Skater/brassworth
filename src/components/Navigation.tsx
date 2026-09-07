@@ -16,6 +16,7 @@ import {
   Menu,
   LucideIcon,
   Heart,
+  QrCode,
 } from 'lucide-react';
 import { NavLink } from './NavLink';
 import { cn } from '@/lib/utils';
@@ -102,6 +103,9 @@ export function Navigation() {
                   <MobileNavLink to="/locations" icon={MapPin} onClick={closeMobileMenu}>
                     Locations
                   </MobileNavLink>
+                  <MobileNavLink to="/labels" icon={QrCode} onClick={closeMobileMenu}>
+                    Labels
+                  </MobileNavLink>
                   {(canManageUsers || canManageOrg) && (
                     <MobileNavLink to="/settings" icon={SettingsIcon} onClick={closeMobileMenu}>
                       Settings
@@ -175,6 +179,9 @@ export function Navigation() {
           </NavLink>
           <NavLink to="/locations" icon={MapPin}>
             Locations
+          </NavLink>
+          <NavLink to="/labels" icon={QrCode}>
+            Labels
           </NavLink>
           {(canManageUsers || canManageOrg) && (
             <NavLink to="/settings" icon={SettingsIcon}>

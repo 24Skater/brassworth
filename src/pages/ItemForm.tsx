@@ -10,8 +10,6 @@ import { brandsFrom } from '@/lib/gear/dataPlate';
 import { availableProfiles, fetchVendorCatalogue } from '@/lib/gear/resolve';
 import type { GearProfile } from '@/types';
 import type { DataPlateReading } from '@/lib/gear/dataPlate';
-import { ItemLifecycle } from '@/components/items/ItemLifecycle';
-import { ItemValueSummary } from '@/components/items/ItemValueSummary';
 import { DEPRECIATION_LABELS } from '@/lib/valuation';
 import type { DepreciationMethod } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -208,7 +206,10 @@ export default function ItemForm() {
     const existingPhotos = await storage.getPhotos();
     await storage.setPhotos([...existingPhotos, ...newPhotos]);
 
-    navigate('/items');
+    // Editing returns to the item's own page, since that is where the edit
+    // was launched from and where its history and value now live. Creating
+    // still lands on the list — there is no single item to return to yet.
+    navigate(isEditing ? `/items/${itemId}` : '/items');
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -623,7 +624,11 @@ export default function ItemForm() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => navigate('/items')}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(isEditing && id ? `/items/${id}` : '/items')}
+                >
                   Cancel
                 </Button>
                 <Button type="submit">{isEditing ? 'Save Changes' : 'Create Item'}</Button>
@@ -634,14 +639,6 @@ export default function ItemForm() {
 
         {/* What is known about the model, shared by every item that is one. */}
         {selectedProfile && <GearProfilePanel profile={selectedProfile} />}
-
-        {/* History only exists once the item does. */}
-        {isEditing && id && currentOrg && (
-          <>
-            <ItemValueSummary itemId={id} />
-            <ItemLifecycle itemId={id} organizationId={currentOrg.id} />
-          </>
-        )}
       </main>
     </div>
   );

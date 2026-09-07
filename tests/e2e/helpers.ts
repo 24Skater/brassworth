@@ -19,10 +19,27 @@ export function uniqueEmail(): string {
   return `e2e-${Date.now()}-${seq}-${Math.floor(Math.random() * 100000)}@example.com`;
 }
 
-/** Clear all browser-side state so a test starts from a known-empty app. */
+/**
+ * Clear all browser-side state so a test starts from a known-empty app.
+ *
+ * CI runs the E2E suite against a production build (see playwright.config.ts),
+ * so a service worker is genuinely installed and can keep serving a cached
+ * page -- or a cached API response -- across tests that share an origin.
+ * Unregistering it and dropping its caches first keeps tests independent the
+ * same way clearing storage does; skipping it would let one test's install
+ * leak into the next.
+ */
 export async function resetAppState(page: Page): Promise<void> {
   await page.goto('/');
   await page.evaluate(async () => {
+    if (navigator.serviceWorker) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+    if (window.caches) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
     localStorage.clear();
     sessionStorage.clear();
     if (window.indexedDB?.databases) {

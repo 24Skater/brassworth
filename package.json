@@ -47,7 +47,8 @@
     "type-check:app": "tsc -p tsconfig.app.json --noEmit",
     "type-check:node": "tsc -p tsconfig.node.json --noEmit",
     "screenshots": "node scripts/screenshots/capture.mjs && node scripts/screenshots/frame.mjs && bash scripts/screenshots/makeGif.sh",
-    "social-preview": "node scripts/screenshots/socialPreview.mjs"
+    "social-preview": "node scripts/screenshots/socialPreview.mjs",
+    "icons": "node scripts/icons/appIcons.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
@@ -81,6 +82,7 @@
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@tanstack/react-query": "^5.83.0",
+    "barcode-detector": "^3.2.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -95,6 +97,7 @@
     "next-themes": "^0.3.0",
     "openid-client": "^6.8.8",
     "pdfjs-dist": "^5.4.394",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -123,6 +126,7 @@
     "@testing-library/user-event": "^14.5.2",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^22.16.5",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@types/zxcvbn": "^4.4.5",
@@ -148,6 +152,7 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^2.1.8"
   },
   "lint-staged": {
