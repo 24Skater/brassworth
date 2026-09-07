@@ -26,9 +26,29 @@ export function isNativeDetectorAvailable(): boolean {
   return typeof (globalThis as Record<string, unknown>).BarcodeDetector === 'function';
 }
 
+/**
+ * Whether a native detector can actually read the format we print.
+ *
+ * The constructor existing is not the same as the format being supported —
+ * a browser can expose BarcodeDetector, construct without complaint, and then
+ * simply never match anything, which reads as a camera that does not work
+ * rather than as an unsupported browser.
+ */
+async function nativeSupportsQr(): Promise<boolean> {
+  const Native = (globalThis as Record<string, unknown>).BarcodeDetector as {
+    getSupportedFormats?: () => Promise<string[]>;
+  };
+  if (typeof Native.getSupportedFormats !== 'function') return true;
+  try {
+    return (await Native.getSupportedFormats()).includes('qr_code');
+  } catch {
+    return false;
+  }
+}
+
 /** A detector, native where possible and downloaded where not. */
 export async function resolveDetector(): Promise<Detector> {
-  if (isNativeDetectorAvailable()) {
+  if (isNativeDetectorAvailable() && (await nativeSupportsQr())) {
     const Native = (globalThis as Record<string, unknown>).BarcodeDetector as new (options: {
       formats: readonly string[];
     }) => Detector;

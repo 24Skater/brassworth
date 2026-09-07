@@ -9,6 +9,52 @@ Notable changes to Brassworth. The format follows
 > tagged retrospectively at the commit that closed each phase; they were never
 > published to a registry.
 
+## [Unreleased]
+
+Phase 7 slice one: the app becomes usable standing in front of the gear. Not yet
+tagged — the version in `package.json` is still 2.0.0.
+
+### Added
+
+- **An item's own page.** `/items/:id` is now a place to look at and act on one item —
+  its value, its history, and the controls that check it in and out. Editing moved to
+  `/items/:id/edit`. Previously that URL opened the edit form with the history mounted
+  beneath every input field, which is unusable on a phone.
+- **Printable QR labels** at `/labels`. Choose gear, print a sheet through the browser's
+  own print dialog, stick the labels on. No PDF dependency.
+- **Scanning a label to open an item**, either with a phone's own camera app — the label
+  encodes a full address, so nothing needs installing — or with the Scan button on the
+  items screen, which uses the platform `BarcodeDetector` where it exists and fetches a
+  decoder only where it does not.
+- **Installable as an app**, with a manifest and icons generated from the brand mark
+  (`npm run icons`).
+- **Offline reads.** The app shell is precached, and in server mode `GET` requests are
+  cached stale-while-revalidate. Writes are not queued yet, and in server mode a banner
+  says so rather than letting a change appear to save.
+
+### Changed
+
+- Saving an edit returns to the item rather than to the item list.
+- IBM `xlsx` replacement moved into v2.2: precaching means every install now downloads it
+  whether or not anybody exports a spreadsheet.
+- Coverage ratchet raised to 88 statements / 87 branches / 80 functions / 88 lines.
+  Functions is held deliberately; see [docs/TESTING.md](./docs/TESTING.md).
+
+### Fixed
+
+- **The camera was disabled in production.** Both nginx configurations sent
+  `Permissions-Policy: camera=()`, an empty allowlist, so scanning failed on every Docker
+  deployment before a permission prompt was ever shown.
+- **A printed label could land somebody on the sign-in page.** An escaped path traversal
+  survived URL parsing as an item id and was resolved by the router. The parser now
+  refuses a value that is not an id, and the caller encodes what it builds a path from.
+- **Cached API reads outlived the session that fetched them**, so signing out and back in
+  as somebody else on a shared machine served the first person's data. The cache is
+  emptied on sign-out and on sign-in.
+- The item page rendered a blank screen when a load failed, did not check the item
+  belonged to the selected property, and the scanner could leave the camera lit with no
+  explanation if its decoder failed to load.
+
 ## [2.0.0] — 2026-09-06
 
 Published. The documentation now describes the product that exists.

@@ -36,4 +36,40 @@ describe('resolveDetector', () => {
 
     expect(typeof detector.detect).toBe('function');
   });
+  it('falls back when the browser has a detector that cannot read QR', async () => {
+    // A constructor that exists but does not support the format reads to a
+    // user as a camera that simply never works.
+    const construct = vi.fn();
+    class Fake {
+      constructor(options: unknown) {
+        construct(options);
+      }
+      static getSupportedFormats() {
+        return Promise.resolve(['ean_13']);
+      }
+    }
+    (globalThis as Record<string, unknown>).BarcodeDetector = Fake;
+
+    const detector = await resolveDetector();
+
+    expect(construct).not.toHaveBeenCalled();
+    expect(typeof detector.detect).toBe('function');
+  });
+
+  it('uses the native detector when it reports QR support', async () => {
+    const construct = vi.fn();
+    class Fake {
+      constructor(options: unknown) {
+        construct(options);
+      }
+      static getSupportedFormats() {
+        return Promise.resolve(['qr_code', 'ean_13']);
+      }
+    }
+    (globalThis as Record<string, unknown>).BarcodeDetector = Fake;
+
+    await resolveDetector();
+
+    expect(construct).toHaveBeenCalledWith({ formats: ['qr_code'] });
+  });
 });
