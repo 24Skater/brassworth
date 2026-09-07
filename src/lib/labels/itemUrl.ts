@@ -37,9 +37,20 @@ export function parseItemUrl(text: string, origin: string): string | null {
   const match = /^\/items\/([^/]+)\/?$/.exec(url.pathname);
   if (!match) return null;
 
+  let id: string;
   try {
-    return decodeURIComponent(match[1] as string);
+    id = decodeURIComponent(match[1] as string);
   } catch {
     return null;
   }
+
+  // The path segment is decoded, so an escaped separator survives as a real
+  // one: /items/%2E%2E%2F%2E%2E%2Fauth decodes to the id "../../auth". A router
+  // resolving that against /items/ walks out to /auth, which turns a sticker
+  // anybody can print into a way to put somebody on a sign-in form. Callers
+  // must still encode what they build a path from, and this refuses to hand
+  // back a value that was never an id in the first place.
+  if (id === '' || id.includes('/') || id === '.' || id === '..') return null;
+
+  return id;
 }

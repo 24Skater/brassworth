@@ -18,8 +18,28 @@ describe('parseItemUrl', () => {
     expect(parseItemUrl(itemUrl('abc123', ORIGIN), ORIGIN)).toBe('abc123');
   });
 
-  it('decodes an escaped id', () => {
-    expect(parseItemUrl(itemUrl('a/b', ORIGIN), ORIGIN)).toBe('a/b');
+  it('refuses an id that decodes to a path, however it was escaped', () => {
+    // itemUrl escapes a separator, but the parser decodes it again, so a
+    // value like this comes back as a real path and a router walks out of
+    // /items/ with it. Anybody can print a sticker; nobody should be able to
+    // print one that lands somebody on another screen.
+    expect(parseItemUrl(itemUrl('a/b', ORIGIN), ORIGIN)).toBeNull();
+  });
+
+  it('refuses a traversal dressed up as an id', () => {
+    expect(parseItemUrl(`${ORIGIN}/items/%2E%2E%2F%2E%2E%2Fauth`, ORIGIN)).toBeNull();
+    expect(parseItemUrl(`${ORIGIN}/items/%2E%2E`, ORIGIN)).toBeNull();
+    expect(parseItemUrl(`${ORIGIN}/items/%2E`, ORIGIN)).toBeNull();
+  });
+
+  it('refuses an empty id', () => {
+    expect(parseItemUrl(`${ORIGIN}/items/%20`, ORIGIN)).toBe(' ');
+    expect(parseItemUrl(`${ORIGIN}/items/`, ORIGIN)).toBeNull();
+  });
+
+  it('still reads back a real id, which is a uuid', () => {
+    const id = '3f2504e0-4f89-11d3-9a0c-0305e82c3301';
+    expect(parseItemUrl(itemUrl(id, ORIGIN), ORIGIN)).toBe(id);
   });
 
   it('refuses a URL from another origin', () => {

@@ -11,6 +11,8 @@ you are already looking at the app.
 - [Photos, receipts and documents](#photos-receipts-and-documents)
 - [Receipt scanning](#receipt-scanning)
 - [Data plates and gear profiles](#data-plates-and-gear-profiles)
+- [Labels and scanning](#labels-and-scanning)
+- [Installing the app](#installing-the-app)
 - [Excel import and export](#excel-import-and-export)
 - [Properties](#properties)
 - [Locations and categories](#locations-and-categories)
@@ -61,9 +63,10 @@ event type means: [Lifecycle](./LIFECYCLE.md).
 
 ## Items
 
-`/items` lists them. `/items/new` creates one. `/items/:id` opens one for
-editing, and is the only place the History card appears — you have to save an
-item before you can record anything against it.
+`/items` lists them. `/items/new` creates one. `/items/:id` opens one to look
+at and act on — its value summary, its History card, and the buttons that check
+it in and out. `/items/:id/edit` is where you change its fields. You have to
+save an item before you can record anything against it.
 
 ### Fields
 
@@ -250,7 +253,7 @@ first thing on the screen rather than something below a form.
 A label carries a link to your own Brassworth, nothing more. It holds no password
 and no session. Somebody who photographs a label on your drill gets an address
 they cannot open: in server mode it asks them to sign in, and in local-first mode
-it points at a machine they cannot reach.
+it points at whatever address you run Brassworth on, which for most people is their own machine.
 
 Brassworth also refuses to follow a scanned code that points somewhere else. If
 you scan a QR code from a parcel, a poster or a website, it says the code is not a

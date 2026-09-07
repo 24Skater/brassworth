@@ -39,4 +39,50 @@ describe('ScannerDialog', () => {
       expect(screen.getByText(/could not open the camera/i)).toBeInTheDocument();
     });
   });
+  it('releases the camera when the dialog closes', async () => {
+    // The single most important property of this component. A scanner that
+    // leaves the camera running is visible to the user as a light that will
+    // not go out, and it was previously asserted nowhere.
+    const stop = vi.fn();
+    const stream = { getTracks: () => [{ stop }] };
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+    });
+
+    const { rerender } = renderDialog();
+    await waitFor(() => {
+      expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalled();
+    });
+
+    rerender(
+      <MemoryRouter>
+        <ScannerDialog open={false} onOpenChange={() => {}} onDecoded={() => {}} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(stop).toHaveBeenCalled();
+    });
+  });
+
+  it('releases the camera on unmount', async () => {
+    const stop = vi.fn();
+    const stream = { getTracks: () => [{ stop }] };
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue(stream) },
+    });
+
+    const { unmount } = renderDialog();
+    await waitFor(() => {
+      expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalled();
+    });
+
+    unmount();
+
+    await waitFor(() => {
+      expect(stop).toHaveBeenCalled();
+    });
+  });
 });

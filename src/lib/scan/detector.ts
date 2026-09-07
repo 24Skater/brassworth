@@ -3,8 +3,12 @@
  *
  * Chrome on Android ships BarcodeDetector; Safari does not. Rather than always
  * carrying a WASM decoder, the platform one is used where it exists and the
- * ponyfill is imported only when it is missing — so the common case costs
- * nothing in the bundle, and the uncommon one still works.
+ * ponyfill is imported only when it is missing — so the common case never
+ * parses or executes it, and the uncommon one still works.
+ *
+ * Note it is a separate chunk, not a smaller download: the service worker
+ * precaches every chunk, so an installed app fetches the decoder once whether
+ * or not the browser will ever need it.
  */
 
 export interface DetectedCode {

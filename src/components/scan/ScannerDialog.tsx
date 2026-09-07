@@ -62,15 +62,31 @@ export function ScannerDialog({ open, onOpenChange, onDecoded }: ScannerDialogPr
       const video = videoRef.current;
       if (video) {
         video.srcObject = stream;
-        await video.play().catch(() => undefined);
+        // play() resolves a Promise in current browsers but returns
+        // undefined in older ones, so calling .catch() on the result directly
+        // throws where it was meant to be swallowing a failure.
+        await Promise.resolve(video.play()).catch(() => undefined);
       }
 
-      const detector = await resolveDetector();
+      // Where the browser has no BarcodeDetector the decoder is fetched on
+      // demand, so this can fail: offline, or a deploy that moved the chunk.
+      // Without handling it the camera stayed lit and never decoded anything,
+      // with nothing on screen to explain why.
+      const detector = await resolveDetector().catch(() => null);
+      if (!detector) {
+        setError('Brassworth could not start the scanner. Check your connection and try again.');
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
 
       const tick = async () => {
         if (stopped || !videoRef.current) return;
         try {
           const [first] = await detector.detect(videoRef.current);
+          // The dialog can be closed while a decode is in flight, and acting
+          // on the result then navigates somebody away from the screen they
+          // just cancelled back to.
+          if (stopped) return;
           if (first) {
             onDecodedRef.current(first.rawValue);
             return;

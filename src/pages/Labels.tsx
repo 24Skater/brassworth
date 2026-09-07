@@ -137,9 +137,12 @@ export default function Labels() {
               {codes[item.id] ? (
                 <div
                   className="w-24 h-24 [&>svg]:w-full [&>svg]:h-full"
-                  // The SVG is produced by the QR encoder from a URL this app
-                  // built, never from user text, so there is no untrusted markup
-                  // to sanitise here.
+                  // The QR encoder emits an <svg> of <path> data derived from
+                  // the bit matrix; it never echoes the payload it encoded, so
+                  // there is no route from an item's fields into this markup.
+                  // That, rather than "the input is ours", is what makes it
+                  // safe — the input being ours is true today and is exactly
+                  // the kind of thing a later feature quietly changes.
                   dangerouslySetInnerHTML={{ __html: codes[item.id] as string }}
                 />
               ) : (

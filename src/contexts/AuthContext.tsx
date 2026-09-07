@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { User, UserRole } from '@/types';
 import { createAuthProvider } from '@/lib/auth';
+import { clearApiCache } from '@/lib/storage/apiCache';
 
 // Session check interval (5 minutes)
 const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
@@ -90,6 +91,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const login = async (email: string, password: string, rememberMe: boolean = false) => {
+    // A session can end without ever reaching logout — a closed tab, a crash,
+    // an expiry. Clearing on the way in as well means a stale cache cannot
+    // outlive the person who filled it.
+    await clearApiCache();
     const result = await authProvider.login(email, password, rememberMe);
     if (result.error) {
       throw new Error(result.error);
@@ -100,6 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     authProvider.logout();
+    // Cached API reads outlive the session that fetched them, and they are
+    // keyed by URL rather than by who asked. Leaving them behind hands the
+    // next person to sign in on this machine the last person's data.
+    void clearApiCache();
     setUser(null);
     setIsSessionExpired(false);
   };

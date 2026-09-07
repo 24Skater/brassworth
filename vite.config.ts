@@ -49,6 +49,11 @@ export default defineConfig(({ mode }) => ({
         // versioned; they are fetched on demand rather than precached, so an
         // install does not pull megabytes nobody has asked for yet.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // A navigation to /api/ must reach the server, not the SPA shell. The
+        // OIDC sign-in endpoints are top-level navigations by definition, so
+        // without this, turning OIDC on breaks sign-in for every client with a
+        // service worker — and only in production, where the worker exists.
+        navigateFallbackDenylist: [/^\/api\//],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
           {

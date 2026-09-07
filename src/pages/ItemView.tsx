@@ -8,7 +8,7 @@ import { ItemStatusBadge } from '@/components/items/ItemStatusBadge';
 import { ItemValueSummary } from '@/components/items/ItemValueSummary';
 import { ItemLifecycle } from '@/components/items/ItemLifecycle';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Item, ItemEvent } from '@/types';
 import { ArrowLeft, Pencil } from 'lucide-react';
 
@@ -23,13 +23,28 @@ export default function ItemView() {
   const [item, setItem] = useState<Item | null>(null);
   const [events, setEvents] = useState<ItemEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(async () => {
-    if (!id) return;
-    const [found, log] = await Promise.all([storage.getItem(id), storage.getItemEventsByItem(id)]);
-    setItem(found);
-    setEvents(log);
-    setLoading(false);
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const [found, log] = await Promise.all([
+        storage.getItem(id),
+        storage.getItemEventsByItem(id),
+      ]);
+      setItem(found);
+      setEvents(log);
+    } catch {
+      // In server mode this is the offline-with-nothing-cached case, which is
+      // the exact situation this release exists for. Swallowing it left the
+      // page rendering null: no navigation, no message, a white screen.
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
   useEffect(() => {
@@ -38,7 +53,52 @@ export default function ItemView() {
 
   if (loading) return null;
 
-  if (!item) {
+  // Without a property the lifecycle actions below render nothing, so the page
+  // would show an item you cannot act on and never say why. Every other page
+  // asks for a property instead.
+  if (!currentOrg) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card>
+          <CardHeader>
+            <CardTitle>No Property Selected</CardTitle>
+            <CardDescription>Please select or create a property first</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <Link to="/organizations">Go to Properties</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (failed) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 py-8">
+          <p className="text-muted-foreground">
+            This item could not be loaded. If you are offline, it has not been opened on this device
+            before; reconnect and try again.
+          </p>
+          <Button asChild variant="outline" className="mt-4">
+            <Link to="/items">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to items
+            </Link>
+          </Button>
+        </main>
+      </div>
+    );
+  }
+
+  // An id is printed on a sticker and passed around, so one from another
+  // property is a normal thing to arrive with. Reading it here would let
+  // ItemLifecycle write events tagged with the property that happens to be
+  // selected rather than the one that owns the item.
+  if (!item || item.organizationId !== currentOrg.id) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -89,7 +149,7 @@ export default function ItemView() {
         )}
 
         <ItemValueSummary itemId={item.id} />
-        {currentOrg && <ItemLifecycle itemId={item.id} organizationId={currentOrg.id} />}
+        <ItemLifecycle itemId={item.id} organizationId={currentOrg.id} />
       </main>
     </div>
   );

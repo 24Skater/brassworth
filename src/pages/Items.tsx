@@ -990,7 +990,7 @@ export default function Items() {
             });
             return;
           }
-          navigate(`/items/${id}`);
+          navigate(`/items/${encodeURIComponent(id)}`);
         }}
       />
     </div>

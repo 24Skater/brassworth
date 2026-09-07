@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ItemView from '@/pages/ItemView';
 import { storage } from '@/lib/storage';
 import { renderPage, seed, TEST_ORG } from '../helpers/renderPage';
@@ -82,5 +82,43 @@ describe('ItemView', () => {
     await waitFor(() => {
       expect(screen.getByText(/could not be found/i)).toBeInTheDocument();
     });
+  });
+  it('refuses an item belonging to another property', async () => {
+    // Item ids are printed on stickers and passed around, so arriving with one
+    // from another property is ordinary. Rendering it would let the lifecycle
+    // panel write events tagged with whichever property happens to be selected.
+    const item = await seedItem({ organizationId: 'some-other-org' });
+
+    renderPage(<ItemView />, { route: `/items/${item.id}`, path: '/items/:id' });
+
+    expect(await screen.findByText(/could not be found/i)).toBeInTheDocument();
+  });
+
+  it('explains itself when the item cannot be loaded', async () => {
+    // In server mode this is being offline with nothing cached, which is the
+    // situation this release exists for. It used to render a white screen.
+    const item = await seedItem();
+    // Restore this spy specifically. vi.restoreAllMocks() also tears down the
+    // matchMedia stub that tests/setup.ts installs, which breaks whichever
+    // test happens to run next rather than this one.
+    const getItem = vi.spyOn(storage, 'getItem').mockRejectedValue(new Error('offline'));
+
+    try {
+      renderPage(<ItemView />, { route: `/items/${item.id}`, path: '/items/:id' });
+
+      expect(await screen.findByText(/could not be loaded/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /back to items/i })).toBeInTheDocument();
+    } finally {
+      getItem.mockRestore();
+    }
+  });
+
+  it('asks for a property rather than hiding the actions', async () => {
+    await seed({ withoutOrg: true });
+    const item = await seedItem();
+
+    renderPage(<ItemView />, { route: `/items/${item.id}`, path: '/items/:id' });
+
+    expect(await screen.findByText(/no property selected/i)).toBeInTheDocument();
   });
 });
