@@ -111,7 +111,7 @@
     "tesseract.js": "^6.0.1",
     "vaul": "^0.9.9",
     "xlsx": "^0.18.5",
-    "zod": "^3.25.76",
+    "zod": "^4.6.6",
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
